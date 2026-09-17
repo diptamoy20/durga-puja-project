@@ -6,6 +6,6 @@
     "baseUrl": "./",
     "paths": {}
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
+  "include": ["src/**/*.js"],
+  "exclude": ["node_modules", "dist", "test", "**/*.spec.js"]
 }

@@ -216,7 +216,7 @@ permission change only takes effect for a user once their token is refreshed.
 
 Authorisation is by permission key, not role name:
 
-```typescript
+```javascript
 @Get()
 @RequirePermissions(PERMISSIONS.VIEW_USERS)
 async list(@Query() query: ListUsersDto) { … }
@@ -246,9 +246,9 @@ page reload.
 
 1. Copy an existing service directory; the smallest is `atlas-service`.
 2. Add the workspace to `backend/package.json` and give it a `start:*` script.
-3. Declare its patterns in `shared/src/constants/patterns.ts`.
-4. Register its client in `api-gateway/src/clients/clients.module.ts` and add
-   its host and port to `.env` and `config/services.config.ts`.
+3. Declare its patterns in `shared/src/constants/patterns.js`.
+4. Register its client in `api-gateway/src/clients/clients.module.js` and add
+   its host and port to `.env` and `config/services.config.js`.
 5. Add a controller to the gateway that forwards to it.
 
 ## Testing

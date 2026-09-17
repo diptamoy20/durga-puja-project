@@ -1,12 +1,8 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "declaration": true
+    "outDir": "./dist"
   },
-  /* `prisma.service.ts` sits at the package root (per the required structure)
-     while the barrel lives in src/, so both are included and no rootDir is
-     set — TypeScript infers the package directory as the common root. */
-  "include": ["src/**/*.ts", "prisma.service.ts"],
-  "exclude": ["node_modules", "dist", "prisma/seed.ts", "**/*.spec.ts"]
+  "include": ["src/**/*.js", "prisma.service.js"],
+  "exclude": ["node_modules", "dist", "prisma/seed.js", "**/*.spec.js"]
 }

@@ -9,7 +9,6 @@
     "start": "node dist/main",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "jest"
   },
   "dependencies": {
