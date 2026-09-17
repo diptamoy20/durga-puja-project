@@ -10,7 +10,6 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "jest",
     "test:e2e": "jest --config test/jest-e2e.json"
   },

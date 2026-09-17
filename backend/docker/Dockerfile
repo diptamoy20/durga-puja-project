@@ -9,7 +9,7 @@
 # Build context is the `backend/` directory.
 # ---------------------------------------------------------------------------
 
-# --- Stage 1: install dependencies and compile TypeScript -------------------
+# --- Stage 1: install dependencies and compile JavaScript -----------------
 FROM node:20-alpine AS build
 
 WORKDIR /app
@@ -36,8 +36,7 @@ RUN npm install --no-audit --no-fund
 
 COPY . .
 
-# The client must exist before the services compile, since they import its
-# generated types.
+# The client must exist before the services compile.
 RUN npx prisma generate --schema database/prisma/schema.prisma
 RUN npm run build --workspaces --if-present
 

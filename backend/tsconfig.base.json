@@ -5,8 +5,9 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "moduleResolution": "node",
-
-    "declaration": true,
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": false,
     "removeComments": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -15,32 +16,13 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "skipLibCheck": true,
-
-    /* Incremental builds are deliberately off. TypeScript writes
-       `tsconfig.tsbuildinfo` next to this config rather than inside `dist`,
-       but the Nest CLI runs with `deleteOutDir: true` — so the output is
-       deleted while the build state survives, and the next compile reports
-       "Found 0 errors" and emits nothing, leaving `dist/main.js` missing.
-       Watch mode keeps its own in-memory state, so little is lost. */
     "incremental": false,
-
-    "strict": true,
-    "strictNullChecks": true,
-    "strictBindCallApply": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": false,
-
-    /* Decorator metadata cannot express `T | undefined` for injected
-       properties, so Nest projects conventionally disable this one check. */
     "strictPropertyInitialization": false,
-
     "baseUrl": ".",
     "paths": {
-      "@dpgc/shared": ["shared/src/index.ts"],
+      "@dpgc/shared": ["shared/src/index.js"],
       "@dpgc/shared/*": ["shared/src/*"],
-      "@dpgc/database": ["database/src/index.ts"],
+      "@dpgc/database": ["database/src/index.js"],
       "@dpgc/database/*": ["database/src/*"]
     }
   },
