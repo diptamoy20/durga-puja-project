@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PujaCommitteeController = exports.DiasporaVerificationController = exports.PublicRegistrationController = void 0;
 const shared_1 = require("@dpgc/shared");
@@ -218,6 +218,36 @@ let PujaCommitteeController = class PujaCommitteeController {
             failed: results.filter((r) => r.status === 'rejected').length,
         }));
     }
+    remove(id) {
+        return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_REMOVE, { id });
+    }
+    async exportCsv(query) {
+        const result = await this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_FIND_ALL, {
+            ...query,
+            page: 1,
+            perPage: 1000,
+        });
+        const items = result?.items ?? [];
+        const header = [
+            'Registration No', 'Committee Name', 'Contact Person', 'Email', 'Mobile',
+            'City', 'Status', 'Committee ID', 'Created At',
+        ].join(',');
+        const lines = items.map((row) => [
+            row.registrationNo,
+            row.committeeName,
+            row.contactPersonName,
+            row.email,
+            row.mobile,
+            row.city,
+            row.status,
+            row.committeeId,
+            row.createdAt,
+        ].map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','));
+        return {
+            filename: 'puja-committee-applications.csv',
+            content: [header, ...lines].join('\n'),
+        };
+    }
 };
 exports.PujaCommitteeController = PujaCommitteeController;
 __decorate([
@@ -309,6 +339,26 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_s = typeof registration_dto_1.BulkCommitteeActionDto !== "undefined" && registration_dto_1.BulkCommitteeActionDto) === "function" ? _s : Object, typeof (_t = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _t : Object]),
     __metadata("design:returntype", void 0)
 ], PujaCommitteeController.prototype, "bulkAction", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_COMMITTEES),
+    (0, response_interceptor_1.ResponseMessage)('Puja committee deleted successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Soft-delete a committee application' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], PujaCommitteeController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Get)('export/csv'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EXPORT_COMMITTEES),
+    (0, response_interceptor_1.ResponseMessage)('Committee export generated successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Export filtered committee applications as CSV' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_u = typeof registration_dto_1.ListCommitteesQueryDto !== "undefined" && registration_dto_1.ListCommitteesQueryDto) === "function" ? _u : Object]),
+    __metadata("design:returntype", Promise)
+], PujaCommitteeController.prototype, "exportCsv", null);
 exports.PujaCommitteeController = PujaCommitteeController = __decorate([
     (0, swagger_1.ApiTags)('Puja Committees'),
     (0, swagger_1.ApiBearerAuth)(),

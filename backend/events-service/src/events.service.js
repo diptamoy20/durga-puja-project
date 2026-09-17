@@ -232,8 +232,22 @@ let EventsService = EventsService_1 = class EventsService {
      * public webinar payload until someone has registered.
      */
     async createRsvp(data) {
+        let webinarId = data.webinarId;
+        if (!webinarId && data.slug) {
+            const bySlug = await this.prisma.webinar.findFirst({
+                where: { slug: data.slug, deletedAt: null, isPublished: true },
+                select: { id: true },
+            });
+            if (!bySlug) {
+                throw shared_1.ServiceException.notFound('That webinar is not available.');
+            }
+            webinarId = bySlug.id;
+        }
+        if (!webinarId) {
+            throw shared_1.ServiceException.badRequest('A webinar id or slug is required.');
+        }
         const webinar = await this.prisma.webinar.findFirst({
-            where: { id: data.webinarId, deletedAt: null, isPublished: true },
+            where: { id: webinarId, deletedAt: null, isPublished: true },
             select: {
                 id: true,
                 title: true,
@@ -256,7 +270,7 @@ let EventsService = EventsService_1 = class EventsService {
             throw shared_1.ServiceException.badRequest('This webinar has already taken place.');
         }
         const existing = await this.prisma.webinarRegistration.findUnique({
-            where: { webinarId_email: { webinarId: data.webinarId, email: data.email } },
+            where: { webinarId_email: { webinarId, email: data.email } },
             select: { id: true, registrationCode: true },
         });
         if (existing) {
@@ -270,7 +284,7 @@ let EventsService = EventsService_1 = class EventsService {
         try {
             const registration = await this.prisma.webinarRegistration.create({
                 data: {
-                    webinarId: data.webinarId,
+                    webinarId,
                     userId: data.userId ?? null,
                     name: data.name,
                     email: data.email,
@@ -281,7 +295,7 @@ let EventsService = EventsService_1 = class EventsService {
                     status: database_1.RsvpStatus.REGISTERED,
                 },
             });
-            this.logger.log(`RSVP ${registration.registrationCode} for webinar #${data.webinarId}`);
+            this.logger.log(`RSVP ${registration.registrationCode} for webinar #${webinarId}`);
             return {
                 registrationCode: registration.registrationCode,
                 webinarTitle: webinar.title,

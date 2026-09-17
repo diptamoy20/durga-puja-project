@@ -25,7 +25,7 @@ export default [
   },
 
   {
-    files: ['database/prisma/seed.js'],
+    files: ['database/prisma/seed.js', 'database/prisma/seed-module-data.js'],
     rules: { 'no-console': 'off' },
   },
 ];

@@ -46,6 +46,7 @@ const bcrypt = __importStar(require("bcryptjs"));
 // under ts-node before the shared package has necessarily been built.
 const permissions_1 = require("../../shared/src/constants/permissions");
 const roles_1 = require("../../shared/src/constants/roles");
+const { seedModuleData } = require("./seed-module-data");
 const prisma = new client_1.PrismaClient();
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? 'Password123!';
 const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS ?? 12);
@@ -251,6 +252,7 @@ async function main() {
     await seedDepartments();
     await seedUsers();
     await seedTaxonomy();
+    await seedModuleData(prisma);
     console.log('\nSeed complete.');
     console.log(`  Sign in with admin@durgapujaglobalconnect.in / ${SEED_PASSWORD}`);
 }

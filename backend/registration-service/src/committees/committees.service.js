@@ -311,6 +311,47 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
             mustChangePassword: true,
         };
     }
+    async update(payload) {
+        const { id, data } = payload;
+        const existing = await this.prisma.pujaCommittee.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, email: true },
+        });
+        if (!existing) {
+            throw shared_1.ServiceException.notFound(`No committee exists with id ${id}.`);
+        }
+        if (data.email && data.email !== existing.email) {
+            const emailTaken = await this.prisma.user.findUnique({
+                where: { email: data.email },
+                select: { id: true },
+            });
+            const committeeTaken = await this.prisma.pujaCommittee.findFirst({
+                where: { email: data.email, deletedAt: null, id: { not: id } },
+                select: { id: true },
+            });
+            if (emailTaken || committeeTaken) {
+                throw shared_1.ServiceException.conflict(`A record already exists for ${data.email}.`);
+            }
+        }
+        try {
+            return await this.prisma.pujaCommittee.update({
+                where: { id },
+                data: { ...data, updatedAt: new Date() },
+            });
+        }
+        catch (error) {
+            (0, shared_1.translatePrismaError)(error, 'committee');
+        }
+    }
+    async remove(payload) {
+        const { id } = payload;
+        await this.findOne(id);
+        await this.prisma.pujaCommittee.update({
+            where: { id },
+            data: { deletedAt: new Date() },
+        });
+        return { id, deleted: true };
+    }
     async stats() {
         const grouped = await this.prisma.pujaCommittee.groupBy({
             by: ['status'],

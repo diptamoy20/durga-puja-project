@@ -165,6 +165,28 @@ let AdminWebinarsController = class AdminWebinarsController {
             notes: dto.notes,
         });
     }
+    async exportRsvps(id) {
+        const result = await this.client.send(shared_1.SERVICE_TOKENS.EVENTS, shared_1.EVENTS_PATTERNS.RSVP_FIND_ALL, {
+            webinarId: id,
+            page: 1,
+            perPage: 5000,
+        });
+        const items = result?.items ?? [];
+        const header = ['Registration Code', 'Name', 'Email', 'Phone', 'Organization', 'City/Country', 'Status'].join(',');
+        const lines = items.map((row) => [
+            row.registrationCode,
+            row.name,
+            row.email,
+            row.phone,
+            row.organization,
+            row.cityCountry,
+            row.status,
+        ].map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','));
+        return {
+            filename: `webinar-${id}-rsvps.csv`,
+            content: [header, ...lines].join('\n'),
+        };
+    }
 };
 exports.AdminWebinarsController = AdminWebinarsController;
 __decorate([
@@ -257,6 +279,16 @@ __decorate([
     __metadata("design:paramtypes", [Number, typeof (_p = typeof events_dto_1.UpdateRsvpStatusDto !== "undefined" && events_dto_1.UpdateRsvpStatusDto) === "function" ? _p : Object]),
     __metadata("design:returntype", void 0)
 ], AdminWebinarsController.prototype, "updateRsvpStatus", null);
+__decorate([
+    (0, common_1.Get)(':id/export-rsvps'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_WEBINAR_RSVPS),
+    (0, response_interceptor_1.ResponseMessage)('RSVP export generated successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Export webinar RSVPs as CSV' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminWebinarsController.prototype, "exportRsvps", null);
 exports.AdminWebinarsController = AdminWebinarsController = __decorate([
     (0, swagger_1.ApiTags)('Admin Webinars'),
     (0, swagger_1.ApiBearerAuth)(),

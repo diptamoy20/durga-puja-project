@@ -13,6 +13,7 @@ exports.ROLES = {
     EVENT_MANAGER: 'Event Manager',
     AUTHORIZED_DATA_PROVIDER: 'Authorized Data Provider',
     COMMITTEE_MEMBER: 'Committee Member',
+    DIASPORA_MEMBER: 'Diaspora Member',
     TOURISM_OFFICER: 'Tourism Officer',
     DISTRICT_OFFICER: 'District Officer',
     REPORT_VIEWER: 'Report Viewer',
@@ -130,6 +131,17 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.VIEW_GALLERY, permissions_1.PERMISSIONS.UPLOAD_MEDIA, permissions_1.PERMISSIONS.EDIT_MEDIA,
             permissions_1.PERMISSIONS.VIEW_ALBUMS, permissions_1.PERMISSIONS.MANAGE_ALBUMS,
             permissions_1.PERMISSIONS.VIEW_PANDAL_ATLAS, permissions_1.PERMISSIONS.CREATE_PANDAL_ATLAS, permissions_1.PERMISSIONS.EDIT_PANDAL_ATLAS,
+        ],
+    },
+    {
+        name: exports.ROLES.DIASPORA_MEMBER,
+        slug: 'diaspora-member',
+        description: 'Verified diaspora member with access to public portal features.',
+        isSystem: true,
+        permissions: [
+            permissions_1.PERMISSIONS.VIEW_DASHBOARD,
+            permissions_1.PERMISSIONS.VIEW_GALLERY, permissions_1.PERMISSIONS.VIEW_ARTICLES,
+            permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.VIEW_PANDAL_ATLAS,
         ],
     },
     {

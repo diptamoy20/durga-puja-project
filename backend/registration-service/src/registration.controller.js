@@ -68,6 +68,12 @@ let RegistrationController = class RegistrationController {
     committeeStats() {
         return this.committees.stats();
     }
+    updateCommittee(payload) {
+        return this.committees.update(payload);
+    }
+    removeCommittee(payload) {
+        return this.committees.remove(payload);
+    }
 };
 exports.RegistrationController = RegistrationController;
 __decorate([
@@ -158,6 +164,20 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], RegistrationController.prototype, "committeeStats", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.REGISTRATION_PATTERNS.COMMITTEE_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], RegistrationController.prototype, "updateCommittee", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.REGISTRATION_PATTERNS.COMMITTEE_REMOVE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], RegistrationController.prototype, "removeCommittee", null);
 exports.RegistrationController = RegistrationController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof diaspora_service_1.DiasporaService !== "undefined" && diaspora_service_1.DiasporaService) === "function" ? _a : Object, typeof (_b = typeof committees_service_1.CommitteesService !== "undefined" && committees_service_1.CommitteesService) === "function" ? _b : Object])

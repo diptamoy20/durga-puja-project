@@ -164,8 +164,21 @@ let PublicNewsController = class PublicNewsController {
     findBySlug(slug) {
         return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.CONTENT_PATTERNS.ARTICLE_FIND_BY_SLUG, { slug });
     }
+    findAll(query) {
+        return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.CONTENT_PATTERNS.ARTICLE_PUBLIC_LIST, query);
+    }
 };
 exports.PublicNewsController = PublicNewsController;
+__decorate([
+    (0, shared_1.Public)(),
+    (0, common_1.Get)(),
+    (0, response_interceptor_1.ResponseMessage)('Published articles retrieved successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Public listing of published news articles' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_l = typeof content_dto_1.ListArticlesQueryDto !== "undefined" && content_dto_1.ListArticlesQueryDto) === "function" ? _l : Object]),
+    __metadata("design:returntype", void 0)
+], PublicNewsController.prototype, "findAll", null);
 __decorate([
     (0, shared_1.Public)(),
     (0, common_1.Get)(':slug'),

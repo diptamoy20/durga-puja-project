@@ -70,8 +70,11 @@ let CommitteeMediaController = class CommitteeMediaController {
     constructor(client) {
         this.client = client;
     }
-    index(query) {
-        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_MY_UPLOADS, query);
+    index(query, actor) {
+        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_MY_UPLOADS, {
+            ...query,
+            uploadedById: actor.id,
+        });
     }
     findOne(id) {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_FIND_ONE, { id });
@@ -103,8 +106,9 @@ __decorate([
     (0, response_interceptor_1.ResponseMessage)('Media retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'List media uploaded by the current committee' }),
     __param(0, (0, common_1.Query)()),
+    __param(1, (0, shared_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof gallery_dto_1.ListMediaQueryDto !== "undefined" && gallery_dto_1.ListMediaQueryDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof gallery_dto_1.ListMediaQueryDto !== "undefined" && gallery_dto_1.ListMediaQueryDto) === "function" ? _d : Object, typeof (_e = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _e : Object]),
     __metadata("design:returntype", void 0)
 ], CommitteeMediaController.prototype, "index", null);
 __decorate([

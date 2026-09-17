@@ -33,7 +33,10 @@ let GalleryController = class GalleryController {
         return this.gallery.publicList(query);
     }
     myUploads(query) {
-        return this.gallery.findAll(query);
+        return this.gallery.findAll({
+            ...query,
+            uploadedById: query.uploadedById ?? query.actorId,
+        });
     }
     findOne(payload) {
         return this.gallery.findOne(payload);

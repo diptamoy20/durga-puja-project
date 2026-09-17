@@ -35,6 +35,7 @@ let GalleryService = GalleryService_1 = class GalleryService {
                 : query.pujaCommitteeId
                     ? { pujaCommitteeId: query.pujaCommitteeId }
                     : {}),
+            ...(query.uploadedById ? { uploadedById: query.uploadedById } : {}),
             ...(query.search
                 ? {
                     OR: [
@@ -96,7 +97,16 @@ let GalleryService = GalleryService_1 = class GalleryService {
         return media;
     }
     async create(payload) {
-        const { data, actorId } = payload;
+        const actorId = payload.actorId ?? payload.uploadedById;
+        const nested = payload.data;
+        const { actorId: _actorId, uploadedById: _uploadedById, data: _data, ...flat } = payload;
+        const data = nested ?? flat;
+        if (!actorId) {
+            throw shared_1.ServiceException.badRequest('An uploader id is required.');
+        }
+        if (!data.pujaCommitteeId) {
+            throw shared_1.ServiceException.badRequest('pujaCommitteeId is required.');
+        }
         const committee = await this.prisma.pujaCommittee.findFirst({
             where: { id: data.pujaCommitteeId, deletedAt: null },
             select: { id: true, status: true },
@@ -147,7 +157,8 @@ let GalleryService = GalleryService_1 = class GalleryService {
     }
     /** Approves or rejects an upload; a rejection must carry a reason. */
     async moderate(payload) {
-        const { id, decision, reason, actorId } = payload;
+        const { id, decision, actorId } = payload;
+        const reason = payload.reason ?? payload.rejectionReason;
         const media = await this.prisma.committeeMedia.findFirst({
             where: { id, deletedAt: null },
             select: { id: true, status: true },
