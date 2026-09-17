@@ -246,6 +246,10 @@ model User {
   updatedWebinars     Webinar[]              @relation("WebinarUpdatedBy")
   webinarRegistrations WebinarRegistration[]
 
+  // Podcast domain
+  createdPodcasts     PodcastEpisode[]       @relation("PodcastCreatedBy")
+  updatedPodcasts     PodcastEpisode[]       @relation("PodcastUpdatedBy")
+
   @@index([status])
   @@index([createdAt])
   @@index([departmentId])
@@ -965,3 +969,71 @@ model NotificationLog {
   @@index([recipient])
   @@map("notification_logs")
 }
+
+// ===========================================================================
+// Podcasts (Bid Document: WEBEL/EOT/W/26-27/000107)
+// ===========================================================================
+
+model PodcastEpisode {
+  id                   Int       @id @default(autoincrement())
+  title                String    @db.VarChar(255)
+  slug                 String    @unique @db.VarChar(255)
+  seasonNumber         Int       @default(1) @map("season_number")
+  episodeNumber        Int       @map("episode_number")
+  summary              String    @db.Text
+  description          String    @db.Text
+  transcript           String?   @db.Text
+
+  audioUrl             String    @map("audio_url") @db.VarChar(1000)
+  audioDurationSeconds Int       @default(0) @map("audio_duration_seconds")
+  audioFileSize        Int?      @map("audio_file_size")
+  audioMimeType        String    @default("audio/mpeg") @map("audio_mime_type") @db.VarChar(100)
+
+  coverImageUrl        String?   @map("cover_image_url") @db.VarChar(1000)
+  hostName             String    @default("Durga Puja Global Connect") @map("host_name") @db.VarChar(150)
+  guestName            String?   @map("guest_name") @db.VarChar(150)
+  guestTitle           String?   @map("guest_title") @db.VarChar(255)
+  guestBio             String?   @map("guest_bio") @db.Text
+  guestAvatarUrl       String?   @map("guest_avatar_url") @db.VarChar(1000)
+
+  tags                 String[]  @default([])
+  language             String    @default("bn") @db.VarChar(10)
+
+  isPublished          Boolean   @default(true) @map("is_published")
+  isFeatured           Boolean   @default(false) @map("is_featured")
+  publishedAt          DateTime? @default(now()) @map("published_at")
+
+  playCount            Int       @default(0) @map("play_count")
+  likesCount           Int       @default(0) @map("likes_count")
+  reactions            Json?
+
+  spotifyUrl           String?   @map("spotify_url") @db.VarChar(500)
+  applePodcastsUrl     String?   @map("apple_podcasts_url") @db.VarChar(500)
+  youtubeUrl           String?   @map("youtube_url") @db.VarChar(500)
+
+  createdById          Int?      @map("created_by")
+  updatedById          Int?      @map("updated_by")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  createdBy User? @relation("PodcastCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User? @relation("PodcastUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([isPublished, publishedAt])
+  @@index([seasonNumber, episodeNumber])
+  @@index([language])
+  @@map("podcast_episodes")
+}
+
+model PodcastSubscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @db.VarChar(180)
+  name      String?  @db.VarChar(150)
+  source    String   @default("web") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("podcast_subscribers")
+}
+
