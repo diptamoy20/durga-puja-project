@@ -152,6 +152,21 @@ const PublicAtlasPage = lazy(() =>
 const PublicWebinarsPage = lazy(() =>
   import('@/pages/public/PublicWebinarsPage').then((m) => ({ default: m.PublicWebinarsPage })),
 );
+const PublicPodcastsPage = lazy(() =>
+  import('@/pages/public/PublicPodcastsPage').then((m) => ({ default: m.PublicPodcastsPage })),
+);
+const PodcastDetailPage = lazy(() =>
+  import('@/pages/public/PodcastDetailPage').then((m) => ({ default: m.PodcastDetailPage })),
+);
+
+// Podcast Admin Pages
+const PodcastListPage = lazy(() =>
+  import('@/pages/podcasts/PodcastListPage').then((m) => ({ default: m.PodcastListPage })),
+);
+const PodcastFormPage = lazy(() =>
+  import('@/pages/podcasts/PodcastFormPage').then((m) => ({ default: m.PodcastFormPage })),
+);
+
 
 export function AppRoutes() {
   return (
@@ -165,6 +180,8 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_GALLERY} element={<PublicGalleryPage />} />
         <Route path={ROUTES.PUBLIC_ATLAS} element={<PublicAtlasPage />} />
         <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
+        <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
+        <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -423,6 +440,32 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.EDIT_ARTICLES]}>
               <ArticleFormPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Podcasts */}
+        <Route
+          path={ROUTES.PODCASTS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES]}>
+              <PodcastListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PODCAST_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_ARTICLES]}>
+              <PodcastFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PODCAST_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ARTICLES]}>
+              <PodcastFormPage />
             </ProtectedRoute>
           }
         />

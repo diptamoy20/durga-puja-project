@@ -78,6 +78,11 @@ export const ROUTES = {
   WEBINARS_DETAIL: (id: number | string = ':id') => `/webinars/${id}`,
   WEBINARS_RSVPS: (id: number | string = ':id') => `/webinars/${id}/rsvps`,
 
+  // Podcasts
+  PODCASTS: '/podcasts',
+  PODCAST_NEW: '/podcasts/new',
+  PODCAST_EDIT: (id: number | string = ':id') => `/podcasts/${id}/edit`,
+
   // Public Facing Pages
   PUBLIC_CHOOSE_TYPE: '/register/choose',
   PUBLIC_REGISTER_DIASPORA: '/register/diaspora',
@@ -87,6 +92,8 @@ export const ROUTES = {
   PUBLIC_GALLERY: '/public/gallery',
   PUBLIC_ATLAS: '/public/atlas',
   PUBLIC_WEBINARS: '/public/webinars',
+  PUBLIC_PODCASTS: '/public/podcasts',
+  PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
 
   FORBIDDEN: '/forbidden',
 } as const;

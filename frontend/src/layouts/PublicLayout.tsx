@@ -60,6 +60,12 @@ export function PublicLayout() {
               Webinars
             </Link>
             <Link
+              to={ROUTES.PUBLIC_PODCASTS}
+              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
+            >
+              Podcasts
+            </Link>
+            <Link
               to={ROUTES.PUBLIC_CHOOSE_TYPE}
               className="btn btn--primary btn--sm"
               style={{ textDecoration: 'none' }}
