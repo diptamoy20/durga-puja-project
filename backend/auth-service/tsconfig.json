@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    /* Clear the inherited source-path mappings: @dpgc/shared and
+       @dpgc/database resolve through node_modules to their built `dist`, so
+       each service compiles against declaration files rather than recompiling
+       its dependencies' sources. */
+    "paths": {}
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
+}

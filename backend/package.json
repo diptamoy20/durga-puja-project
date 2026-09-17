@@ -1,0 +1,67 @@
+{
+  "name": "@dpgc/backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Durga Puja Global Connect - NestJS microservices backend",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "shared",
+    "database",
+    "api-gateway",
+    "auth-service",
+    "user-service",
+    "registration-service",
+    "content-service",
+    "gallery-service",
+    "atlas-service",
+    "events-service",
+    "notification-service"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "start:gateway": "npm run start:dev --workspace @dpgc/api-gateway",
+    "start:auth": "npm run start:dev --workspace @dpgc/auth-service",
+    "start:user": "npm run start:dev --workspace @dpgc/user-service",
+    "start:registration": "npm run start:dev --workspace @dpgc/registration-service",
+    "start:content": "npm run start:dev --workspace @dpgc/content-service",
+    "start:gallery": "npm run start:dev --workspace @dpgc/gallery-service",
+    "start:atlas": "npm run start:dev --workspace @dpgc/atlas-service",
+    "start:events": "npm run start:dev --workspace @dpgc/events-service",
+    "start:notification": "npm run start:dev --workspace @dpgc/notification-service",
+    "dev": "concurrently -k -p \"[{name}]\" -n gateway,auth,user,registration,content,gallery,atlas,events,notify -c cyan,green,yellow,magenta,blue,red,white,gray,greenBright \"npm:start:gateway\" \"npm:start:auth\" \"npm:start:user\" \"npm:start:registration\" \"npm:start:content\" \"npm:start:gallery\" \"npm:start:atlas\" \"npm:start:events\" \"npm:start:notification\"",
+    "dev:core": "concurrently -k -p \"[{name}]\" -n gateway,auth,user -c cyan,green,yellow \"npm:start:gateway\" \"npm:start:auth\" \"npm:start:user\"",
+    "prisma": "prisma",
+    "prisma:generate": "prisma generate --schema database/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",
+    "prisma:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma",
+    "prisma:reset": "prisma migrate reset --force --schema database/prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema database/prisma/schema.prisma",
+    "prisma:validate": "prisma validate --schema database/prisma/schema.prisma",
+    "prisma:format": "prisma format --schema database/prisma/schema.prisma",
+    "db:seed": "prisma db seed",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "prisma": {
+    "schema": "database/prisma/schema.prisma",
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} database/prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^22.10.5",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
+    "prisma": "^6.2.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.70.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1"
+  }
+}

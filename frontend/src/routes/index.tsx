@@ -1,0 +1,463 @@
+import { lazy } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+
+import { AuthLayout } from '@/layouts/AuthLayout';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { PublicLayout } from '@/layouts/PublicLayout';
+import { ForbiddenPage, NotFoundPage } from '@/pages/ErrorPages';
+import { PERMISSIONS } from '@/constants/permissions';
+import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute';
+import { ROUTES } from '@/constants/routes';
+
+// Auth pages
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'));
+
+// Core Admin pages
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const AuditLogsPage = lazy(() => import('@/pages/AuditLogsPage'));
+const UsersListPage = lazy(() => import('@/pages/users/UsersListPage'));
+const UserDetailPage = lazy(() => import('@/pages/users/UserDetailPage'));
+const UserFormPage = lazy(() => import('@/pages/users/UserFormPage'));
+const RolesPage = lazy(() => import('@/pages/roles/RolesPage'));
+const PermissionsListPage = lazy(() => import('@/pages/roles/PermissionsListPage'));
+const PermissionsPage = lazy(() => import('@/pages/roles/PermissionsPage'));
+const ProfilePage = lazy(() => import('@/pages/account/ProfilePage'));
+const ChangePasswordPage = lazy(() => import('@/pages/account/ChangePasswordPage'));
+
+// Diaspora pages
+const DiasporaListPage = lazy(() =>
+  import('@/pages/diaspora/DiasporaListPage').then((m) => ({ default: m.DiasporaListPage })),
+);
+const DiasporaDetailPage = lazy(() =>
+  import('@/pages/diaspora/DiasporaDetailPage').then((m) => ({ default: m.DiasporaDetailPage })),
+);
+
+// Committee pages
+const CommitteeListPage = lazy(() =>
+  import('@/pages/committees/CommitteeListPage').then((m) => ({ default: m.CommitteeListPage })),
+);
+const CommitteeDetailPage = lazy(() =>
+  import('@/pages/committees/CommitteeDetailPage').then((m) => ({ default: m.CommitteeDetailPage })),
+);
+const CommitteeEditPage = lazy(() =>
+  import('@/pages/committees/CommitteeEditPage').then((m) => ({ default: m.CommitteeEditPage })),
+);
+
+// Categories & Subcategories
+const CategoriesPage = lazy(() =>
+  import('@/pages/categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })),
+);
+const SubcategoriesPage = lazy(() =>
+  import('@/pages/categories/SubcategoriesPage').then((m) => ({ default: m.SubcategoriesPage })),
+);
+
+// Articles & Content
+const ArticleListPage = lazy(() =>
+  import('@/pages/articles/ArticleListPage').then((m) => ({ default: m.ArticleListPage })),
+);
+const ArticleFormPage = lazy(() =>
+  import('@/pages/articles/ArticleFormPage').then((m) => ({ default: m.ArticleFormPage })),
+);
+const ArticleDetailPage = lazy(() =>
+  import('@/pages/articles/ArticleDetailPage').then((m) => ({ default: m.ArticleDetailPage })),
+);
+
+// Gallery & Media
+const MediaListPage = lazy(() =>
+  import('@/pages/gallery/MediaListPage').then((m) => ({ default: m.MediaListPage })),
+);
+const MediaUploadPage = lazy(() =>
+  import('@/pages/gallery/MediaUploadPage').then((m) => ({ default: m.MediaUploadPage })),
+);
+const MediaDetailPage = lazy(() =>
+  import('@/pages/gallery/MediaDetailPage').then((m) => ({ default: m.MediaDetailPage })),
+);
+const ModerationQueuePage = lazy(() =>
+  import('@/pages/gallery/ModerationQueuePage').then((m) => ({ default: m.ModerationQueuePage })),
+);
+const AlbumsPage = lazy(() =>
+  import('@/pages/gallery/AlbumsPage').then((m) => ({ default: m.AlbumsPage })),
+);
+
+// Atlas & Pandals
+const PandalListPage = lazy(() =>
+  import('@/pages/atlas/PandalListPage').then((m) => ({ default: m.PandalListPage })),
+);
+const PandalFormPage = lazy(() =>
+  import('@/pages/atlas/PandalFormPage').then((m) => ({ default: m.PandalFormPage })),
+);
+const PandalDetailPage = lazy(() =>
+  import('@/pages/atlas/PandalDetailPage').then((m) => ({ default: m.PandalDetailPage })),
+);
+
+// Webinars & Events
+const WebinarListPage = lazy(() =>
+  import('@/pages/webinars/WebinarListPage').then((m) => ({ default: m.WebinarListPage })),
+);
+const WebinarFormPage = lazy(() =>
+  import('@/pages/webinars/WebinarFormPage').then((m) => ({ default: m.WebinarFormPage })),
+);
+const WebinarDetailPage = lazy(() =>
+  import('@/pages/webinars/WebinarDetailPage').then((m) => ({ default: m.WebinarDetailPage })),
+);
+const RsvpManagementPage = lazy(() =>
+  import('@/pages/webinars/RsvpManagementPage').then((m) => ({ default: m.RsvpManagementPage })),
+);
+
+// Public Pages
+const ChooseAccountTypePage = lazy(() =>
+  import('@/pages/public/ChooseAccountTypePage').then((m) => ({ default: m.ChooseAccountTypePage })),
+);
+const DiasporaRegistrationPage = lazy(() =>
+  import('@/pages/public/DiasporaRegistrationPage').then((m) => ({ default: m.DiasporaRegistrationPage })),
+);
+const CommitteeRegistrationPage = lazy(() =>
+  import('@/pages/public/CommitteeRegistrationPage').then((m) => ({ default: m.CommitteeRegistrationPage })),
+);
+const RegistrationThankYouPage = lazy(() =>
+  import('@/pages/public/RegistrationThankYouPage').then((m) => ({ default: m.RegistrationThankYouPage })),
+);
+const PublicGalleryPage = lazy(() =>
+  import('@/pages/public/PublicGalleryPage').then((m) => ({ default: m.PublicGalleryPage })),
+);
+const PublicAtlasPage = lazy(() =>
+  import('@/pages/public/PublicAtlasPage').then((m) => ({ default: m.PublicAtlasPage })),
+);
+const PublicWebinarsPage = lazy(() =>
+  import('@/pages/public/PublicWebinarsPage').then((m) => ({ default: m.PublicWebinarsPage })),
+);
+
+export function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public Pages Layout (Outside auth) */}
+      <Route element={<PublicLayout />}>
+        <Route path={ROUTES.PUBLIC_CHOOSE_TYPE} element={<ChooseAccountTypePage />} />
+        <Route path={ROUTES.PUBLIC_REGISTER_DIASPORA} element={<DiasporaRegistrationPage />} />
+        <Route path={ROUTES.PUBLIC_REGISTER_COMMITTEE} element={<CommitteeRegistrationPage />} />
+        <Route path={ROUTES.PUBLIC_THANK_YOU()} element={<RegistrationThankYouPage />} />
+        <Route path={ROUTES.PUBLIC_GALLERY} element={<PublicGalleryPage />} />
+        <Route path={ROUTES.PUBLIC_ATLAS} element={<PublicAtlasPage />} />
+        <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
+      </Route>
+
+      {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
+      <Route
+        element={
+          <PublicOnlyRoute>
+            <AuthLayout />
+          </PublicOnlyRoute>
+        }
+      >
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+        <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+      </Route>
+
+      {/* Authenticated shell. Individual routes add permission requirements */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+
+        {/* User Management */}
+        <Route
+          path={ROUTES.USERS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_USERS]}>
+              <UsersListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.USER_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_USERS]}>
+              <UserFormPage mode="create" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.USER_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_USERS]}>
+              <UserDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.USER_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_USERS]}>
+              <UserFormPage mode="edit" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ROLES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ROLES]}>
+              <RolesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PERMISSION_MATRIX}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ROLE_PERMISSIONS]}>
+              <PermissionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PERMISSIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_PERMISSIONS]}>
+              <PermissionsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.AUDIT_LOGS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_AUDIT_LOGS]}>
+              <AuditLogsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Diaspora Management */}
+        <Route
+          path={ROUTES.DIASPORA}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_DIASPORA]}>
+              <DiasporaListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.DIASPORA_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_DIASPORA]}>
+              <DiasporaDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Committee Management */}
+        <Route
+          path={ROUTES.COMMITTEES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_COMMITTEES]}>
+              <CommitteeListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.COMMITTEE_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_COMMITTEES]}>
+              <CommitteeDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.COMMITTEE_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_COMMITTEES]}>
+              <CommitteeEditPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Master: Categories & Subcategories */}
+        <Route
+          path={ROUTES.CATEGORIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
+              <CategoriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUBCATEGORIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
+              <SubcategoriesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Content Management */}
+        <Route
+          path={ROUTES.ARTICLES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES]}>
+              <ArticleListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ARTICLE_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_ARTICLES]}>
+              <ArticleFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ARTICLE_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES]}>
+              <ArticleDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ARTICLE_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ARTICLES]}>
+              <ArticleFormPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Gallery & Media */}
+        <Route
+          path={ROUTES.GALLERY_MEDIA}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_GALLERY, PERMISSIONS.MODERATE_MEDIA]}>
+              <MediaListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_UPLOAD}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.UPLOAD_MEDIA]}>
+              <MediaUploadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_GALLERY, PERMISSIONS.MODERATE_MEDIA]}>
+              <MediaDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_MODERATION}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MODERATE_MEDIA]}>
+              <ModerationQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_ALBUMS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ALBUMS, PERMISSIONS.MANAGE_ALBUMS]}>
+              <AlbumsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Atlas & Pandals */}
+        <Route
+          path={ROUTES.PANDAL_ATLAS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_PANDAL_ATLAS]}>
+              <PandalListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PANDAL_ATLAS_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_PANDAL_ATLAS]}>
+              <PandalFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PANDAL_ATLAS_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_PANDAL_ATLAS]}>
+              <PandalDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PANDAL_ATLAS_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_PANDAL_ATLAS]}>
+              <PandalFormPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Webinars & Events */}
+        <Route
+          path={ROUTES.WEBINARS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_WEBINARS]}>
+              <WebinarListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.WEBINARS_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_WEBINARS]}>
+              <WebinarFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.WEBINARS_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_WEBINARS]}>
+              <WebinarDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.WEBINARS_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_WEBINARS]}>
+              <WebinarFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.WEBINARS_RSVPS()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_WEBINARS]}>
+              <RsvpManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Account */}
+        <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+        <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPage />} />
+
+        {/* Error pages */}
+        <Route path={ROUTES.FORBIDDEN} element={<ForbiddenPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+    </Routes>
+  );
+}
