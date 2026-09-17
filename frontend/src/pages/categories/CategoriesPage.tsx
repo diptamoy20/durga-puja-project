@@ -1,86 +1,88 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ConfirmDialog, Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/Modal';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Pagination } from '@/components/ui/Pagination';
+import { PERMISSIONS } from '@/constants/permissions';
+import { ROUTES } from '@/constants/routes';
 import { StatusBadge } from '@/components/ui/Badge';
 import { categoryService } from '@/services/contentService';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import type { Category } from '@/types/content';
+import type { Category, CategoryListQuery, RecordStatusType } from '@/types/content';
+import type { PaginationMeta } from '@/types';
+
+const STATUS_OPTIONS: Array<{ value: RecordStatusType | ''; label: string }> = [
+  { value: '', label: 'All Status' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'INACTIVE', label: 'Inactive' },
+];
+
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+
+function truncate(text: string | null | undefined, max = 60): string {
+  if (!text) return '';
+  return text.length <= max ? text : `${text.slice(0, max)}…`;
+}
 
 export function CategoriesPage() {
   const toast = useToast();
+  const { can } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | undefined>();
+  const [query, setQuery] = useState<CategoryListQuery>({ page: 1, perPage: 10, sortDir: 'asc' });
+  const [draftSearch, setDraftSearch] = useState('');
+  const [draftStatus, setDraftStatus] = useState<RecordStatusType | ''>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
 
-  // Modal form state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
-  const [saving, setSaving] = useState(false);
-
-  // Delete dialog
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const canManage = can(PERMISSIONS.MANAGE_CATEGORIES);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await categoryService.list({ search: search || undefined });
+      const res = await categoryService.list(query);
       setCategories(res.items);
+      setPagination(res.pagination);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load categories.');
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [query]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const openCreateModal = () => {
-    setEditingCategory(null);
-    setName('');
-    setDescription('');
-    setStatus('ACTIVE');
-    setModalOpen(true);
-  };
-
-  const openEditModal = (cat: Category) => {
-    setEditingCategory(cat);
-    setName(cat.name);
-    setDescription(cat.description ?? '');
-    setStatus(cat.status as 'ACTIVE' | 'INACTIVE');
-    setModalOpen(true);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
+  const applyFilters = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      if (editingCategory) {
-        await categoryService.update(editingCategory.id, { name, description, status });
-        toast.success('Category updated successfully.');
-      } else {
-        await categoryService.create({ name, description });
-        toast.success('Category created successfully.');
-      }
-      setModalOpen(false);
-      load();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save category.');
-    } finally {
-      setSaving(false);
-    }
+    setQuery((current) => ({
+      ...current,
+      search: draftSearch.trim() || undefined,
+      status: draftStatus || undefined,
+      page: 1,
+    }));
+  };
+
+  const resetFilters = () => {
+    setDraftSearch('');
+    setDraftStatus('');
+    setQuery({ page: 1, perPage: 10, sortDir: 'asc' });
   };
 
   const handleDelete = async () => {
@@ -100,76 +102,126 @@ export function CategoriesPage() {
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page__title">Categories</h1>
-          <p className="page__subtitle">Manage content and media categories.</p>
-        </div>
-        <Button variant="primary" size="md" onClick={openCreateModal}>
-          + Add Category
-        </Button>
-      </header>
+      <PageHeader
+        title="Categories"
+        description="Manage master categories for the portal."
+        breadcrumbs={[{ label: 'Dashboard', to: ROUTES.DASHBOARD }, { label: 'Categories' }]}
+        actions={
+          canManage ? (
+            <Link to={ROUTES.CATEGORY_NEW} className="btn btn--primary btn--md">
+              Create Category
+            </Link>
+          ) : undefined
+        }
+      />
 
       {error && <Alert tone="danger">{error}</Alert>}
 
-      <Card>
-        <div className="filter-bar">
-          <div className="filter-bar__search">
+      <Card className="mb-4">
+        <form className="form-grid form-grid--3" onSubmit={applyFilters}>
+          <div className="field">
+            <label className="field__label" htmlFor="catSearch">
+              Search
+            </label>
             <input
+              id="catSearch"
               type="search"
               className="field__control"
-              placeholder="Search categories..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, slug, description..."
+              value={draftSearch}
+              onChange={(e) => setDraftSearch(e.target.value)}
             />
           </div>
-        </div>
 
+          <div className="field">
+            <label className="field__label" htmlFor="catStatusFilter">
+              Status
+            </label>
+            <select
+              id="catStatusFilter"
+              className="field__control"
+              value={draftStatus}
+              onChange={(e) => setDraftStatus(e.target.value as RecordStatusType | '')}
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field" style={{ alignSelf: 'end' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <Button type="submit" variant="primary" size="md">
+                Filter
+              </Button>
+              <Button type="button" variant="secondary" size="md" onClick={resetFilters}>
+                Reset
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Card>
+
+      <Card>
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Slug</th>
-                <th>Description</th>
                 <th>Subcategories</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
                     Loading categories…
                   </td>
                 </tr>
               ) : categories.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
                     No categories found.
                   </td>
                 </tr>
               ) : (
                 categories.map((cat) => (
                   <tr key={cat.id}>
-                    <td><strong>{cat.name}</strong></td>
-                    <td><code>{cat.slug}</code></td>
-                    <td>{cat.description ?? '—'}</td>
-                    <td>{cat._count?.subcategories ?? cat.subcategories?.length ?? 0}</td>
                     <td>
-                      <StatusBadge tone={cat.status === 'ACTIVE' ? 'success' : 'muted'}>
-                        {cat.status}
-                      </StatusBadge>
+                      <div style={{ fontWeight: 600 }}>{cat.name}</div>
+                      {cat.description && (
+                        <div className="detail-subtitle">{truncate(cat.description)}</div>
+                      )}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 'var(--space-150)' }}>
-                        <Button variant="secondary" size="sm" onClick={() => openEditModal(cat)}>
-                          Edit
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => setDeletingCategory(cat)}>
-                          Delete
-                        </Button>
+                      <code>{cat.slug}</code>
+                    </td>
+                    <td>
+                      <Badge variant="info">{cat._count?.subcategories ?? 0}</Badge>
+                    </td>
+                    <td>
+                      <StatusBadge status={cat.status} />
+                    </td>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', gap: 'var(--space-150)', justifyContent: 'flex-end' }}>
+                        <Link to={ROUTES.CATEGORY_DETAIL(cat.id)} className="btn btn--secondary btn--sm">
+                          View
+                        </Link>
+                        {canManage && (
+                          <>
+                            <Link to={ROUTES.CATEGORY_EDIT(cat.id)} className="btn btn--secondary btn--sm">
+                              Edit
+                            </Link>
+                            <Button variant="danger" size="sm" onClick={() => setDeletingCategory(cat)}>
+                              Delete
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -178,62 +230,9 @@ export function CategoriesPage() {
             </tbody>
           </table>
         </div>
+
+        <Pagination pagination={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
       </Card>
-
-      <Modal
-        open={modalOpen}
-        title={editingCategory ? 'Edit Category' : 'Create Category'}
-        onClose={() => setModalOpen(false)}
-      >
-        <form onSubmit={handleSave}>
-          <div className="field">
-            <label className="field__label" htmlFor="catName">Category Name *</label>
-            <input
-              id="catName"
-              type="text"
-              required
-              className="field__control"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="field">
-            <label className="field__label" htmlFor="catDesc">Description</label>
-            <textarea
-              id="catDesc"
-              rows={3}
-              className="field__control"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          {editingCategory && (
-            <div className="field">
-              <label className="field__label" htmlFor="catStatus">Status</label>
-              <select
-                id="catStatus"
-                className="field__control"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}
-              >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-              </select>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-200)', marginTop: 'var(--space-400)' }}>
-            <Button type="button" variant="secondary" size="md" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" size="md" disabled={saving}>
-              {saving ? 'Saving…' : editingCategory ? 'Update' : 'Create'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
       <ConfirmDialog
         open={deletingCategory !== null}
@@ -247,4 +246,8 @@ export function CategoriesPage() {
       />
     </div>
   );
+}
+
+export function formatCategoryDate(value: string): string {
+  return dateFormat.format(new Date(value));
 }

@@ -56,3 +56,6 @@ coverage/
 scratch/
 tmp/
 temp/
+
+# Legacy Laravel reference (local only)
+_php_old_extract/

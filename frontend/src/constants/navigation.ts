@@ -234,15 +234,16 @@ export const NAVIGATION: NavSection[] = [
     permissions: [PERMISSIONS.VIEW_GALLERY],
     hiddenWhen: [PERMISSIONS.MODERATE_MEDIA],
     items: [
-      { label: 'My Media', icon: 'fa-images' },
+      { label: 'My Media', icon: 'fa-images', to: ROUTES.MY_COMMITTEE_MEDIA },
       {
         label: 'Upload Media',
         icon: 'fa-cloud-arrow-up',
         permissions: [PERMISSIONS.UPLOAD_MEDIA],
+        to: ROUTES.MY_COMMITTEE_MEDIA_CREATE,
       },
-      { label: 'Pending', icon: 'fa-hourglass-half', tone: 'warning' },
-      { label: 'Approved', icon: 'fa-circle-check', tone: 'success' },
-      { label: 'Rejected', icon: 'fa-circle-xmark', tone: 'danger' },
+      { label: 'Pending', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.MY_COMMITTEE_MEDIA}?status=PENDING` },
+      { label: 'Approved', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.MY_COMMITTEE_MEDIA}?status=APPROVED` },
+      { label: 'Rejected', icon: 'fa-circle-xmark', tone: 'danger', to: `${ROUTES.MY_COMMITTEE_MEDIA}?status=REJECTED` },
     ],
   },
 
@@ -251,8 +252,8 @@ export const NAVIGATION: NavSection[] = [
     permissions: [PERMISSIONS.VIEW_ALBUMS],
     hiddenWhen: [PERMISSIONS.MANAGE_ALBUMS],
     items: [
-      { label: 'Albums', icon: 'fa-photo-film' },
-      { label: 'Create Album', icon: 'fa-circle-plus' },
+      { label: 'Albums', icon: 'fa-photo-film', to: ROUTES.MY_COMMITTEE_ALBUMS },
+      { label: 'Create Album', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_ALBUM_NEW },
     ],
   },
 

@@ -11,31 +11,130 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PujaCommitteeController = exports.DiasporaVerificationController = exports.PublicRegistrationController = void 0;
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const config_1 = require("@nestjs/config");
+const platform_express_1 = require("@nestjs/platform-express");
+const node_path_1 = require("node:path");
+const node_fs_1 = require("node:fs");
 const microservice_client_1 = require("../clients/microservice.client");
 const response_interceptor_1 = require("../interceptors/response.interceptor");
 const registration_dto_1 = require("./dto/registration.dto");
+const registration_upload_util_1 = require("./registration-upload.util");
+const PUBLIC_UPLOAD_DIR = process.env.UPLOAD_DIR ?? './storage/uploads';
+const COMMITTEE_DOCUMENT_FIELDS = {
+    registration_certificate: 'registrationCertificate',
+    address_proof: 'addressProof',
+    pandal_image: 'pandalImage',
+};
+function parseBoolean(value) {
+    return value === true || value === 'true' || value === '1' || value === 1;
+}
+function parseCommitteeMultipartBody(body, files) {
+    const rel = (file) => file ? (0, node_path_1.join)('committee-documents', file.filename).replace(/\\/g, '/') : '';
+    return {
+        committeeName: body.committeeName?.trim(),
+        establishedYear: Number(body.establishedYear),
+        pujaType: body.pujaType,
+        pujaCategory: body.pujaCategory,
+        committeeDescription: body.committeeDescription,
+        contactPersonName: body.contactPersonName?.trim(),
+        designation: body.designation,
+        email: body.email?.trim().toLowerCase(),
+        mobile: body.mobile,
+        country: body.country,
+        state: body.state,
+        city: body.city,
+        postalCode: body.postalCode,
+        venueName: body.venueName,
+        venueAddress: body.venueAddress,
+        landmark: body.landmark || undefined,
+        address: body.address,
+        registrationCertificate: rel(files?.registrationCertificate?.[0]),
+        addressProof: rel(files?.addressProof?.[0]),
+        pandalImage: rel(files?.pandalImage?.[0]),
+        declaration: parseBoolean(body.declaration),
+        captcha: body.captcha,
+        captchaToken: body.captchaToken,
+    };
+}
+function parseCommitteeUpdateBody(body, files) {
+    const rel = (file) => file ? (0, node_path_1.join)('committee-documents', file.filename).replace(/\\/g, '/') : '';
+    const data = {};
+    const textFields = [
+        'committeeName', 'pujaType', 'pujaCategory', 'committeeDescription',
+        'contactPersonName', 'designation', 'email', 'mobile', 'country', 'state',
+        'city', 'postalCode', 'venueName', 'venueAddress', 'landmark', 'address',
+    ];
+    for (const field of textFields) {
+        if (body[field] !== undefined && body[field] !== '') {
+            data[field] = field === 'email' ? String(body[field]).trim().toLowerCase() : body[field];
+        }
+    }
+    if (body.establishedYear !== undefined && body.establishedYear !== '') {
+        data.establishedYear = Number(body.establishedYear);
+    }
+    if (files?.registrationCertificate?.[0]) {
+        data.registrationCertificate = rel(files.registrationCertificate[0]);
+    }
+    if (files?.addressProof?.[0]) {
+        data.addressProof = rel(files.addressProof[0]);
+    }
+    if (files?.pandalImage?.[0]) {
+        data.pandalImage = rel(files.pandalImage[0]);
+    }
+    return data;
+}
+const BULK_STATUS_MAP = {
+    approve: 'APPROVED',
+    reject: 'REJECTED',
+};
 // ============================================================================
 // PUBLIC Registration (no auth)
 // ============================================================================
 let PublicRegistrationController = class PublicRegistrationController {
     client;
-    constructor(client) {
+    config;
+    constructor(client, config) {
         this.client = client;
+        this.config = config;
+    }
+    captcha() {
+        return shared_1.createRegistrationCaptcha();
     }
     submitDiaspora(dto) {
-        return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.DIASPORA_SUBMIT, dto);
+        if (!shared_1.verifyRegistrationCaptcha(dto.captchaToken, dto.captcha)) {
+            throw new common_1.BadRequestException('The security check answer is incorrect.');
+        }
+        const { captcha, captchaToken, ...payload } = dto;
+        return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.DIASPORA_SUBMIT, payload);
     }
-    submitCommittee(dto) {
-        return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_SUBMIT, dto);
+    submitCommittee(body, files) {
+        const dto = parseCommitteeMultipartBody(body, files);
+        if (!shared_1.verifyRegistrationCaptcha(dto.captchaToken, dto.captcha)) {
+            throw new common_1.BadRequestException('The security check answer is incorrect.');
+        }
+        if (!dto.registrationCertificate || !dto.addressProof || !dto.pandalImage) {
+            throw new common_1.BadRequestException('All required documents must be uploaded.');
+        }
+        const { captcha, captchaToken, ...payload } = dto;
+        return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_SUBMIT, payload);
     }
 };
 exports.PublicRegistrationController = PublicRegistrationController;
+__decorate([
+    (0, shared_1.Public)(),
+    (0, common_1.Get)('captcha'),
+    (0, response_interceptor_1.ResponseMessage)('Captcha generated successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Generate a registration security check question' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PublicRegistrationController.prototype, "captcha", null);
 __decorate([
     (0, shared_1.Public)(),
     (0, common_1.Post)('diaspora'),
@@ -54,21 +153,27 @@ __decorate([
 __decorate([
     (0, shared_1.Public)(),
     (0, common_1.Post)('committee'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
+        { name: 'registrationCertificate', maxCount: 1 },
+        { name: 'addressProof', maxCount: 1 },
+        { name: 'pandalImage', maxCount: 1 },
+    ], (0, registration_upload_util_1.committeeUploadOptions)(PUBLIC_UPLOAD_DIR))),
     (0, response_interceptor_1.ResponseMessage)('Committee registration submitted successfully'),
     (0, swagger_1.ApiOperation)({
         summary: 'Submit a puja committee registration',
-        description: 'Public-facing form. Creates a pending committee application that an admin will review.',
+        description: 'Public-facing multipart form. Creates a pending committee application that an admin will review.',
     }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Application created.' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.UploadedFiles)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof registration_dto_1.SubmitCommitteeDto !== "undefined" && registration_dto_1.SubmitCommitteeDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], PublicRegistrationController.prototype, "submitCommittee", null);
 exports.PublicRegistrationController = PublicRegistrationController = __decorate([
     (0, swagger_1.ApiTags)('Public Registration'),
     (0, common_1.Controller)('registrations'),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservice_client_1.MicroserviceClient !== "undefined" && microservice_client_1.MicroserviceClient) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof microservice_client_1.MicroserviceClient !== "undefined" && microservice_client_1.MicroserviceClient) === "function" ? _a : Object, typeof (_v = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _v : Object])
 ], PublicRegistrationController);
 // ============================================================================
 // Admin: Diaspora Verification
@@ -187,10 +292,30 @@ let PujaCommitteeController = class PujaCommitteeController {
     findOne(id) {
         return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_FIND_ONE, { id });
     }
-    update(id, dto, actor) {
+    async document(id, document, query, res) {
+        const field = COMMITTEE_DOCUMENT_FIELDS[document];
+        if (!field) {
+            throw new common_1.BadRequestException('Unknown document type.');
+        }
+        const committee = await this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_FIND_ONE, { id });
+        const relativePath = committee?.[field];
+        if (!relativePath) {
+            throw new common_1.NotFoundException('Document not found for this committee.');
+        }
+        const absolutePath = (0, node_path_1.join)(PUBLIC_UPLOAD_DIR, relativePath);
+        if (!(0, node_fs_1.existsSync)(absolutePath)) {
+            throw new common_1.NotFoundException('Document file is missing on the server.');
+        }
+        if (query.download === '1' || query.download === 'true') {
+            return res.download(absolutePath);
+        }
+        return res.sendFile(absolutePath);
+    }
+    update(id, body, files, actor) {
+        const data = parseCommitteeUpdateBody(body ?? {}, files);
         return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_UPDATE, {
             id,
-            data: dto,
+            data,
             actorId: actor.id,
         });
     }
@@ -205,18 +330,37 @@ let PujaCommitteeController = class PujaCommitteeController {
     createPortalAccount(id, actor) {
         return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_CREATE_PORTAL_ACCOUNT, { id, actorId: actor.id });
     }
-    bulkAction(dto, actor) {
-        // Fan out to individual status changes; the service handles each one.
-        const promises = dto.ids.map((id) => this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_CHANGE_STATUS, {
-            id,
-            status: dto.action,
-            reason: dto.reason,
-            actorId: actor.id,
+    generateLocalPassword(id, actor) {
+        return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_GENERATE_LOCAL_PASSWORD, { id, actorId: actor.id });
+    }
+    async bulkAction(dto, actor) {
+        if (!dto.ids?.length) {
+            throw new common_1.BadRequestException('Select at least one application.');
+        }
+        if (dto.action === 'reject' && !dto.reason?.trim()) {
+            throw new common_1.BadRequestException('A rejection reason is required.');
+        }
+        if (dto.action === 'status' && !dto.status) {
+            throw new common_1.BadRequestException('Select a status to apply.');
+        }
+        const results = await Promise.allSettled(dto.ids.map(async (committeeId) => {
+            if (dto.action === 'delete') {
+                return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_REMOVE, { id: committeeId });
+            }
+            const status = dto.action === 'status'
+                ? dto.status
+                : BULK_STATUS_MAP[dto.action];
+            return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_CHANGE_STATUS, {
+                id: committeeId,
+                status,
+                reason: dto.reason,
+                actorId: actor.id,
+            });
         }));
-        return Promise.allSettled(promises).then((results) => ({
+        return {
             succeeded: results.filter((r) => r.status === 'fulfilled').length,
             failed: results.filter((r) => r.status === 'rejected').length,
-        }));
+        };
     }
     remove(id) {
         return this.client.send(shared_1.SERVICE_TOKENS.REGISTRATION, shared_1.REGISTRATION_PATTERNS.COMMITTEE_REMOVE, { id });
@@ -284,15 +428,32 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PujaCommitteeController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.Get)(':id/documents/:document'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_COMMITTEES),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('document')),
+    __param(2, (0, common_1.Query)()),
+    __param(3, (0, common_1.Res)({ passthrough: false })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], PujaCommitteeController.prototype, "document", null);
+__decorate([
     (0, common_1.Put)(':id'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.APPROVE_COMMITTEES),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
+        { name: 'registrationCertificate', maxCount: 1 },
+        { name: 'addressProof', maxCount: 1 },
+        { name: 'pandalImage', maxCount: 1 },
+    ], (0, registration_upload_util_1.committeeUploadOptions)(PUBLIC_UPLOAD_DIR))),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_COMMITTEES),
     (0, response_interceptor_1.ResponseMessage)('Puja committee updated successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Update committee application details' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
-    __param(2, (0, shared_1.CurrentUser)()),
+    __param(2, (0, common_1.UploadedFiles)()),
+    __param(3, (0, shared_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, typeof (_m = typeof registration_dto_1.UpdateCommitteeDto !== "undefined" && registration_dto_1.UpdateCommitteeDto) === "function" ? _m : Object, typeof (_o = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _o : Object]),
+    __metadata("design:paramtypes", [Number, Object, Object, typeof (_o = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _o : Object]),
     __metadata("design:returntype", void 0)
 ], PujaCommitteeController.prototype, "update", null);
 __decorate([
@@ -327,6 +488,18 @@ __decorate([
     __metadata("design:paramtypes", [Number, typeof (_r = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _r : Object]),
     __metadata("design:returntype", void 0)
 ], PujaCommitteeController.prototype, "createPortalAccount", null);
+__decorate([
+    (0, common_1.Post)(':id/generate-local-password'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_COMMITTEES),
+    (0, response_interceptor_1.ResponseMessage)('Local development password generated'),
+    (0, swagger_1.ApiOperation)({ summary: 'Generate a new local development password for the committee portal account' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, shared_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, typeof (_r = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _r : Object]),
+    __metadata("design:returntype", void 0)
+], PujaCommitteeController.prototype, "generateLocalPassword", null);
 __decorate([
     (0, common_1.Post)('bulk-action'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

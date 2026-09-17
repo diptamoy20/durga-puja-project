@@ -86,7 +86,10 @@ export const adminMediaService = {
   get: (id: number): Promise<CommitteeMedia> => unwrap(api.get(`/admin/media/${id}`)),
 
   moderate: (id: number, decision: MediaModerationStatus, rejectionReason?: string): Promise<CommitteeMedia> =>
-    unwrap(api.post(`/admin/media/${id}/moderate`, { decision, rejectionReason })),
+    unwrap(api.post(`/admin/media/${id}/moderate`, {
+      decision: decision === 'APPROVED' ? 'APPROVED' : 'REJECTED',
+      rejectionReason,
+    })),
 };
 
 // Albums
@@ -104,11 +107,82 @@ export const albumService = {
     };
   },
 
+  get: (id: number): Promise<Album> => unwrap(api.get(`/albums/${id}`)),
+
   create: (data: {
     categoryId: number; subcategoryId?: number; pujaCommitteeId: number;
-    title: string; description?: string; isPublic?: boolean;
+    title: string; description?: string; isPublic?: boolean; status?: 'ACTIVE' | 'INACTIVE';
   }): Promise<Album> => unwrap(api.post('/albums', data)),
+
+  update: (id: number, data: Record<string, unknown>): Promise<Album> =>
+    unwrap(api.put(`/albums/${id}`, data)),
+
+  remove: (id: number): Promise<{ id: number; deleted: boolean }> =>
+    unwrap(api.delete(`/albums/${id}`)),
 
   syncMedia: (id: number, mediaIds: number[]): Promise<Album> =>
     unwrap(api.put(`/albums/${id}/media`, { mediaIds })),
+
+  mediaPicker: async (query: MediaListQuery & { mediaType?: string } = {}) => {
+    const { items, pagination } = await unwrapList<CommitteeMedia>(
+      api.get('/albums/media-picker', { params: toParams(query) }),
+    );
+    return {
+      items,
+      pagination: pagination ?? {
+        page: 1, perPage: items.length, total: items.length,
+        lastPage: 1, hasPreviousPage: false, hasNextPage: false,
+      },
+    };
+  },
+};
+
+export const committeeAlbumService = {
+  list: async (query: MediaListQuery = {}): Promise<PaginatedData<Album>> => {
+    const params = toParams({
+      ...query,
+      status: query.albumStatus,
+      albumStatus: undefined,
+    });
+    const { items, pagination } = await unwrapList<Album>(
+      api.get('/committee/albums', { params }),
+    );
+    return {
+      items,
+      pagination: pagination ?? {
+        page: 1, perPage: items.length, total: items.length,
+        lastPage: 1, hasPreviousPage: false, hasNextPage: false,
+      },
+    };
+  },
+
+  get: (id: number): Promise<Album> => unwrap(api.get(`/committee/albums/${id}`)),
+
+  create: (data: {
+    categoryId: number; subcategoryId?: number;
+    title: string; description?: string; isPublic?: boolean; status?: 'ACTIVE' | 'INACTIVE';
+    mediaIds?: number[];
+  }): Promise<Album> => unwrap(api.post('/committee/albums', data)),
+
+  update: (id: number, data: Record<string, unknown>): Promise<Album> =>
+    unwrap(api.put(`/committee/albums/${id}`, data)),
+
+  remove: (id: number): Promise<{ id: number; deleted: boolean }> =>
+    unwrap(api.delete(`/committee/albums/${id}`)),
+
+  syncMedia: (id: number, mediaIds: number[]): Promise<{ id: number; mediaCount: number }> =>
+    unwrap(api.put(`/committee/albums/${id}/media`, { mediaIds })),
+
+  mediaPicker: async (query: MediaListQuery & { mediaType?: string } = {}) => {
+    const { items, pagination } = await unwrapList<CommitteeMedia>(
+      api.get('/committee/albums/media-picker', { params: toParams(query) }),
+    );
+    return {
+      items,
+      pagination: pagination ?? {
+        page: 1, perPage: items.length, total: items.length,
+        lastPage: 1, hasPreviousPage: false, hasNextPage: false,
+      },
+    };
+  },
 };

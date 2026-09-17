@@ -121,6 +121,9 @@ let GalleryService = GalleryService_1 = class GalleryService {
                     uploadedById: actorId,
                     // Uploads await the moderation pipeline before becoming visible.
                     status: database_1.MediaModerationStatus.PENDING,
+                    processingStatus: database_1.ProcessingStatus.COMPLETE,
+                    virusScanStatus: database_1.VirusScanStatus.SKIPPED,
+                    aiModerationStatus: database_1.AiModerationStatus.SKIPPED,
                 },
             });
             this.logger.log(`Media #${media.id} uploaded for committee #${data.pujaCommitteeId}`);
@@ -168,21 +171,27 @@ let GalleryService = GalleryService_1 = class GalleryService {
         if (media.status !== database_1.MediaModerationStatus.PENDING) {
             throw shared_1.ServiceException.badRequest(`This item has already been ${media.status.toLowerCase()}.`);
         }
-        if (decision === 'reject' && !reason?.trim()) {
+        if (reject && !reason?.trim()) {
             throw shared_1.ServiceException.badRequest('A reason is required when rejecting an upload.');
+        }
+        const normalized = String(decision).toLowerCase();
+        const approve = normalized === 'approve' || normalized === 'approved';
+        const reject = normalized === 'reject' || normalized === 'rejected';
+        if (!approve && !reject) {
+            throw shared_1.ServiceException.badRequest('Decision must be approve or reject.');
         }
         const updated = await this.prisma.committeeMedia.update({
             where: { id },
             data: {
-                status: decision === 'approve'
+                status: approve
                     ? database_1.MediaModerationStatus.APPROVED
                     : database_1.MediaModerationStatus.REJECTED,
-                rejectionReason: decision === 'reject' ? (reason ?? null) : null,
+                rejectionReason: reject ? (reason ?? null) : null,
                 moderatedById: actorId,
                 moderatedAt: new Date(),
             },
         });
-        this.logger.log(`Media #${id} ${decision}d by user #${actorId}`);
+        this.logger.log(`Media #${id} ${approve ? 'approve' : 'reject'}d by user #${actorId}`);
         return { ...updated, fileSize: updated.fileSize.toString() };
     }
     // -------------------------------------------------------------------------
@@ -191,14 +200,22 @@ let GalleryService = GalleryService_1 = class GalleryService {
     async findAllAlbums(query) {
         const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
         const where = {
-            status: database_1.RecordStatus.ACTIVE,
             ...(query.publicOnly ? { isPublic: true } : {}),
+            ...(query.visibility === 'public' ? { isPublic: true } : query.visibility === 'private' ? { isPublic: false } : {}),
+            ...(query.status ? { status: query.status } : {}),
             ...(query.scopeToCommitteeId
                 ? { pujaCommitteeId: query.scopeToCommitteeId }
                 : query.pujaCommitteeId
                     ? { pujaCommitteeId: query.pujaCommitteeId }
                     : {}),
-            ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
+            ...(query.search
+                ? {
+                    OR: [
+                        { title: { contains: query.search, mode: 'insensitive' } },
+                        { description: { contains: query.search, mode: 'insensitive' } },
+                    ],
+                }
+                : {}),
         };
         const [items, total] = await this.prisma.$transaction([
             this.prisma.album.findMany({
@@ -269,6 +286,117 @@ let GalleryService = GalleryService_1 = class GalleryService {
             }
         });
         return { id, mediaCount: mediaIds.length };
+    }
+    async findOneAlbum(payload) {
+        const album = await this.prisma.album.findUnique({
+            where: { id: payload.id },
+            include: {
+                category: { select: { id: true, name: true } },
+                subcategory: { select: { id: true, name: true } },
+                committee: { select: { id: true, committeeName: true, committeeId: true } },
+                media: {
+                    orderBy: { sortOrder: 'asc' },
+                    include: {
+                        committeeMedia: {
+                            include: {
+                                category: { select: { id: true, name: true } },
+                                subcategory: { select: { id: true, name: true } },
+                            },
+                        },
+                    },
+                },
+                _count: { select: { media: true } },
+            },
+        });
+        if (!album) {
+            throw shared_1.ServiceException.notFound(`No album exists with id ${payload.id}.`);
+        }
+        if (payload.scopeToCommitteeId !== undefined &&
+            album.pujaCommitteeId !== payload.scopeToCommitteeId) {
+            throw shared_1.ServiceException.notFound(`No album exists with id ${payload.id}.`);
+        }
+        return {
+            ...album,
+            media: album.media.map((row) => row.committeeMedia),
+        };
+    }
+    async updateAlbum(payload) {
+        const { id, data, scopeToCommitteeId } = payload;
+        await this.findOneAlbum({ id, scopeToCommitteeId });
+        try {
+            const updated = await this.prisma.album.update({
+                where: { id },
+                data: {
+                    ...(data.title !== undefined ? { title: data.title } : {}),
+                    ...(data.description !== undefined ? { description: data.description } : {}),
+                    ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
+                    ...(data.subcategoryId !== undefined ? { subcategoryId: data.subcategoryId } : {}),
+                    ...(data.isPublic !== undefined ? { isPublic: data.isPublic } : {}),
+                    ...(data.status !== undefined ? { status: data.status } : {}),
+                    ...(data.pujaCommitteeId !== undefined ? { pujaCommitteeId: data.pujaCommitteeId } : {}),
+                },
+                include: {
+                    category: { select: { id: true, name: true } },
+                    subcategory: { select: { id: true, name: true } },
+                    committee: { select: { id: true, committeeName: true } },
+                    _count: { select: { media: true } },
+                },
+            });
+            if (data.mediaIds) {
+                await this.syncAlbumMedia({ id, mediaIds: data.mediaIds });
+            }
+            return updated;
+        }
+        catch (error) {
+            (0, shared_1.translatePrismaError)(error, 'album');
+        }
+    }
+    async removeAlbum(payload) {
+        await this.findOneAlbum({ id: payload.id, scopeToCommitteeId: payload.scopeToCommitteeId });
+        await this.prisma.albumMedia.deleteMany({ where: { albumId: payload.id } });
+        await this.prisma.album.delete({ where: { id: payload.id } });
+        return { id: payload.id, deleted: true };
+    }
+    async mediaPicker(query) {
+        const committeeId = query.scopeToCommitteeId ?? query.pujaCommitteeId;
+        if (!committeeId) {
+            throw shared_1.ServiceException.badRequest('A committee id is required for the media picker.');
+        }
+        const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
+        const where = {
+            deletedAt: null,
+            pujaCommitteeId: committeeId,
+            status: database_1.MediaModerationStatus.APPROVED,
+            ...(query.mediaType ? { mediaType: query.mediaType } : {}),
+            ...(query.search
+                ? {
+                    OR: [
+                        { title: { contains: query.search, mode: 'insensitive' } },
+                        { originalFilename: { contains: query.search, mode: 'insensitive' } },
+                    ],
+                }
+                : {}),
+        };
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.committeeMedia.findMany({
+                where,
+                skip,
+                take,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    title: true,
+                    originalFilename: true,
+                    mediaType: true,
+                    mimeType: true,
+                    thumbnailPath: true,
+                    storedPath: true,
+                    createdAt: true,
+                },
+            }),
+            this.prisma.committeeMedia.count({ where }),
+        ]);
+        return { items, pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total) };
     }
 };
 exports.GalleryService = GalleryService;

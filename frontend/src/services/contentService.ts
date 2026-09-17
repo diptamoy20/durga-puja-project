@@ -5,7 +5,11 @@ import type {
   ArticleListQuery,
   ArticleWorkflowAction,
   Category,
+  CategoryFormValues,
+  CategoryListQuery,
   Subcategory,
+  SubcategoryFormValues,
+  SubcategoryListQuery,
 } from '@/types/content';
 import type { PaginatedData } from '@/types';
 
@@ -51,19 +55,24 @@ export const articleService = {
 };
 
 export const categoryService = {
-  list: async (query: { page?: number; perPage?: number; search?: string } = {}) => {
+  list: async (query: CategoryListQuery = {}) => {
     const { items, pagination } = await unwrapList<Category>(
       api.get('/categories', { params: toParams(query) }),
     );
     return { items, pagination };
   },
 
+  listActive: async () => {
+    const { items } = await categoryService.list({ status: 'ACTIVE', perPage: 100, sortDir: 'asc' });
+    return items;
+  },
+
   get: (id: number): Promise<Category> => unwrap(api.get(`/categories/${id}`)),
 
-  create: (values: { name: string; description?: string }): Promise<Category> =>
+  create: (values: CategoryFormValues): Promise<Category> =>
     unwrap(api.post('/categories', values)),
 
-  update: (id: number, values: { name?: string; description?: string; status?: string }): Promise<Category> =>
+  update: (id: number, values: Partial<CategoryFormValues>): Promise<Category> =>
     unwrap(api.put(`/categories/${id}`, values)),
 
   remove: (id: number): Promise<{ id: number; deleted: boolean }> =>
@@ -71,16 +80,19 @@ export const categoryService = {
 };
 
 export const subcategoryService = {
-  list: async (categoryId?: number) => {
-    const params = categoryId ? { categoryId } : {};
-    const items = await unwrap<Subcategory[]>(api.get('/subcategories', { params }));
-    return items;
+  list: async (query: SubcategoryListQuery = {}) => {
+    const { items, pagination } = await unwrapList<Subcategory>(
+      api.get('/subcategories', { params: toParams(query) }),
+    );
+    return { items, pagination };
   },
 
-  create: (values: { categoryId: number; name: string; description?: string }): Promise<Subcategory> =>
+  get: (id: number): Promise<Subcategory> => unwrap(api.get(`/subcategories/${id}`)),
+
+  create: (values: SubcategoryFormValues): Promise<Subcategory> =>
     unwrap(api.post('/subcategories', values)),
 
-  update: (id: number, values: { name?: string; description?: string; status?: string }): Promise<Subcategory> =>
+  update: (id: number, values: Partial<SubcategoryFormValues>): Promise<Subcategory> =>
     unwrap(api.put(`/subcategories/${id}`, values)),
 
   remove: (id: number): Promise<{ id: number; deleted: boolean }> =>

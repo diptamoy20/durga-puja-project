@@ -73,8 +73,11 @@ let ContentController = class ContentController {
     removeCategory(payload) {
         return this.taxonomy.removeCategory(payload);
     }
-    findAllSubcategories(payload) {
-        return this.taxonomy.findAllSubcategories(payload);
+    findAllSubcategories(query) {
+        return this.taxonomy.findAllSubcategories(query);
+    }
+    findOneSubcategory(payload) {
+        return this.taxonomy.findOneSubcategory(payload.id);
     }
     createSubcategory(payload) {
         return this.taxonomy.createSubcategory(payload);
@@ -197,6 +200,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ContentController.prototype, "findAllSubcategories", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.SUBCATEGORY_FIND_ONE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "findOneSubcategory", null);
 __decorate([
     (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.SUBCATEGORY_CREATE),
     __param(0, (0, microservices_1.Payload)()),

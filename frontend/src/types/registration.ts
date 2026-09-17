@@ -37,8 +37,9 @@ export interface DiasporaRegistration {
   updatedAt: string;
   verifiedBy?: { id: number; name: string } | null;
   rejectedBy?: { id: number; name: string } | null;
-  user?: { id: number; email: string; status: string } | null;
+  user?: { id: number; email: string; status: string; initialPassword?: string | null } | null;
   histories?: DiasporaVerificationHistory[];
+  generatedPassword?: string | null;
 }
 
 export type DiasporaStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
@@ -115,11 +116,13 @@ export interface PujaCommittee {
   approvedBy?: { id: number; name: string } | null;
   rejectedBy?: { id: number; name: string } | null;
   reviewedBy?: { id: number; name: string } | null;
-  user?: { id: number; email: string; status: string } | null;
+  user?: { id: number; email: string; status: string; initialPassword?: string | null; createdAt?: string } | null;
   histories?: CommitteeStatusHistory[];
 }
 
-export type CommitteeStatus = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED';
+export type CommitteeStatus = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'INACTIVE';
+
+export type CommitteeBulkAction = 'approve' | 'reject' | 'status' | 'delete';
 
 export interface CommitteeStatusHistory {
   id: number;
@@ -148,6 +151,7 @@ export interface CommitteeStats {
   under_review: number;
   approved: number;
   rejected: number;
+  inactive: number;
 }
 
 export interface CommitteeUpdatePayload {

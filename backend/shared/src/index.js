@@ -32,3 +32,4 @@ __exportStar(require("./utils/pagination.util"), exports);
 __exportStar(require("./utils/prisma-error.util"), exports);
 __exportStar(require("./utils/service-exception.util"), exports);
 __exportStar(require("./utils/slug.util"), exports);
+__exportStar(require("./utils/registration-captcha.util"), exports);

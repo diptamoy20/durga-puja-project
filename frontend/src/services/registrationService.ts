@@ -1,5 +1,6 @@
 import api, { unwrap, unwrapList } from './api';
 import type {
+  CommitteeBulkAction,
   CommitteeListQuery,
   CommitteeStats,
   CommitteeStatus,
@@ -72,8 +73,12 @@ export const committeeService = {
   stats: (): Promise<CommitteeStats> =>
     unwrap(api.get('/puja-committees/stats')),
 
-  update: (id: number, data: CommitteeUpdatePayload): Promise<PujaCommittee> =>
-    unwrap(api.put(`/puja-committees/${id}`, data)),
+  update: (id: number, data: CommitteeUpdatePayload | FormData): Promise<PujaCommittee> =>
+    unwrap(
+      api.put(`/puja-committees/${id}`, data, {
+        headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+      }),
+    ),
 
   changeStatus: (id: number, status: CommitteeStatus, reason?: string): Promise<PujaCommittee> =>
     unwrap(api.post(`/puja-committees/${id}/status`, { status, reason })),
@@ -81,8 +86,66 @@ export const committeeService = {
   createPortalAccount: (id: number): Promise<{ userId: number; email: string; generatedPassword?: string }> =>
     unwrap(api.post(`/puja-committees/${id}/create-portal-account`)),
 
-  bulkAction: (ids: number[], action: CommitteeStatus, reason?: string): Promise<{ succeeded: number; failed: number }> =>
-    unwrap(api.post('/puja-committees/bulk-action', { ids, action, reason })),
+  generateLocalPassword: (id: number): Promise<{ generatedPassword: string }> =>
+    unwrap(api.post(`/puja-committees/${id}/generate-local-password`)),
+
+  bulkAction: (
+    ids: number[],
+    action: CommitteeBulkAction,
+    options?: { status?: CommitteeStatus; reason?: string },
+  ): Promise<{ succeeded: number; failed: number }> =>
+    unwrap(api.post('/puja-committees/bulk-action', { ids, action, ...options })),
+
+  remove: (id: number): Promise<{ id: number; deleted: boolean }> =>
+    unwrap(api.delete(`/puja-committees/${id}`)),
+
+  exportCsv: async (query: CommitteeListQuery = {}): Promise<void> => {
+    const result = await unwrap<{ filename: string; content: string }>(
+      api.get('/puja-committees/export/csv', { params: toParams(query) }),
+    );
+    const blob = new Blob([result.content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = result.filename || 'puja-committee-applications.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  },
+
+  fetchDocument: async (
+    id: number,
+    document: 'registration_certificate' | 'address_proof' | 'pandal_image',
+    download = false,
+  ): Promise<Blob> => {
+    const response = await api.get(`/puja-committees/${id}/documents/${document}`, {
+      params: download ? { download: '1' } : undefined,
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  openDocument: async (
+    committeeId: number,
+    doc: 'registration_certificate' | 'address_proof' | 'pandal_image',
+    download = false,
+  ): Promise<void> => {
+    const blob = await committeeService.fetchDocument(committeeId, doc, download);
+    const url = URL.createObjectURL(blob);
+    if (download) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${doc}.file`;
+      link.click();
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  },
+
+  documentUrl: (id: number, document: 'registration_certificate' | 'address_proof' | 'pandal_image', download = false): string => {
+    const base = api.defaults.baseURL ?? '';
+    return `${base}/puja-committees/${id}/documents/${document}${download ? '?download=1' : ''}`;
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -90,6 +153,9 @@ export const committeeService = {
 // ---------------------------------------------------------------------------
 
 export const publicRegistrationService = {
+  getCaptcha: (): Promise<{ question: string; captchaToken: string }> =>
+    unwrap(api.get('/registrations/captcha')),
+
   submitDiaspora: (data: Record<string, unknown>): Promise<{ id: number; registrationNo: string }> =>
     unwrap(api.post('/registrations/diaspora', data)),
 
@@ -99,8 +165,5 @@ export const publicRegistrationService = {
         headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
       }),
     ),
-
-  getThankYou: (type: 'diaspora' | 'committee', id: number): Promise<{ id: number; registrationNo: string; type: string; details?: Record<string, unknown> }> =>
-    unwrap(api.get(`/registrations/thank-you/${type}/${id}`)),
 };
 

@@ -1,95 +1,92 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ConfirmDialog, Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/Modal';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Pagination } from '@/components/ui/Pagination';
+import { PERMISSIONS } from '@/constants/permissions';
+import { ROUTES } from '@/constants/routes';
 import { StatusBadge } from '@/components/ui/Badge';
 import { categoryService, subcategoryService } from '@/services/contentService';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import type { Category, Subcategory } from '@/types/content';
+import type { Category, RecordStatusType, Subcategory, SubcategoryListQuery } from '@/types/content';
+import type { PaginationMeta } from '@/types';
+
+const STATUS_OPTIONS: Array<{ value: RecordStatusType | ''; label: string }> = [
+  { value: '', label: 'All Status' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'INACTIVE', label: 'Inactive' },
+];
+
+function truncate(text: string | null | undefined, max = 60): string {
+  if (!text) return '';
+  return text.length <= max ? text : `${text.slice(0, max)}…`;
+}
 
 export function SubcategoriesPage() {
   const toast = useToast();
+  const { can } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<number | ''>('');
+  const [pagination, setPagination] = useState<PaginationMeta | undefined>();
+  const [query, setQuery] = useState<SubcategoryListQuery>({ page: 1, perPage: 10, sortDir: 'asc' });
+  const [draftSearch, setDraftSearch] = useState('');
+  const [draftCategoryId, setDraftCategoryId] = useState<number | ''>('');
+  const [draftStatus, setDraftStatus] = useState<RecordStatusType | ''>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingSub, setEditingSub] = useState<Subcategory | null>(null);
-  const [catId, setCatId] = useState<number | ''>('');
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
-  const [saving, setSaving] = useState(false);
-
-  // Delete dialog
   const [deletingSub, setDeletingSub] = useState<Subcategory | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Load categories once
+  const canManage = can(PERMISSIONS.MANAGE_CATEGORIES);
+
   useEffect(() => {
-    categoryService.list().then((res) => setCategories(res.items)).catch(() => {});
+    categoryService
+      .list({ perPage: 100, sortDir: 'asc' })
+      .then((res) => setCategories(res.items))
+      .catch(() => {});
   }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const items = await subcategoryService.list(selectedCategory || undefined);
-      setSubcategories(items);
+      const res = await subcategoryService.list(query);
+      setSubcategories(res.items);
+      setPagination(res.pagination);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load subcategories.');
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory]);
+  }, [query]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const openCreateModal = () => {
-    setEditingSub(null);
-    setCatId(selectedCategory || (categories[0]?.id ?? ''));
-    setName('');
-    setDescription('');
-    setStatus('ACTIVE');
-    setModalOpen(true);
-  };
-
-  const openEditModal = (sub: Subcategory) => {
-    setEditingSub(sub);
-    setCatId(sub.categoryId);
-    setName(sub.name);
-    setDescription(sub.description ?? '');
-    setStatus(sub.status as 'ACTIVE' | 'INACTIVE');
-    setModalOpen(true);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
+  const applyFilters = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !catId) return;
-    setSaving(true);
-    try {
-      if (editingSub) {
-        await subcategoryService.update(editingSub.id, { name, description, status });
-        toast.success('Subcategory updated successfully.');
-      } else {
-        await subcategoryService.create({ categoryId: Number(catId), name, description });
-        toast.success('Subcategory created successfully.');
-      }
-      setModalOpen(false);
-      load();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save subcategory.');
-    } finally {
-      setSaving(false);
-    }
+    setQuery((current) => ({
+      ...current,
+      search: draftSearch.trim() || undefined,
+      categoryId: draftCategoryId || undefined,
+      status: draftStatus || undefined,
+      page: 1,
+    }));
+  };
+
+  const resetFilters = () => {
+    setDraftSearch('');
+    setDraftCategoryId('');
+    setDraftStatus('');
+    setQuery({ page: 1, perPage: 10, sortDir: 'asc' });
   };
 
   const handleDelete = async () => {
@@ -109,84 +106,143 @@ export function SubcategoriesPage() {
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page__title">Subcategories</h1>
-          <p className="page__subtitle">Manage nested classification for articles and content.</p>
-        </div>
-        <Button variant="primary" size="md" onClick={openCreateModal}>
-          + Add Subcategory
-        </Button>
-      </header>
+      <PageHeader
+        title="Subcategories"
+        description="Manage subcategories under master categories."
+        breadcrumbs={[{ label: 'Dashboard', to: ROUTES.DASHBOARD }, { label: 'Subcategories' }]}
+        actions={
+          canManage ? (
+            <Link to={ROUTES.SUBCATEGORY_NEW} className="btn btn--primary btn--md">
+              Create Subcategory
+            </Link>
+          ) : undefined
+        }
+      />
 
       {error && <Alert tone="danger">{error}</Alert>}
 
-      <Card>
-        <div className="filter-bar">
-          <div className="filter-bar__filters">
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-200)' }}>
-              <span>Filter by Category:</span>
-              <select
-                className="field__control"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+      <Card className="mb-4">
+        <form className="form-grid form-grid--3" onSubmit={applyFilters}>
+          <div className="field">
+            <label className="field__label" htmlFor="subSearch">
+              Search
             </label>
+            <input
+              id="subSearch"
+              type="search"
+              className="field__control"
+              placeholder="Search by name, slug, description..."
+              value={draftSearch}
+              onChange={(e) => setDraftSearch(e.target.value)}
+            />
           </div>
-        </div>
 
+          <div className="field">
+            <label className="field__label" htmlFor="subCategoryFilter">
+              Category
+            </label>
+            <select
+              id="subCategoryFilter"
+              className="field__control"
+              value={draftCategoryId}
+              onChange={(e) => setDraftCategoryId(e.target.value ? Number(e.target.value) : '')}
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <label className="field__label" htmlFor="subStatusFilter">
+              Status
+            </label>
+            <select
+              id="subStatusFilter"
+              className="field__control"
+              value={draftStatus}
+              onChange={(e) => setDraftStatus(e.target.value as RecordStatusType | '')}
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field" style={{ alignSelf: 'end' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <Button type="submit" variant="primary" size="md">
+                Filter
+              </Button>
+              <Button type="button" variant="secondary" size="md" onClick={resetFilters}>
+                Reset
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Card>
+
+      <Card>
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Slug</th>
                 <th>Category</th>
-                <th>Description</th>
+                <th>Slug</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
                     Loading subcategories…
                   </td>
                 </tr>
               ) : subcategories.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
                     No subcategories found.
                   </td>
                 </tr>
               ) : (
                 subcategories.map((sub) => (
                   <tr key={sub.id}>
-                    <td><strong>{sub.name}</strong></td>
-                    <td><code>{sub.slug}</code></td>
-                    <td>{sub.category?.name ?? categories.find((c) => c.id === sub.categoryId)?.name ?? '—'}</td>
-                    <td>{sub.description ?? '—'}</td>
                     <td>
-                      <StatusBadge tone={sub.status === 'ACTIVE' ? 'success' : 'muted'}>
-                        {sub.status}
-                      </StatusBadge>
+                      <div style={{ fontWeight: 600 }}>{sub.name}</div>
+                      {sub.description && (
+                        <div className="detail-subtitle">{truncate(sub.description)}</div>
+                      )}
+                    </td>
+                    <td>{sub.category?.name ?? categories.find((c) => c.id === sub.categoryId)?.name ?? '—'}</td>
+                    <td>
+                      <code>{sub.slug}</code>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 'var(--space-150)' }}>
-                        <Button variant="secondary" size="sm" onClick={() => openEditModal(sub)}>
-                          Edit
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => setDeletingSub(sub)}>
-                          Delete
-                        </Button>
+                      <StatusBadge status={sub.status} />
+                    </td>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', gap: 'var(--space-150)', justifyContent: 'flex-end' }}>
+                        <Link to={ROUTES.SUBCATEGORY_DETAIL(sub.id)} className="btn btn--secondary btn--sm">
+                          View
+                        </Link>
+                        {canManage && (
+                          <>
+                            <Link to={ROUTES.SUBCATEGORY_EDIT(sub.id)} className="btn btn--secondary btn--sm">
+                              Edit
+                            </Link>
+                            <Button variant="danger" size="sm" onClick={() => setDeletingSub(sub)}>
+                              Delete
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -195,82 +251,9 @@ export function SubcategoriesPage() {
             </tbody>
           </table>
         </div>
+
+        <Pagination pagination={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
       </Card>
-
-      <Modal
-        open={modalOpen}
-        title={editingSub ? 'Edit Subcategory' : 'Create Subcategory'}
-        onClose={() => setModalOpen(false)}
-      >
-        <form onSubmit={handleSave}>
-          {!editingSub && (
-            <div className="field">
-              <label className="field__label" htmlFor="subCat">Parent Category *</label>
-              <select
-                id="subCat"
-                required
-                className="field__control"
-                value={catId}
-                onChange={(e) => setCatId(Number(e.target.value))}
-              >
-                <option value="">Select Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="field">
-            <label className="field__label" htmlFor="subName">Subcategory Name *</label>
-            <input
-              id="subName"
-              type="text"
-              required
-              className="field__control"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="field">
-            <label className="field__label" htmlFor="subDesc">Description</label>
-            <textarea
-              id="subDesc"
-              rows={3}
-              className="field__control"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          {editingSub && (
-            <div className="field">
-              <label className="field__label" htmlFor="subStatus">Status</label>
-              <select
-                id="subStatus"
-                className="field__control"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}
-              >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-              </select>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-200)', marginTop: 'var(--space-400)' }}>
-            <Button type="button" variant="secondary" size="md" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" size="md" disabled={saving}>
-              {saving ? 'Saving…' : editingSub ? 'Update' : 'Create'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
       <ConfirmDialog
         open={deletingSub !== null}

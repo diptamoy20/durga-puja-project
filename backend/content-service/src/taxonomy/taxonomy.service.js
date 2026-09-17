@@ -14,6 +14,48 @@ exports.TaxonomyService = void 0;
 const database_1 = require("@dpgc/database");
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
+function resolveSlug(name, slug) {
+    const trimmedSlug = typeof slug === 'string' ? slug.trim() : '';
+    if (trimmedSlug)
+        return (0, shared_1.slugify)(trimmedSlug);
+    if (name?.trim())
+        return (0, shared_1.slugify)(name);
+    throw shared_1.ServiceException.badRequest('A slug could not be generated. Provide a name or slug.');
+}
+function buildCategoryWhere(query) {
+    const where = {};
+    if (query.search) {
+        const search = query.search;
+        where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { slug: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+        ];
+    }
+    if (query.status) {
+        where.status = query.status;
+    }
+    return where;
+}
+function buildSubcategoryWhere(query) {
+    const where = {};
+    if (query.search) {
+        const search = query.search;
+        where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { slug: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+            { category: { name: { contains: search, mode: 'insensitive' } } },
+        ];
+    }
+    if (query.status) {
+        where.status = query.status;
+    }
+    if (query.categoryId) {
+        where.categoryId = query.categoryId;
+    }
+    return where;
+}
 /**
  * Categories and subcategories are shared reference data: the gallery, albums
  * and articles all point at them, so this service owns them and the other
@@ -26,21 +68,14 @@ let TaxonomyService = class TaxonomyService {
     }
     async findAllCategories(query) {
         const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
-        const where = query.search
-            ? { name: { contains: query.search, mode: 'insensitive' } }
-            : {};
+        const where = buildCategoryWhere(query);
         const [items, total] = await this.prisma.$transaction([
             this.prisma.category.findMany({
                 where,
                 skip,
                 take,
-                orderBy: { name: query.sortDir },
+                orderBy: { name: query.sortDir ?? 'asc' },
                 include: {
-                    subcategories: {
-                        where: { status: database_1.RecordStatus.ACTIVE },
-                        orderBy: { name: 'asc' },
-                        select: { id: true, name: true, slug: true, status: true },
-                    },
                     _count: { select: { subcategories: true } },
                 },
             }),
@@ -51,20 +86,24 @@ let TaxonomyService = class TaxonomyService {
     async findOneCategory(id) {
         const category = await this.prisma.category.findUnique({
             where: { id },
-            include: { subcategories: { orderBy: { name: 'asc' } } },
+            include: {
+                subcategories: { orderBy: { name: 'asc' } },
+                _count: { select: { subcategories: true } },
+            },
         });
         if (!category)
             throw shared_1.ServiceException.notFound(`No category exists with id ${id}.`);
         return category;
     }
     async createCategory(payload) {
+        const { name, slug, description, status } = payload.data;
         try {
             return await this.prisma.category.create({
                 data: {
-                    name: payload.data.name,
-                    slug: (0, shared_1.slugify)(payload.data.name),
-                    description: payload.data.description ?? null,
-                    status: database_1.RecordStatus.ACTIVE,
+                    name,
+                    slug: resolveSlug(name, slug),
+                    description: description ?? null,
+                    status: status ?? database_1.RecordStatus.ACTIVE,
                 },
             });
         }
@@ -79,7 +118,7 @@ let TaxonomyService = class TaxonomyService {
                 where: { id },
                 data: {
                     name: data.name,
-                    slug: data.name ? (0, shared_1.slugify)(data.name) : undefined,
+                    slug: data.name || data.slug ? resolveSlug(data.name, data.slug) : undefined,
                     description: data.description,
                     status: data.status,
                 },
@@ -92,40 +131,55 @@ let TaxonomyService = class TaxonomyService {
     async removeCategory(payload) {
         const category = await this.prisma.category.findUnique({
             where: { id: payload.id },
-            include: { _count: { select: { subcategories: true, albums: true, committeeMedia: true } } },
+            include: { _count: { select: { subcategories: true } } },
         });
         if (!category)
             throw shared_1.ServiceException.notFound(`No category exists with id ${payload.id}.`);
-        const inUse = category._count.subcategories + category._count.albums + category._count.committeeMedia;
-        // Deleting would cascade into subcategories and orphan albums and media.
-        if (inUse > 0) {
-            throw shared_1.ServiceException.conflict(`"${category.name}" is still in use by ${inUse} record(s). Deactivate it instead.`, { counts: category._count });
+        if (category._count.subcategories > 0) {
+            throw shared_1.ServiceException.conflict('Cannot delete a category that has subcategories.', { counts: category._count });
         }
         await this.prisma.category.delete({ where: { id: payload.id } });
         return { id: payload.id, deleted: true };
     }
-    async findAllSubcategories(payload) {
-        return this.prisma.subcategory.findMany({
-            where: payload.categoryId ? { categoryId: payload.categoryId } : {},
-            orderBy: [{ categoryId: 'asc' }, { name: 'asc' }],
-            include: { category: { select: { id: true, name: true } } },
+    async findAllSubcategories(query) {
+        const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
+        const where = buildSubcategoryWhere(query);
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.subcategory.findMany({
+                where,
+                skip,
+                take,
+                orderBy: { name: query.sortDir ?? 'asc' },
+                include: { category: { select: { id: true, name: true, slug: true } } },
+            }),
+            this.prisma.subcategory.count({ where }),
+        ]);
+        return { items, pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total) };
+    }
+    async findOneSubcategory(id) {
+        const subcategory = await this.prisma.subcategory.findUnique({
+            where: { id },
+            include: { category: { select: { id: true, name: true, slug: true, status: true } } },
         });
+        if (!subcategory)
+            throw shared_1.ServiceException.notFound(`No subcategory exists with id ${id}.`);
+        return subcategory;
     }
     async createSubcategory(payload) {
-        const category = await this.prisma.category.findUnique({
-            where: { id: payload.data.categoryId },
+        const category = await this.prisma.category.findFirst({
+            where: { id: payload.data.categoryId, status: database_1.RecordStatus.ACTIVE },
             select: { id: true },
         });
         if (!category)
-            throw shared_1.ServiceException.badRequest('The selected category does not exist.');
+            throw shared_1.ServiceException.badRequest('The selected category does not exist or is not active.');
         try {
             return await this.prisma.subcategory.create({
                 data: {
                     categoryId: payload.data.categoryId,
                     name: payload.data.name,
-                    slug: (0, shared_1.slugify)(payload.data.name),
+                    slug: resolveSlug(payload.data.name, payload.data.slug),
                     description: payload.data.description ?? null,
-                    status: database_1.RecordStatus.ACTIVE,
+                    status: payload.data.status ?? database_1.RecordStatus.ACTIVE,
                 },
             });
         }
@@ -134,14 +188,24 @@ let TaxonomyService = class TaxonomyService {
         }
     }
     async updateSubcategory(payload) {
+        const { id, data } = payload;
+        if (data.categoryId) {
+            const category = await this.prisma.category.findFirst({
+                where: { id: data.categoryId, status: database_1.RecordStatus.ACTIVE },
+                select: { id: true },
+            });
+            if (!category)
+                throw shared_1.ServiceException.badRequest('The selected category does not exist or is not active.');
+        }
         try {
             return await this.prisma.subcategory.update({
-                where: { id: payload.id },
+                where: { id },
                 data: {
-                    name: payload.data.name,
-                    slug: payload.data.name ? (0, shared_1.slugify)(payload.data.name) : undefined,
-                    description: payload.data.description,
-                    status: payload.data.status,
+                    categoryId: data.categoryId,
+                    name: data.name,
+                    slug: data.name || data.slug ? resolveSlug(data.name, data.slug) : undefined,
+                    description: data.description,
+                    status: data.status,
                 },
             });
         }
@@ -152,14 +216,9 @@ let TaxonomyService = class TaxonomyService {
     async removeSubcategory(payload) {
         const subcategory = await this.prisma.subcategory.findUnique({
             where: { id: payload.id },
-            include: { _count: { select: { articles: true, albums: true, committeeMedia: true } } },
         });
         if (!subcategory) {
             throw shared_1.ServiceException.notFound(`No subcategory exists with id ${payload.id}.`);
-        }
-        const inUse = subcategory._count.articles + subcategory._count.albums + subcategory._count.committeeMedia;
-        if (inUse > 0) {
-            throw shared_1.ServiceException.conflict(`"${subcategory.name}" is still in use by ${inUse} record(s). Deactivate it instead.`, { counts: subcategory._count });
         }
         await this.prisma.subcategory.delete({ where: { id: payload.id } });
         return { id: payload.id, deleted: true };

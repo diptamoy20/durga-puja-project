@@ -29,9 +29,25 @@ export const ROUTES = {
   COMMITTEE_DETAIL: (id: number | string = ':id') => `/committees/${id}`,
   COMMITTEE_EDIT: (id: number | string = ':id') => `/committees/${id}/edit`,
 
+  // Committee member media & albums
+  MY_COMMITTEE_MEDIA: '/committee/media',
+  MY_COMMITTEE_MEDIA_CREATE: '/committee/media/create',
+  MY_COMMITTEE_MEDIA_DETAIL: (id: number | string = ':id') => `/committee/media/${id}`,
+  MY_COMMITTEE_MEDIA_EDIT: (id: number | string = ':id') => `/committee/media/${id}/edit`,
+  MY_COMMITTEE_ALBUMS: '/committee/albums',
+  MY_COMMITTEE_ALBUM_NEW: '/committee/albums/new',
+  MY_COMMITTEE_ALBUM_DETAIL: (id: number | string = ':id') => `/committee/albums/${id}`,
+  MY_COMMITTEE_ALBUM_EDIT: (id: number | string = ':id') => `/committee/albums/${id}/edit`,
+
   // Master / Categories
   CATEGORIES: '/categories',
+  CATEGORY_NEW: '/categories/new',
+  CATEGORY_EDIT: (id: number | string = ':id') => `/categories/${id}/edit`,
+  CATEGORY_DETAIL: (id: number | string = ':id') => `/categories/${id}`,
   SUBCATEGORIES: '/subcategories',
+  SUBCATEGORY_NEW: '/subcategories/new',
+  SUBCATEGORY_EDIT: (id: number | string = ':id') => `/subcategories/${id}/edit`,
+  SUBCATEGORY_DETAIL: (id: number | string = ':id') => `/subcategories/${id}`,
 
   // Content / Articles
   ARTICLES: '/articles',
@@ -46,6 +62,7 @@ export const ROUTES = {
   GALLERY_MODERATION: '/gallery/moderation',
   GALLERY_ALBUMS: '/gallery/albums',
   GALLERY_ALBUM_NEW: '/gallery/albums/new',
+  GALLERY_ALBUM_DETAIL: (id: number | string = ':id') => `/gallery/albums/${id}`,
   GALLERY_ALBUM_EDIT: (id: number | string = ':id') => `/gallery/albums/${id}/edit`,
 
   // Atlas
@@ -65,7 +82,8 @@ export const ROUTES = {
   PUBLIC_CHOOSE_TYPE: '/register/choose',
   PUBLIC_REGISTER_DIASPORA: '/register/diaspora',
   PUBLIC_REGISTER_COMMITTEE: '/register/committee',
-  PUBLIC_THANK_YOU: (type: string = ':type', id: number | string = ':id') => `/register/thank-you/${type}/${id}`,
+  PUBLIC_THANK_YOU: (type: string = ':type', registrationNo: string = ':registrationNo') =>
+    `/register/thank-you/${type}/${registrationNo}`,
   PUBLIC_GALLERY: '/public/gallery',
   PUBLIC_ATLAS: '/public/atlas',
   PUBLIC_WEBINARS: '/public/webinars',

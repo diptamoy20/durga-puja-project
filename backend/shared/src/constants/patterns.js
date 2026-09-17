@@ -79,6 +79,7 @@ exports.REGISTRATION_PATTERNS = {
     COMMITTEE_CHANGE_STATUS: 'committee.change_status',
     COMMITTEE_REMOVE: 'committee.remove',
     COMMITTEE_CREATE_PORTAL_ACCOUNT: 'committee.create_portal_account',
+    COMMITTEE_GENERATE_LOCAL_PASSWORD: 'committee.generate_local_password',
     COMMITTEE_STATS: 'committee.stats',
 };
 exports.CONTENT_PATTERNS = {
@@ -97,6 +98,7 @@ exports.CONTENT_PATTERNS = {
     CATEGORY_UPDATE: 'category.update',
     CATEGORY_REMOVE: 'category.remove',
     SUBCATEGORY_FIND_ALL: 'subcategory.find_all',
+    SUBCATEGORY_FIND_ONE: 'subcategory.find_one',
     SUBCATEGORY_CREATE: 'subcategory.create',
     SUBCATEGORY_UPDATE: 'subcategory.update',
     SUBCATEGORY_REMOVE: 'subcategory.remove',
@@ -120,6 +122,7 @@ exports.GALLERY_PATTERNS = {
     ALBUM_UPDATE: 'album.update',
     ALBUM_REMOVE: 'album.remove',
     ALBUM_SYNC_MEDIA: 'album.sync_media',
+    ALBUM_MEDIA_PICKER: 'album.media_picker',
 };
 exports.ATLAS_PATTERNS = {
     FIND_ALL: 'atlas.find_all',

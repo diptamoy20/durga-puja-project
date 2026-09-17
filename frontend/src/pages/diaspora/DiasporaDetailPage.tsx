@@ -4,19 +4,45 @@ import { Link, useParams } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ConfirmDialog } from '@/components/ui/Modal';
-import { PERMISSIONS } from '@/constants/permissions';
+import { ConfirmDialog, Modal } from '@/components/ui/Modal';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoader } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/ui/Badge';
+import { PERMISSIONS } from '@/constants/permissions';
+import { ROUTES } from '@/constants/routes';
+import { formatGenderLabel, formatInterestLabel } from '@/constants/registration';
 import { diasporaService } from '@/services/registrationService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import type { DiasporaRegistration } from '@/types/registration';
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit', month: 'short', year: 'numeric',
-  hour: '2-digit', minute: '2-digit', hour12: true,
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
 });
+
+const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+});
+
+function detailValue(value: string | null | undefined): string {
+  return value?.trim() ? value : '—';
+}
+
+function DetailField({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div className="detail-field">
+      <div className="detail-field__label">{label}</div>
+      <div className="detail-field__value">{detailValue(value)}</div>
+    </div>
+  );
+}
 
 export function DiasporaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,8 +52,9 @@ export function DiasporaDetailPage() {
   const [reg, setReg] = useState<DiasporaRegistration | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionType, setActionType] = useState<'verify' | 'reject' | null>(null);
-  const [reason, setReason] = useState('');
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
   const [busy, setBusy] = useState(false);
 
   const canVerify = can(PERMISSIONS.VERIFY_DIASPORA);
@@ -36,175 +63,221 @@ export function DiasporaDetailPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    diasporaService.get(Number(id))
+    diasporaService
+      .get(Number(id))
       .then(setReg)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load.'))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load registration.'))
       .finally(() => setLoading(false));
   }, [id]);
 
-  const confirmAction = async () => {
-    if (!actionType || !reg) return;
-    if (actionType === 'reject' && !reason.trim()) {
-      toast.warning('A reason is required for rejection.');
-      return;
-    }
+  const handleVerify = async () => {
+    if (!reg) return;
     setBusy(true);
     try {
-      const updated = actionType === 'verify'
-        ? await diasporaService.verify(reg.id, reason || undefined)
-        : await diasporaService.reject(reg.id, reason);
+      const updated = await diasporaService.verify(reg.id);
       setReg(updated);
-      toast.success(`Registration ${actionType === 'verify' ? 'verified' : 'rejected'} successfully.`);
-      setActionType(null);
-      setReason('');
+      toast.success('Registration verified and login credentials sent.');
+      setVerifyOpen(false);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Action failed.');
+      toast.error(err instanceof Error ? err.message : 'Verification failed.');
     } finally {
       setBusy(false);
     }
   };
 
-  if (loading) return <PageLoader />;
-  if (error) return <Alert variant="error">{error}</Alert>;
-  if (!reg) return <Alert variant="warning">Registration not found.</Alert>;
+  const handleReject = async () => {
+    if (!reg || !rejectReason.trim()) {
+      toast.warning('Rejection reason is required.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const updated = await diasporaService.reject(reg.id, rejectReason.trim());
+      setReg(updated);
+      toast.success('Registration rejected.');
+      setRejectOpen(false);
+      setRejectReason('');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Rejection failed.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) return <PageLoader label="Loading registration" />;
+  if (error || !reg) {
+    return (
+      <Alert tone="danger">
+        {error ?? 'Registration not found.'}{' '}
+        <Link to={ROUTES.DIASPORA}>Back to diaspora verification</Link>
+      </Alert>
+    );
+  }
+
+  const address = [reg.address1, reg.address2].filter(Boolean).join(' ');
+  const interests = reg.interests?.map(formatInterestLabel).join(', ') ?? '—';
+  const tempPassword = reg.generatedPassword ?? reg.user?.initialPassword ?? 'Unavailable for an existing account';
 
   return (
-    <div className="users-page">
-      <div className="users-page__head">
-        <h1 className="users-page__title">
-          <Link to="/diaspora-verifications" className="breadcrumb-link">
-            <i className="fas fa-arrow-left" /> Diaspora Verification
-          </Link>
-          {' / '}{reg.fullName}
-        </h1>
-        <div className="users-page__head-actions">
-          {canVerify && reg.status === 'PENDING' && (
-            <Button variant="success" onClick={() => setActionType('verify')}>
-              <i className="fas fa-circle-check" /> Verify
-            </Button>
-          )}
-          {canReject && reg.status === 'PENDING' && (
-            <Button variant="danger" onClick={() => setActionType('reject')}>
-              <i className="fas fa-circle-xmark" /> Reject
-            </Button>
-          )}
+    <div className="page">
+      <PageHeader
+        title="Diaspora Registration"
+        description={reg.registrationNo}
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: 'Diaspora Verification', to: ROUTES.DIASPORA },
+          { label: reg.registrationNo },
+        ]}
+        actions={
+          reg.status === 'PENDING' ? (
+            <>
+              {canVerify && (
+                <Button variant="primary" onClick={() => setVerifyOpen(true)}>
+                  Verify
+                </Button>
+              )}
+              {canReject && (
+                <Button variant="danger" onClick={() => setRejectOpen(true)}>
+                  Reject
+                </Button>
+              )}
+            </>
+          ) : undefined
+        }
+      />
+
+      <div className="diaspora-detail-layout">
+        <Card
+          title="Registration Details"
+          actions={<StatusBadge status={reg.status} />}
+        >
+          <div className="diaspora-detail-grid">
+            <DetailField label="Registration ID" value={reg.registrationNo} />
+            <DetailField label="Full Name" value={reg.fullName} />
+            <DetailField label="Email" value={reg.email} />
+            <DetailField label="Mobile" value={reg.mobile} />
+            <DetailField label="Date of Birth" value={dateFormat.format(new Date(reg.dob))} />
+            <DetailField label="Gender" value={formatGenderLabel(reg.gender)} />
+            <DetailField label="Country" value={reg.country} />
+            <DetailField label="City" value={reg.city} />
+            <DetailField label="State / Province" value={reg.state} />
+            <DetailField label="Postal Code" value={reg.postalCode} />
+            <DetailField label="Nationality" value={reg.nationality} />
+            <DetailField label="Passport No." value={reg.passportNo} />
+            <DetailField label="District of Origin" value={reg.districtOrigin} />
+            <DetailField label="Village" value={reg.village} />
+            <DetailField label="Relationship with Bengal" value={reg.relationshipWithBengal} />
+            <DetailField label="Languages" value={reg.languages} />
+            <DetailField label="Address" value={address} />
+            <DetailField label="Registered On" value={dateTimeFormat.format(new Date(reg.createdAt))} />
+            <DetailField label="Interests" value={interests} />
+            <DetailField label="Volunteer" value={reg.volunteer ? 'Yes' : 'No'} />
+            <DetailField label="Receives Updates" value={reg.receiveUpdates ? 'Yes' : 'No'} />
+          </div>
+        </Card>
+
+        <div className="diaspora-detail-sidebar">
+          <Card title="Verification">
+            {reg.status === 'VERIFIED' && (
+              <>
+                <DetailField label="Verified by" value={reg.verifiedBy?.name} />
+                <DetailField label="Verified on" value={reg.verifiedAt ? dateTimeFormat.format(new Date(reg.verifiedAt)) : null} />
+                <DetailField label="Login email" value={reg.user?.email ?? reg.email} />
+                <div className="detail-field">
+                  <div className="detail-field__label">Temporary password</div>
+                  <div className="detail-field__value detail-field__value--mono">{tempPassword}</div>
+                </div>
+              </>
+            )}
+            {reg.status === 'REJECTED' && (
+              <>
+                <DetailField label="Rejected by" value={reg.rejectedBy?.name} />
+                <DetailField label="Rejected on" value={reg.rejectedAt ? dateTimeFormat.format(new Date(reg.rejectedAt)) : null} />
+                <DetailField label="Reason" value={reg.rejectionReason} />
+              </>
+            )}
+            {reg.status === 'PENDING' && (
+              <p className="detail-empty">This registration is awaiting verification.</p>
+            )}
+          </Card>
+
+          <Card title="Verification History">
+            <div className="table-wrapper">
+              <table className="table table--compact">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Action</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Admin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(reg.histories ?? []).length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="detail-empty">No verification activity yet.</td>
+                    </tr>
+                  ) : (
+                    reg.histories?.map((history) => (
+                      <tr key={history.id}>
+                        <td>{dateTimeFormat.format(new Date(history.createdAt))}</td>
+                        <td>{history.action.replace(/_/g, ' ')}</td>
+                        <td>
+                          {(history.previousStatus ?? 'New').replace(/_/g, ' ')} to {history.newStatus.replace(/_/g, ' ')}
+                        </td>
+                        <td>{history.reason ?? '—'}</td>
+                        <td>{history.changedBy?.name ?? '—'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
       </div>
 
-      <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-400)' }}>
-        <Card title="Registration Details">
-          <dl className="detail-list">
-            <div><dt>Registration No.</dt><dd><code>{reg.registrationNo}</code></dd></div>
-            <div><dt>Status</dt><dd><StatusBadge status={reg.status} /></dd></div>
-            <div><dt>Full Name</dt><dd>{reg.fullName}</dd></div>
-            <div><dt>Date of Birth</dt><dd>{new Date(reg.dob).toLocaleDateString()}</dd></div>
-            <div><dt>Gender</dt><dd>{reg.gender}</dd></div>
-            <div><dt>Email</dt><dd>{reg.email}</dd></div>
-            <div><dt>Mobile</dt><dd>{reg.mobile}</dd></div>
-            <div><dt>Nationality</dt><dd>{reg.nationality}</dd></div>
-            {reg.passportNo && <div><dt>Passport No.</dt><dd>{reg.passportNo}</dd></div>}
-            <div><dt>Registered</dt><dd>{dateTimeFormat.format(new Date(reg.createdAt))}</dd></div>
-          </dl>
-        </Card>
-
-        <Card title="Address & Origin">
-          <dl className="detail-list">
-            <div><dt>Country</dt><dd>{reg.country}</dd></div>
-            <div><dt>City</dt><dd>{reg.city}</dd></div>
-            {reg.state && <div><dt>State</dt><dd>{reg.state}</dd></div>}
-            <div><dt>Address Line 1</dt><dd>{reg.address1}</dd></div>
-            {reg.address2 && <div><dt>Address Line 2</dt><dd>{reg.address2}</dd></div>}
-            {reg.postalCode && <div><dt>Postal Code</dt><dd>{reg.postalCode}</dd></div>}
-            <div><dt>District of Origin</dt><dd>{reg.districtOrigin}</dd></div>
-            {reg.village && <div><dt>Village</dt><dd>{reg.village}</dd></div>}
-            <div><dt>Relationship with Bengal</dt><dd>{reg.relationshipWithBengal}</dd></div>
-            {reg.languages && <div><dt>Languages</dt><dd>{reg.languages}</dd></div>}
-            {reg.interests && reg.interests.length > 0 && (
-              <div><dt>Interests</dt><dd>{reg.interests.join(', ')}</dd></div>
-            )}
-            <div><dt>Volunteer</dt><dd>{reg.volunteer ? 'Yes' : 'No'}</dd></div>
-            <div><dt>Receive Updates</dt><dd>{reg.receiveUpdates ? 'Yes' : 'No'}</dd></div>
-          </dl>
-        </Card>
-      </div>
-
-      {reg.status !== 'PENDING' && (
-        <Card title="Verification Details" style={{ marginTop: 'var(--space-400)' }}>
-          <dl className="detail-list">
-            {reg.verifiedBy && (
-              <>
-                <div><dt>Verified By</dt><dd>{reg.verifiedBy.name}</dd></div>
-                <div><dt>Verified At</dt><dd>{reg.verifiedAt ? dateTimeFormat.format(new Date(reg.verifiedAt)) : '—'}</dd></div>
-              </>
-            )}
-            {reg.rejectedBy && (
-              <>
-                <div><dt>Rejected By</dt><dd>{reg.rejectedBy.name}</dd></div>
-                <div><dt>Rejected At</dt><dd>{reg.rejectedAt ? dateTimeFormat.format(new Date(reg.rejectedAt)) : '—'}</dd></div>
-                <div><dt>Reason</dt><dd>{reg.rejectionReason ?? '—'}</dd></div>
-              </>
-            )}
-          </dl>
-        </Card>
-      )}
-
-      {reg.histories && reg.histories.length > 0 && (
-        <Card title="Verification History" style={{ marginTop: 'var(--space-400)' }}>
-          <div className="table-wrapper">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>Previous Status</th>
-                  <th>New Status</th>
-                  <th>Reason</th>
-                  <th>Changed By</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reg.histories.map((h) => (
-                  <tr key={h.id}>
-                    <td>{h.action}</td>
-                    <td>{h.previousStatus ? <StatusBadge status={h.previousStatus} /> : '—'}</td>
-                    <td><StatusBadge status={h.newStatus} /></td>
-                    <td>{h.reason ?? '—'}</td>
-                    <td>{h.changedBy?.name ?? '—'}</td>
-                    <td>{dateTimeFormat.format(new Date(h.createdAt))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
       <ConfirmDialog
-        open={actionType !== null}
-        title={actionType === 'verify' ? 'Verify Registration' : 'Reject Registration'}
-        message={
-          <div>
-            <p>{actionType === 'verify' ? `Verify ${reg.fullName}?` : `Reject ${reg.fullName}?`}</p>
-            <div style={{ marginTop: 'var(--space-200)' }}>
-              <label className="field__label" htmlFor="action-reason">
-                {actionType === 'reject' ? 'Reason (required)' : 'Remarks (optional)'}
-              </label>
-              <textarea
-                id="action-reason"
-                className="field__control"
-                rows={3}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-            </div>
-          </div>
-        }
-        confirmLabel={actionType === 'verify' ? 'Verify' : 'Reject'}
-        destructive={actionType === 'reject'}
+        open={verifyOpen}
+        title="Verify Registration"
+        message="Verify this registration and create the login account?"
+        confirmLabel="Verify"
         busy={busy}
-        onConfirm={confirmAction}
-        onCancel={() => { setActionType(null); setReason(''); }}
+        onConfirm={handleVerify}
+        onCancel={() => setVerifyOpen(false)}
       />
+
+      <Modal open={rejectOpen} title="Reject Registration" onClose={() => { setRejectOpen(false); setRejectReason(''); }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleReject();
+          }}
+        >
+          <div className="field">
+            <label className="field__label" htmlFor="detailRejectReason">
+              Rejection reason <span className="field__required">*</span>
+            </label>
+            <textarea
+              id="detailRejectReason"
+              rows={4}
+              required
+              className="field__control"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </div>
+          <div className="form-actions">
+            <Button type="button" variant="secondary" size="md" onClick={() => { setRejectOpen(false); setRejectReason(''); }}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="danger" size="md" disabled={busy}>
+              {busy ? 'Rejecting…' : 'Reject'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

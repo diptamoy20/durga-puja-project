@@ -31,6 +31,7 @@ export interface CommitteeMedia {
   subcategory?: { id: number; name: string } | null;
   uploadedBy?: { id: number; name: string };
   moderatedBy?: { id: number; name: string } | null;
+  processingStatus?: string;
 }
 
 export interface MediaListQuery {
@@ -44,6 +45,8 @@ export interface MediaListQuery {
   pujaCommitteeId?: number;
   categoryId?: number;
   subcategoryId?: number;
+  albumStatus?: 'ACTIVE' | 'INACTIVE';
+  visibility?: 'public' | 'private';
 }
 
 // ---------------------------------------------------------------------------

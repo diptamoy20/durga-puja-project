@@ -33,7 +33,10 @@ export function MediaUploadPage() {
 
   useEffect(() => {
     if (categoryId) {
-      subcategoryService.list(Number(categoryId)).then(setSubcategories).catch(() => {});
+      subcategoryService
+        .list({ categoryId: Number(categoryId), perPage: 100, sortDir: 'asc' })
+        .then((res) => setSubcategories(res.items))
+        .catch(() => {});
     } else {
       setSubcategories([]);
     }

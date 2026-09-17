@@ -69,10 +69,8 @@ let DiasporaService = DiasporaService_1 = class DiasporaService {
     }
     async nextRegistrationNo() {
         const year = new Date().getFullYear();
-        const count = await this.prisma.diasporaRegistration.count({
-            where: { createdAt: { gte: new Date(`${year}-01-01T00:00:00Z`) } },
-        });
-        return `DIA-${year}-${String(count + 1).padStart(6, '0')}`;
+        const suffix = (0, node_crypto_1.randomBytes)(4).toString('hex').toUpperCase();
+        return `DGC-D-${year}-${suffix}`;
     }
     async findAll(query) {
         const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
@@ -111,6 +109,7 @@ let DiasporaService = DiasporaService_1 = class DiasporaService {
             include: {
                 verifiedBy: { select: { id: true, name: true } },
                 rejectedBy: { select: { id: true, name: true } },
+                user: { select: { id: true, email: true, status: true, initialPassword: true } },
                 histories: {
                     orderBy: { createdAt: 'desc' },
                     include: { changedBy: { select: { id: true, name: true } } },
@@ -191,9 +190,9 @@ let DiasporaService = DiasporaService_1 = class DiasporaService {
         const password = this.generatePassword();
         const rounds = this.config.get('registration.bcryptRounds') ?? 12;
         const now = new Date();
-        return this.prisma.$transaction(async (tx) => {
+        let generatedPassword = null;
+        await this.prisma.$transaction(async (tx) => {
             let userId = registration.userId;
-            let generatedPassword = null;
             if (!userId) {
                 const existingUser = await tx.user.findUnique({
                     where: { email: registration.email },
@@ -217,6 +216,7 @@ let DiasporaService = DiasporaService_1 = class DiasporaService {
                             city: registration.city,
                             address,
                             password: await bcrypt.hash(password, rounds),
+                            initialPassword: password,
                             mustChangePassword: true,
                             status: database_1.UserStatus.ACTIVE,
                             emailVerified: true,
@@ -224,7 +224,7 @@ let DiasporaService = DiasporaService_1 = class DiasporaService {
                             createdById: actorId,
                             roles: { create: [{ roleId: role.id, assignedById: actorId }] },
                         },
-                        select: { id: true, email: true },
+                        select: { id: true, email: true, initialPassword: true },
                     });
                     userId = created.id;
                     generatedPassword = password;
@@ -248,17 +248,16 @@ let DiasporaService = DiasporaService_1 = class DiasporaService {
                     changedById: actorId,
                 },
             });
-            return {
-                ...updated,
-                generatedPassword,
-            };
         });
+        const fullRegistration = await this.findOne(id);
+        return { ...fullRegistration, generatedPassword };
     }
     async reject(payload) {
         if (!payload.reason?.trim()) {
             throw shared_1.ServiceException.badRequest('A reason is required when rejecting a registration.');
         }
-        return this.decide(payload, database_1.DiasporaStatus.REJECTED);
+        await this.decide(payload, database_1.DiasporaStatus.REJECTED);
+        return this.findOne(payload.id);
     }
     async decide(payload, status) {
         const { id, reason, actorId } = payload;

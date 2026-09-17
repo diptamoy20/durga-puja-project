@@ -50,8 +50,20 @@ const CommitteeEditPage = lazy(() =>
 const CategoriesPage = lazy(() =>
   import('@/pages/categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })),
 );
+const CategoryFormPage = lazy(() =>
+  import('@/pages/categories/CategoryFormPage').then((m) => ({ default: m.CategoryFormPage })),
+);
+const CategoryDetailPage = lazy(() =>
+  import('@/pages/categories/CategoryDetailPage').then((m) => ({ default: m.CategoryDetailPage })),
+);
 const SubcategoriesPage = lazy(() =>
   import('@/pages/categories/SubcategoriesPage').then((m) => ({ default: m.SubcategoriesPage })),
+);
+const SubcategoryFormPage = lazy(() =>
+  import('@/pages/categories/SubcategoryFormPage').then((m) => ({ default: m.SubcategoryFormPage })),
+);
+const SubcategoryDetailPage = lazy(() =>
+  import('@/pages/categories/SubcategoryDetailPage').then((m) => ({ default: m.SubcategoryDetailPage })),
 );
 
 // Articles & Content
@@ -105,6 +117,17 @@ const WebinarDetailPage = lazy(() =>
 );
 const RsvpManagementPage = lazy(() =>
   import('@/pages/webinars/RsvpManagementPage').then((m) => ({ default: m.RsvpManagementPage })),
+);
+
+// Committee member media pages
+const MyCommitteeMediaListPage = lazy(() =>
+  import('@/pages/committee-media/MyCommitteeMediaListPage').then((m) => ({ default: m.MyCommitteeMediaListPage })),
+);
+const MyCommitteeMediaUploadPage = lazy(() =>
+  import('@/pages/committee-media/MyCommitteeMediaUploadPage').then((m) => ({ default: m.MyCommitteeMediaUploadPage })),
+);
+const CommitteeAlbumListPage = lazy(() =>
+  import('@/pages/committee-albums/CommitteeAlbumListPage').then((m) => ({ default: m.CommitteeAlbumListPage })),
 );
 
 // Public Pages
@@ -278,6 +301,32 @@ export function AppRoutes() {
           }
         />
 
+        {/* Committee member media & albums */}
+        <Route
+          path={ROUTES.MY_COMMITTEE_MEDIA}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_GALLERY]}>
+              <MyCommitteeMediaListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_MEDIA_CREATE}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.UPLOAD_MEDIA]}>
+              <MyCommitteeMediaUploadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_ALBUMS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ALBUMS]}>
+              <CommitteeAlbumListPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Master: Categories & Subcategories */}
         <Route
           path={ROUTES.CATEGORIES}
@@ -288,10 +337,58 @@ export function AppRoutes() {
           }
         />
         <Route
+          path={ROUTES.CATEGORY_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <CategoryFormPage mode="create" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.CATEGORY_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <CategoryFormPage mode="edit" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.CATEGORY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
+              <CategoryDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path={ROUTES.SUBCATEGORIES}
           element={
             <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
               <SubcategoriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUBCATEGORY_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <SubcategoryFormPage mode="create" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUBCATEGORY_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <SubcategoryFormPage mode="edit" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUBCATEGORY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
+              <SubcategoryDetailPage />
             </ProtectedRoute>
           }
         />
