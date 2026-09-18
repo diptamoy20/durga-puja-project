@@ -202,6 +202,9 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Drafts', icon: 'fa-file', to: `${ROUTES.ARTICLES}?status=DRAFT` },
       { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.ARTICLES}?status=IN_REVIEW` },
       { label: 'Published', icon: 'fa-tower-broadcast', tone: 'success', to: `${ROUTES.ARTICLES}?status=PUBLISHED` },
+      { label: 'Podcasts Library', icon: 'fa-podcast', to: ROUTES.PODCASTS },
+      { label: 'Add Podcast', icon: 'fa-circle-plus', to: ROUTES.PODCAST_NEW },
+      { label: 'Public Podcast Hub', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_PODCASTS },
     ],
   },
 
