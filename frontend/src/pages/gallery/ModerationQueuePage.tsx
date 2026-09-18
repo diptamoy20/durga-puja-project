@@ -2,33 +2,70 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
-import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
+import { MediaFiltersBar } from '@/components/gallery/MediaFiltersBar';
+import { MediaPreviewModal } from '@/components/gallery/MediaPreviewModal';
+import { MediaTable } from '@/components/gallery/MediaTable';
 import { ROUTES } from '@/constants/routes';
 import { adminMediaService } from '@/services/galleryService';
+import { categoryService, subcategoryService } from '@/services/contentService';
 import { useToast } from '@/hooks/useToast';
-import type { CommitteeMedia, MediaModerationStatus } from '@/types/gallery';
+import type { CommitteeMedia, MediaListQuery, MediaModerationStatus, MediaType } from '@/types/gallery';
+import type { Category, Subcategory } from '@/types/content';
 import type { PaginationMeta } from '@/types';
+
+import '@/styles/gallery-admin.css';
 
 export function ModerationQueuePage() {
   const toast = useToast();
 
   const [items, setItems] = useState<CommitteeMedia[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState<MediaListQuery>({
+    page: 1,
+    perPage: 15,
+    sortDir: 'desc',
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [actionItem, setActionItem] = useState<{ id: number; title: string; decision: MediaModerationStatus } | null>(null);
+  const [previewItem, setPreviewItem] = useState<CommitteeMedia | null>(null);
+  const [actionItem, setActionItem] = useState<{
+    id: number;
+    title: string;
+    decision: MediaModerationStatus;
+  } | null>(null);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async (page = 1) => {
+  useEffect(() => {
+    categoryService.list().then((r) => setCategories(r.items)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (query.categoryId) {
+      subcategoryService
+        .list({ categoryId: query.categoryId, perPage: 100, sortDir: 'asc' })
+        .then((res) => setSubcategories(res.items))
+        .catch(() => setSubcategories([]));
+    } else {
+      setSubcategories([]);
+    }
+  }, [query.categoryId]);
+
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await adminMediaService.moderationQueue({ page, perPage: 12 });
+      const res = await adminMediaService.moderationQueue({
+        ...query,
+        status: 'PENDING',
+      });
       setItems(res.items);
       setPagination(res.pagination);
     } catch (err: unknown) {
@@ -36,21 +73,30 @@ export function ModerationQueuePage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [query]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    setQuery((q) => ({ ...q, search: search.trim() || undefined, page: 1 }));
+  };
+
   const handleDecision = async () => {
     if (!actionItem) return;
+    if (actionItem.decision === 'REJECTED' && !reason.trim()) {
+      toast.warning('Rejection reason is required.');
+      return;
+    }
     setBusy(true);
     try {
-      await adminMediaService.moderate(actionItem.id, actionItem.decision, reason || undefined);
+      await adminMediaService.moderate(actionItem.id, actionItem.decision, reason.trim() || undefined);
       toast.success(`Media marked as ${actionItem.decision.toLowerCase()}.`);
       setActionItem(null);
       setReason('');
-      load(pagination?.page ?? 1);
+      load();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Action failed.');
     } finally {
@@ -60,121 +106,96 @@ export function ModerationQueuePage() {
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="page__header">
         <div>
-          <div style={{ marginBottom: 'var(--space-100)' }}>
-            <Link to={ROUTES.GALLERY_MEDIA} className="btn btn--secondary btn--sm">
-              ← Back to All Media
-            </Link>
-          </div>
-          <h1 className="page__title">Media Moderation Queue</h1>
-          <p className="page__subtitle">Review and approve uploaded photos and videos before they appear in public galleries.</p>
+          <Link to={ROUTES.GALLERY_MEDIA} className="btn btn--secondary btn--sm" style={{ marginBottom: 'var(--space-200)' }}>
+            ← Back to All Media
+          </Link>
+          <h1 className="page__title">Pending Moderation</h1>
+          <p className="page__subtitle">
+            Review and approve uploaded photos and videos before they appear in public galleries.
+          </p>
         </div>
       </header>
 
       {error && <Alert tone="danger">{error}</Alert>}
 
       <Card>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-800)' }}>Loading queue…</div>
-        ) : items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-800)', color: 'var(--color-text-muted)' }}>
-            ✓ The moderation queue is empty! No pending media items to review.
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 'var(--space-400)',
-            }}
-          >
-            {items.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-md)',
-                  overflow: 'hidden',
-                  background: 'var(--color-surface)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <div style={{ height: '180px', background: 'var(--color-surface-sunken)' }}>
-                  {item.mediaType === 'PHOTO' ? (
-                    <img
-                      src={item.thumbnailPath || item.storedPath}
-                      alt={item.title || item.originalFilename}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                      <span>▶ Video Clip</span>
-                    </div>
-                  )}
-                </div>
+        <MediaFiltersBar
+          search={search}
+          onSearchChange={setSearch}
+          onSearchSubmit={handleSearchSubmit}
+          showStatusFilter={false}
+          mediaType={query.mediaType}
+          onMediaTypeChange={(mediaType: MediaType | undefined) =>
+            setQuery((q) => ({ ...q, mediaType, page: 1 }))
+          }
+          categoryId={query.categoryId}
+          onCategoryChange={(categoryId) =>
+            setQuery((q) => ({ ...q, categoryId, subcategoryId: undefined, page: 1 }))
+          }
+          subcategoryId={query.subcategoryId}
+          onSubcategoryChange={(subcategoryId) =>
+            setQuery((q) => ({ ...q, subcategoryId, page: 1 }))
+          }
+          categories={categories}
+          subcategories={subcategories}
+        />
 
-                <div style={{ padding: 'var(--space-300)', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 var(--space-100) 0', fontSize: 'var(--font-sm)', fontWeight: 600 }}>
-                      {item.title || item.originalFilename}
-                    </h4>
-                    <p style={{ margin: '0 0 var(--space-100) 0', fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
-                      Committee: <strong>{item.committee?.committeeName ?? '—'}</strong>
-                    </p>
-                    {item.venueName && (
-                      <p style={{ margin: 0, fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
-                        Venue: {item.venueName}
-                      </p>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 'var(--space-200)', marginTop: 'var(--space-400)' }}>
-                    <Link to={ROUTES.GALLERY_DETAIL(item.id)} className="btn btn--secondary btn--sm" style={{ flex: 1, textAlign: 'center' }}>
-                      Detail
-                    </Link>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setActionItem({ id: item.id, title: item.title || item.originalFilename, decision: 'APPROVED' })}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => setActionItem({ id: item.id, title: item.title || item.originalFilename, decision: 'REJECTED' })}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <MediaTable
+          items={items}
+          loading={loading}
+          detailRoute={ROUTES.GALLERY_DETAIL}
+          editRoute={ROUTES.GALLERY_MEDIA_EDIT}
+          canEdit
+          canModerate
+          onPreview={setPreviewItem}
+          onApprove={(item) =>
+            setActionItem({
+              id: item.id,
+              title: item.title || item.originalFilename,
+              decision: 'APPROVED',
+            })
+          }
+          onReject={(item) =>
+            setActionItem({
+              id: item.id,
+              title: item.title || item.originalFilename,
+              decision: 'REJECTED',
+            })
+          }
+          emptyMessage="The moderation queue is empty. No pending media items to review."
+        />
 
         {pagination && pagination.lastPage > 1 && (
-          <Pagination meta={pagination} onPageChange={(page) => load(page)} />
+          <Pagination meta={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
         )}
       </Card>
+
+      <MediaPreviewModal
+        item={previewItem}
+        open={previewItem !== null}
+        onClose={() => setPreviewItem(null)}
+      />
 
       <ConfirmDialog
         open={actionItem !== null}
         title={`Confirm ${actionItem?.decision}: ${actionItem?.title}`}
         message={
           <div>
-            <p>Are you sure you want to <strong>{actionItem?.decision}</strong> this item?</p>
+            <p>
+              Are you sure you want to <strong>{actionItem?.decision}</strong> this item?
+            </p>
             {actionItem?.decision === 'REJECTED' && (
-              <div style={{ marginTop: 'var(--space-200)' }}>
+              <div className="field" style={{ marginTop: 'var(--space-200)' }}>
                 <label className="field__label" htmlFor="queueReason">
-                  Rejection Reason (required)
+                  Rejection Reason *
                 </label>
                 <textarea
                   id="queueReason"
                   className="field__control"
-                  rows={2}
+                  rows={3}
+                  required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                 />

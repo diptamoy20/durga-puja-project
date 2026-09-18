@@ -187,8 +187,7 @@ let GalleryService = GalleryService_1 = class GalleryService {
                 },
             });
             this.logger.log(`Media #${media.id} uploaded for committee #${data.pujaCommitteeId}`);
-            // BigInt is not JSON-serialisable, so it crosses TCP as a string.
-            return { ...media, fileSize: media.fileSize.toString() };
+            return this.serialiseMedia({ ...media, fileSize: media.fileSize.toString() });
         }
         catch (error) {
             (0, shared_1.translatePrismaError)(error, 'media item');

@@ -4,18 +4,19 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Modal } from '@/components/ui/Modal';
 import { PageLoader } from '@/components/ui/Spinner';
+import { AlbumMediaPicker } from '@/components/gallery/AlbumMediaPicker';
+import { MediaPreviewModal } from '@/components/gallery/MediaPreviewModal';
+import { MediaPreviewThumb } from '@/components/gallery/MediaPreviewThumb';
 import { ROUTES } from '@/constants/routes';
 import { albumService, committeeAlbumService } from '@/services/galleryService';
 import { categoryService, subcategoryService } from '@/services/contentService';
 import { adminAtlasService } from '@/services/atlasService';
 import { useToast } from '@/hooks/useToast';
-import { mediaThumbnailUrl } from '@/utils/galleryHelpers';
-import type { CommitteeMedia, MediaType } from '@/types/gallery';
+import { formatMediaType } from '@/utils/galleryHelpers';
+import type { CommitteeMedia } from '@/types/gallery';
 import type { Category, Subcategory } from '@/types/content';
 import type { AtlasFormCommitteeOption } from '@/types/atlas';
-import type { PaginationMeta } from '@/types';
 
 import '@/styles/gallery-admin.css';
 
@@ -50,12 +51,7 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
   const [selectedMedia, setSelectedMedia] = useState<CommitteeMedia[]>([]);
 
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerType, setPickerType] = useState<MediaType>('PHOTO');
-  const [pickerItems, setPickerItems] = useState<CommitteeMedia[]>([]);
-  const [pickerPagination, setPickerPagination] = useState<PaginationMeta | undefined>();
-  const [pickerSearch, setPickerSearch] = useState('');
-  const [pickerPage, setPickerPage] = useState(1);
-  const [pickerSelection, setPickerSelection] = useState<number[]>([]);
+  const [previewItem, setPreviewItem] = useState<CommitteeMedia | null>(null);
 
   useEffect(() => {
     categoryService.list().then((r) => setCategories(r.items)).catch(() => {});
@@ -94,51 +90,23 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
       .finally(() => setLoading(false));
   }, [id, service]);
 
-  const loadPicker = useCallback(async () => {
-    const committeeId = isAdmin ? Number(pujaCommitteeId) : undefined;
-    if (isAdmin && !committeeId) {
-      setPickerItems([]);
-      return;
-    }
-    const res = await service.mediaPicker({
-      page: pickerPage,
-      perPage: 12,
-      mediaType: pickerType,
-      search: pickerSearch || undefined,
-      pujaCommitteeId: committeeId,
-    });
-    setPickerItems(res.items);
-    setPickerPagination(res.pagination);
-  }, [isAdmin, pickerPage, pickerSearch, pickerType, pujaCommitteeId, service]);
+  const loadPickerPage = useCallback(
+    async (query: { page: number; perPage: number; mediaType?: CommitteeMedia['mediaType']; search?: string }) => {
+      const committeeId = isAdmin ? Number(pujaCommitteeId) : undefined;
+      return service.mediaPicker({
+        ...query,
+        pujaCommitteeId: committeeId,
+      });
+    },
+    [isAdmin, pujaCommitteeId, service],
+  );
 
-  useEffect(() => {
-    if (pickerOpen) void loadPicker().catch(() => {});
-  }, [pickerOpen, loadPicker]);
-
-  const openPicker = (type: MediaType) => {
+  const openPicker = () => {
     if (isAdmin && !pujaCommitteeId) {
       toast.warning('Select a committee before choosing media.');
       return;
     }
-    setPickerType(type);
-    setPickerSelection(selectedMedia.filter((m) => m.mediaType === type).map((m) => m.id));
-    setPickerPage(1);
     setPickerOpen(true);
-  };
-
-  const applyPickerSelection = () => {
-    const pickedFromPage = pickerItems.filter((item) => pickerSelection.includes(item.id));
-    const keptExisting = selectedMedia.filter(
-      (item) =>
-        item.mediaType === pickerType
-        && pickerSelection.includes(item.id)
-        && !pickedFromPage.some((picked) => picked.id === item.id),
-    );
-    const mergedType = [...keptExisting, ...pickedFromPage];
-    const otherType = selectedMedia.filter((item) => item.mediaType !== pickerType);
-    const unique = Array.from(new Map([...otherType, ...mergedType].map((item) => [item.id, item])).values());
-    setSelectedMedia(unique);
-    setPickerOpen(false);
   };
 
   const removeMedia = (mediaId: number) => {
@@ -286,11 +254,11 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
 
             <fieldset className="field">
               <legend className="field__label">Visibility</legend>
-              <label style={{ display: 'flex', gap: 'var(--space-150)', marginBottom: 'var(--space-100)' }}>
+              <label className="album-form__radio">
                 <input type="radio" name="visibility" checked={!isPublic} onChange={() => setIsPublic(false)} />
                 Private
               </label>
-              <label style={{ display: 'flex', gap: 'var(--space-150)' }}>
+              <label className="album-form__radio">
                 <input type="radio" name="visibility" checked={isPublic} onChange={() => setIsPublic(true)} />
                 Public
               </label>
@@ -303,34 +271,29 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
                 Selected: <strong>{photoCount}</strong> image{photoCount === 1 ? '' : 's'},{' '}
                 <strong>{videoCount}</strong> video{videoCount === 1 ? '' : 's'}
               </div>
-              <div style={{ display: 'flex', gap: 'var(--space-200)', flexWrap: 'wrap' }}>
-                <Button type="button" variant="secondary" size="sm" onClick={() => openPicker('PHOTO')}>
-                  Select Images
-                </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={() => openPicker('VIDEO')}>
-                  Select Videos
-                </Button>
-              </div>
+              <Button type="button" variant="secondary" size="sm" onClick={openPicker}>
+                Select Images & Videos
+              </Button>
             </div>
 
             {selectedMedia.length === 0 ? (
-              <p style={{ color: 'var(--color-text-muted)' }}>No media selected yet. Choose approved committee media below.</p>
+              <p className="album-form__empty">No media selected yet. Choose approved committee photos and videos.</p>
             ) : (
               <div className="album-form__selected-grid">
                 {selectedMedia.map((item) => (
                   <div key={item.id} className="album-form__selected-card">
-                    <div className="album-form__selected-media">
-                      {item.mediaType === 'PHOTO' ? (
-                        <img src={mediaThumbnailUrl(item)} alt="" className="album-form__selected-image" />
-                      ) : item.thumbnailUrl ? (
-                        <img src={mediaThumbnailUrl(item)} alt="" className="album-form__selected-image" />
-                      ) : (
-                        <div className="album-form__selected-video">▶</div>
-                      )}
-                    </div>
+                    <MediaPreviewThumb item={item} size="md" onClick={() => setPreviewItem(item)} />
                     <div className="album-form__selected-body">
                       <div className="album-form__selected-title">{item.title || item.originalFilename}</div>
-                      <Button type="button" variant="danger" size="sm" onClick={() => removeMedia(item.id)}>Remove</Button>
+                      <div className="album-form__selected-type">{formatMediaType(item.mediaType)}</div>
+                      <div className="album-form__selected-actions">
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setPreviewItem(item)}>
+                          Preview
+                        </Button>
+                        <Button type="button" variant="danger" size="sm" onClick={() => removeMedia(item.id)}>
+                          Remove
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -339,7 +302,7 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
           </Card>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-200)', marginTop: 'var(--space-400)' }}>
+        <div className="album-form__footer">
           <Link to={listRoute} className="btn btn--secondary btn--md">Cancel</Link>
           <Button type="submit" variant="primary" size="md" disabled={saving}>
             {saving ? 'Saving…' : isEdit ? 'Update Album' : 'Create Album'}
@@ -347,60 +310,22 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
         </div>
       </form>
 
-      <Modal
+      <AlbumMediaPicker
         open={pickerOpen}
-        title={`Select ${pickerType === 'PHOTO' ? 'Images' : 'Videos'}`}
         onClose={() => setPickerOpen(false)}
-      >
-        <div style={{ display: 'flex', gap: 'var(--space-200)', marginBottom: 'var(--space-300)' }}>
-          <input
-            className="field__control"
-            placeholder="Search media"
-            value={pickerSearch}
-            onChange={(e) => setPickerSearch(e.target.value)}
-          />
-          <Button type="button" variant="secondary" size="sm" onClick={() => { setPickerPage(1); void loadPicker(); }}>
-            Search
-          </Button>
-        </div>
+        onApply={setSelectedMedia}
+        selectedIds={selectedMedia.map((item) => item.id)}
+        initialSelected={selectedMedia}
+        loadPage={loadPickerPage}
+        committeeRequired={isAdmin}
+        committeeSelected={Boolean(pujaCommitteeId)}
+      />
 
-        <div className="public-gallery__grid">
-          {pickerItems.map((item) => (
-            <label key={item.id} className="public-gallery-card" style={{ cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={pickerSelection.includes(item.id)}
-                onChange={(e) => {
-                  setPickerSelection((prev) =>
-                    e.target.checked ? [...prev, item.id] : prev.filter((value) => value !== item.id),
-                  );
-                }}
-                style={{ position: 'absolute', margin: 'var(--space-150)' }}
-              />
-              <div className="public-gallery-card__media">
-                <img src={mediaThumbnailUrl(item)} alt="" className="public-gallery-card__thumb" />
-              </div>
-              <div className="public-gallery-card__body">
-                <h2 className="public-gallery-card__title">{item.title || item.originalFilename}</h2>
-              </div>
-            </label>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-300)' }}>
-          <div style={{ display: 'flex', gap: 'var(--space-150)' }}>
-            <Button type="button" variant="secondary" size="sm" disabled={pickerPage <= 1} onClick={() => setPickerPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button type="button" variant="secondary" size="sm" disabled={!pickerPagination?.hasNextPage} onClick={() => setPickerPage((p) => p + 1)}>
-              Next
-            </Button>
-          </div>
-          <Button type="button" variant="primary" size="md" onClick={applyPickerSelection}>
-            Apply Selection
-          </Button>
-        </div>
-      </Modal>
+      <MediaPreviewModal
+        item={previewItem}
+        open={previewItem !== null}
+        onClose={() => setPreviewItem(null)}
+      />
     </div>
   );
 }

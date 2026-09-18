@@ -101,10 +101,29 @@ let PublicGalleryController = class PublicGalleryController {
         if (!safePath.startsWith('committee-media/') || safePath.includes('..')) {
             throw new common_1.NotFoundException('File not found.');
         }
-        const absolutePath = (0, node_path_1.join)(PUBLIC_UPLOAD_DIR, safePath);
+        const absolutePath = (0, node_path_1.resolve)(PUBLIC_UPLOAD_DIR, safePath);
         if (!(0, node_fs_1.existsSync)(absolutePath)) {
             throw new common_1.NotFoundException('File not found.');
         }
+        const ext = (0, node_path_1.extname)(absolutePath).toLowerCase();
+        const mimeByExt = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+            '.gif': 'image/gif',
+            '.mp4': 'video/mp4',
+            '.webm': 'video/webm',
+            '.mov': 'video/quicktime',
+            '.mpeg': 'video/mpeg',
+            '.mpg': 'video/mpeg',
+        };
+        const contentType = mimeByExt[ext];
+        if (contentType) {
+            res.setHeader('Content-Type', contentType);
+        }
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
         return res.sendFile(absolutePath);
     }
     show(id) {
@@ -426,6 +445,12 @@ let AlbumsController = class AlbumsController {
             actorId: actor.id,
         });
     }
+    mediaPicker(query) {
+        if (!query.pujaCommitteeId) {
+            throw new common_1.BadRequestException('A puja committee is required for the media picker.');
+        }
+        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_MEDIA_PICKER, query);
+    }
     syncMedia(id, dto, actor) {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_SYNC_MEDIA, {
             id,
@@ -445,9 +470,6 @@ let AlbumsController = class AlbumsController {
     }
     remove(id) {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_REMOVE, { id });
-    }
-    mediaPicker(query, actor) {
-        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_MEDIA_PICKER, query);
     }
 };
 exports.AlbumsController = AlbumsController;
@@ -473,6 +495,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AlbumsController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)('media-picker'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_ALBUMS, shared_1.PERMISSIONS.VIEW_ALBUMS),
+    (0, response_interceptor_1.ResponseMessage)('Media picker results retrieved successfully'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_t = typeof gallery_dto_1.ListMediaQueryDto !== "undefined" && gallery_dto_1.ListMediaQueryDto) === "function" ? _t : Object]),
+    __metadata("design:returntype", void 0)
+], AlbumsController.prototype, "mediaPicker", null);
+__decorate([
     (0, common_1.Put)(':id/media'),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_ALBUMS),
     (0, response_interceptor_1.ResponseMessage)('Album media updated successfully'),
@@ -487,16 +518,6 @@ __decorate([
     __metadata("design:paramtypes", [Number, typeof (_w = typeof gallery_dto_1.SyncAlbumMediaDto !== "undefined" && gallery_dto_1.SyncAlbumMediaDto) === "function" ? _w : Object, typeof (_x = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _x : Object]),
     __metadata("design:returntype", void 0)
 ], AlbumsController.prototype, "syncMedia", null);
-__decorate([
-    (0, common_1.Get)('media-picker'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_ALBUMS, shared_1.PERMISSIONS.VIEW_ALBUMS),
-    (0, response_interceptor_1.ResponseMessage)('Media picker results retrieved successfully'),
-    __param(0, (0, common_1.Query)()),
-    __param(1, (0, shared_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_x = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _x : Object]),
-    __metadata("design:returntype", void 0)
-], AlbumsController.prototype, "mediaPicker", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_ALBUMS),
@@ -560,6 +581,15 @@ let CommitteeAlbumsController = class CommitteeAlbumsController {
             scopeToCommitteeId: actor.committeeId,
         });
     }
+    mediaPicker(query, actor) {
+        if (!actor.committeeId) {
+            throw new common_1.BadRequestException('No approved committee is linked to this account.');
+        }
+        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_MEDIA_PICKER, {
+            ...query,
+            scopeToCommitteeId: actor.committeeId,
+        });
+    }
     findOne(id, actor) {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_FIND_ONE, {
             id,
@@ -578,15 +608,6 @@ let CommitteeAlbumsController = class CommitteeAlbumsController {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_REMOVE, {
             id,
             scopeToCommitteeId: actor.committeeId ?? undefined,
-        });
-    }
-    mediaPicker(query, actor) {
-        if (!actor.committeeId) {
-            throw new common_1.BadRequestException('No approved committee is linked to this account.');
-        }
-        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_MEDIA_PICKER, {
-            ...query,
-            scopeToCommitteeId: actor.committeeId,
         });
     }
     syncMedia(id, dto, actor) {
@@ -625,7 +646,7 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __param(1, (0, shared_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_x = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _x : Object]),
+    __metadata("design:paramtypes", [typeof (_t = typeof gallery_dto_1.ListMediaQueryDto !== "undefined" && gallery_dto_1.ListMediaQueryDto) === "function" ? _t : Object, typeof (_x = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _x : Object]),
     __metadata("design:returntype", void 0)
 ], CommitteeAlbumsController.prototype, "mediaPicker", null);
 __decorate([

@@ -5,36 +5,18 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
+import { MediaPreviewThumb } from '@/components/gallery/MediaPreviewThumb';
 import { PERMISSIONS } from '@/constants/permissions';
 import { PageLoader } from '@/components/ui/Spinner';
-import { ROUTES } from '@/constants/routes';
 import { StatusBadge } from '@/components/ui/Badge';
+import { ROUTES } from '@/constants/routes';
 import { adminMediaService, committeeMediaService } from '@/services/galleryService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { mediaStreamUrl } from '@/utils/galleryHelpers';
+import { mediaDetailRows, mediaStatusTone, mediaStreamUrl } from '@/utils/galleryHelpers';
 import type { CommitteeMedia, MediaModerationStatus } from '@/types/gallery';
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: true,
-});
-
-function statusTone(status: MediaModerationStatus): 'default' | 'success' | 'warning' | 'danger' {
-  switch (status) {
-    case 'APPROVED':
-      return 'success';
-    case 'REJECTED':
-      return 'danger';
-    case 'PENDING':
-    default:
-      return 'warning';
-  }
-}
+import '@/styles/gallery-admin.css';
 
 interface MediaDetailPageProps {
   mode?: 'admin' | 'committee';
@@ -72,12 +54,16 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
 
   const handleModerate = async () => {
     if (!moderateAction || !media) return;
+    if (moderateAction === 'REJECTED' && !rejectionReason.trim()) {
+      toast.warning('Rejection reason is required.');
+      return;
+    }
     setBusy(true);
     try {
       const updated = await adminMediaService.moderate(
         media.id,
         moderateAction,
-        rejectionReason || undefined,
+        rejectionReason.trim() || undefined,
       );
       setMedia(updated);
       toast.success(`Media marked as ${moderateAction.toLowerCase()}.`);
@@ -102,24 +88,27 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
     );
   }
 
+  const streamUrl = mediaStreamUrl(media);
+  const detailRows = mediaDetailRows(media);
+
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
+      <header className="page__header media-detail__header">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-200)', marginBottom: 'var(--space-100)' }}>
+          <div className="media-detail__breadcrumb">
             <Link to={listRoute} className="btn btn--secondary btn--sm">
               ← Back
             </Link>
-            <StatusBadge tone={statusTone(media.status)}>{media.status}</StatusBadge>
+            <StatusBadge tone={mediaStatusTone(media.status)}>{media.status}</StatusBadge>
             <span className="badge badge--info">{media.mediaType}</span>
           </div>
           <h1 className="page__title">{media.title || media.originalFilename}</h1>
           <p className="page__subtitle">
-            Uploaded by {media.committee?.committeeName ?? 'Puja Committee'} · {dateTimeFormat.format(new Date(media.createdAt))}
+            {media.committee?.committeeName ?? 'Puja Committee'}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--space-200)', flexWrap: 'wrap' }}>
+        <div className="media-detail__actions">
           {canEdit && (
             <Link to={editRoute(media.id)} className="btn btn--secondary btn--md">
               Edit Media
@@ -138,73 +127,61 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 'var(--space-400)' }}>
+      <div className="media-detail__grid">
         <Card title="Preview">
-          <div style={{ textAlign: 'center', background: 'var(--color-surface-sunken)', borderRadius: 'var(--radius-md)', padding: 'var(--space-300)' }}>
+          <div className="media-detail__preview">
             {media.mediaType === 'PHOTO' ? (
               <img
-                src={mediaStreamUrl(media)}
+                src={streamUrl}
                 alt={media.title || media.originalFilename}
-                style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }}
+                className="media-detail__media"
               />
             ) : (
-              <video controls style={{ maxWidth: '100%', maxHeight: '500px' }} src={mediaStreamUrl(media)} />
+              <video src={streamUrl} controls className="media-detail__media" preload="metadata" />
             )}
           </div>
-
           {media.description && (
-            <div style={{ marginTop: 'var(--space-300)' }}>
-              <h3 style={{ fontSize: 'var(--font-sm)', marginBottom: 'var(--space-100)' }}>Description</h3>
+            <div className="media-detail__description">
+              <h3>Description</h3>
               <p>{media.description}</p>
             </div>
           )}
         </Card>
 
-        <Card title="Details">
+        <Card title="Media Details">
           <dl className="detail-list">
-            <div className="detail-list__row">
-              <dt>Committee</dt>
-              <dd>{media.committee?.committeeName ?? '—'}</dd>
-            </div>
-            <div className="detail-list__row">
-              <dt>Category</dt>
-              <dd>{media.category?.name ?? '—'}</dd>
-            </div>
-            {media.subcategory && (
-              <div className="detail-list__row">
-                <dt>Subcategory</dt>
-                <dd>{media.subcategory.name}</dd>
+            {detailRows.map((row) => (
+              <div key={row.label} className="detail-list__row">
+                <dt>{row.label}</dt>
+                <dd>{row.value}</dd>
               </div>
-            )}
-            <div className="detail-list__row">
-              <dt>Original filename</dt>
-              <dd>{media.originalFilename}</dd>
-            </div>
-            {media.rejectionReason && (
-              <div className="detail-list__row">
-                <dt>Rejection reason</dt>
-                <dd>{media.rejectionReason}</dd>
-              </div>
-            )}
+            ))}
           </dl>
         </Card>
       </div>
+
+      <Card title="Thumbnail">
+        <MediaPreviewThumb item={media} size="lg" />
+      </Card>
 
       <ConfirmDialog
         open={moderateAction !== null}
         title={`Confirm: ${moderateAction}`}
         message={
           <div>
-            <p>Are you sure you want to mark this media item as <strong>{moderateAction}</strong>?</p>
+            <p>
+              Are you sure you want to mark this media item as <strong>{moderateAction}</strong>?
+            </p>
             {moderateAction === 'REJECTED' && (
-              <div style={{ marginTop: 'var(--space-200)' }}>
+              <div className="field" style={{ marginTop: 'var(--space-200)' }}>
                 <label className="field__label" htmlFor="rejectionReasonInput">
-                  Rejection Reason (required)
+                  Rejection Reason *
                 </label>
                 <textarea
                   id="rejectionReasonInput"
                   className="field__control"
-                  rows={2}
+                  rows={3}
+                  required
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                 />
