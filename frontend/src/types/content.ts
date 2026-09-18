@@ -75,6 +75,38 @@ export interface ArticleListQuery {
 
 export type RecordStatusType = 'ACTIVE' | 'INACTIVE';
 
+export interface CategoryListQuery {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  sortDir?: 'asc' | 'desc';
+  status?: RecordStatusType;
+}
+
+export interface SubcategoryListQuery {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  sortDir?: 'asc' | 'desc';
+  status?: RecordStatusType;
+  categoryId?: number;
+}
+
+export interface CategoryFormValues {
+  name: string;
+  slug?: string;
+  description?: string;
+  status: RecordStatusType;
+}
+
+export interface SubcategoryFormValues {
+  categoryId: number;
+  name: string;
+  slug?: string;
+  description?: string;
+  status: RecordStatusType;
+}
+
 export interface Category {
   id: number;
   name: string;

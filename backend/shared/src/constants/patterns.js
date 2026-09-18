@@ -79,6 +79,7 @@ exports.REGISTRATION_PATTERNS = {
     COMMITTEE_CHANGE_STATUS: 'committee.change_status',
     COMMITTEE_REMOVE: 'committee.remove',
     COMMITTEE_CREATE_PORTAL_ACCOUNT: 'committee.create_portal_account',
+    COMMITTEE_GENERATE_LOCAL_PASSWORD: 'committee.generate_local_password',
     COMMITTEE_STATS: 'committee.stats',
 };
 exports.CONTENT_PATTERNS = {
@@ -97,12 +98,27 @@ exports.CONTENT_PATTERNS = {
     CATEGORY_UPDATE: 'category.update',
     CATEGORY_REMOVE: 'category.remove',
     SUBCATEGORY_FIND_ALL: 'subcategory.find_all',
+    SUBCATEGORY_FIND_ONE: 'subcategory.find_one',
     SUBCATEGORY_CREATE: 'subcategory.create',
     SUBCATEGORY_UPDATE: 'subcategory.update',
     SUBCATEGORY_REMOVE: 'subcategory.remove',
     MEDIA_FIND_ALL: 'content_media.find_all',
     MEDIA_CREATE: 'content_media.create',
     MEDIA_REMOVE: 'content_media.remove',
+    PODCAST_FIND_ALL: 'podcast.find_all',
+    PODCAST_FIND_ONE: 'podcast.find_one',
+    PODCAST_FIND_BY_SLUG: 'podcast.find_by_slug',
+    PODCAST_CREATE: 'podcast.create',
+    PODCAST_UPDATE: 'podcast.update',
+    PODCAST_REMOVE: 'podcast.remove',
+    PODCAST_TOGGLE_STATUS: 'podcast.toggle_status',
+    PODCAST_PUBLIC_LIST: 'podcast.public_list',
+    PODCAST_FEATURED: 'podcast.featured',
+    PODCAST_PLAY: 'podcast.play',
+    PODCAST_REACT: 'podcast.react',
+    PODCAST_SUBSCRIBE: 'podcast.subscribe',
+    PODCAST_STATS: 'podcast.stats',
+    PODCAST_RSS: 'podcast.rss',
 };
 exports.GALLERY_PATTERNS = {
     MEDIA_PUBLIC_LIST: 'gallery.public_list',
@@ -114,12 +130,14 @@ exports.GALLERY_PATTERNS = {
     MEDIA_REMOVE: 'gallery.remove',
     MEDIA_MODERATION_QUEUE: 'gallery.moderation_queue',
     MEDIA_MODERATE: 'gallery.moderate',
+    MEDIA_PUBLIC_FILTER_OPTIONS: 'gallery.public_filter_options',
     ALBUM_FIND_ALL: 'album.find_all',
     ALBUM_FIND_ONE: 'album.find_one',
     ALBUM_CREATE: 'album.create',
     ALBUM_UPDATE: 'album.update',
     ALBUM_REMOVE: 'album.remove',
     ALBUM_SYNC_MEDIA: 'album.sync_media',
+    ALBUM_MEDIA_PICKER: 'album.media_picker',
 };
 exports.ATLAS_PATTERNS = {
     FIND_ALL: 'atlas.find_all',
@@ -132,6 +150,7 @@ exports.ATLAS_PATTERNS = {
     PUBLIC_LIST: 'atlas.public_list',
     MAP_DATA: 'atlas.map_data',
     STATS: 'atlas.stats',
+    FORM_OPTIONS: 'atlas.form_options',
 };
 exports.EVENTS_PATTERNS = {
     WEBINAR_FIND_ALL: 'webinar.find_all',

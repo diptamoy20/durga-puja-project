@@ -54,17 +54,11 @@ class CreatePandalDto {
     latitude;
     longitude;
     pujaCommitteeId;
-    photos;
     timing;
-    specialFeatures;
-    history;
-    artisan;
-    theme;
-    pujaType;
-    footfall;
-    contactPhone;
-    contactEmail;
-    website;
+    ritualSchedule;
+    livestreamUrl;
+    virtualTourUrl;
+    action;
 }
 exports.CreatePandalDto = CreatePandalDto;
 __decorate([
@@ -78,6 +72,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(1000),
     __metadata("design:type", String)
 ], CreatePandalDto.prototype, "location", void 0);
 __decorate([
@@ -99,92 +94,50 @@ __decorate([
     __metadata("design:type", Number)
 ], CreatePandalDto.prototype, "pujaCommitteeId", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    __metadata("design:type", Object)
-], CreatePandalDto.prototype, "photos", void 0);
-__decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(255),
     __metadata("design:type", String)
 ], CreatePandalDto.prototype, "timing", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(255),
-    __metadata("design:type", String)
-], CreatePandalDto.prototype, "specialFeatures", void 0);
-__decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(5000),
     __metadata("design:type", String)
-], CreatePandalDto.prototype, "history", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(255),
-    __metadata("design:type", String)
-], CreatePandalDto.prototype, "artisan", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(255),
-    __metadata("design:type", String)
-], CreatePandalDto.prototype, "theme", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(100),
-    __metadata("design:type", String)
-], CreatePandalDto.prototype, "pujaType", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(30),
-    __metadata("design:type", String)
-], CreatePandalDto.prototype, "footfall", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(20),
-    __metadata("design:type", String)
-], CreatePandalDto.prototype, "contactPhone", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(180),
-    __metadata("design:type", String)
-], CreatePandalDto.prototype, "contactEmail", void 0);
+], CreatePandalDto.prototype, "ritualSchedule", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
-], CreatePandalDto.prototype, "website", void 0);
+], CreatePandalDto.prototype, "livestreamUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(500),
+    __metadata("design:type", String)
+], CreatePandalDto.prototype, "virtualTourUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: ['draft', 'submit'] }),
+    (0, class_validator_1.IsIn)(['draft', 'submit']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreatePandalDto.prototype, "action", void 0);
 class UpdatePandalDto {
     name;
     location;
     latitude;
     longitude;
-    photos;
+    pujaCommitteeId;
     timing;
-    specialFeatures;
-    history;
-    artisan;
-    theme;
-    pujaType;
-    footfall;
-    contactPhone;
-    contactEmail;
-    website;
+    ritualSchedule;
+    livestreamUrl;
+    virtualTourUrl;
+    removePhotos;
+    action;
 }
 exports.UpdatePandalDto = UpdatePandalDto;
 __decorate([
@@ -199,6 +152,7 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(1000),
     __metadata("design:type", String)
 ], UpdatePandalDto.prototype, "location", void 0);
 __decorate([
@@ -217,8 +171,11 @@ __decorate([
 ], UpdatePandalDto.prototype, "longitude", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
-    __metadata("design:type", Object)
-], UpdatePandalDto.prototype, "photos", void 0);
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdatePandalDto.prototype, "pujaCommitteeId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
@@ -230,64 +187,34 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(255),
+    (0, class_validator_1.MaxLength)(5000),
     __metadata("design:type", String)
-], UpdatePandalDto.prototype, "specialFeatures", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], UpdatePandalDto.prototype, "history", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(255),
-    __metadata("design:type", String)
-], UpdatePandalDto.prototype, "artisan", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(255),
-    __metadata("design:type", String)
-], UpdatePandalDto.prototype, "theme", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(100),
-    __metadata("design:type", String)
-], UpdatePandalDto.prototype, "pujaType", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(30),
-    __metadata("design:type", String)
-], UpdatePandalDto.prototype, "footfall", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(20),
-    __metadata("design:type", String)
-], UpdatePandalDto.prototype, "contactPhone", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(180),
-    __metadata("design:type", String)
-], UpdatePandalDto.prototype, "contactEmail", void 0);
+], UpdatePandalDto.prototype, "ritualSchedule", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
-], UpdatePandalDto.prototype, "website", void 0);
+], UpdatePandalDto.prototype, "livestreamUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(500),
+    __metadata("design:type", String)
+], UpdatePandalDto.prototype, "virtualTourUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Array)
+], UpdatePandalDto.prototype, "removePhotos", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: ['save', 'submit'] }),
+    (0, class_validator_1.IsIn)(['save', 'submit']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdatePandalDto.prototype, "action", void 0);
 class ModeratePandalDto {
     decision;
     remarks;

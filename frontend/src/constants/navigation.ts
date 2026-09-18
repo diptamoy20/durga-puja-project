@@ -132,7 +132,7 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Approved (Map DB)', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.PANDAL_ATLAS}?status=APPROVED` },
       { label: 'Rejected', icon: 'fa-circle-xmark', tone: 'danger', to: `${ROUTES.PANDAL_ATLAS}?status=REJECTED` },
       { label: 'Drafts', icon: 'fa-pen-to-square', to: `${ROUTES.PANDAL_ATLAS}?status=DRAFT` },
-      { label: 'Add New Pandal', icon: 'fa-circle-plus', to: ROUTES.PANDAL_ATLAS_NEW },
+      { label: 'Add New Pandal', icon: 'fa-circle-plus', to: ROUTES.PANDAL_ATLAS_NEW, end: true },
       { label: 'Public Map View', icon: 'fa-location-dot', tone: 'warning', to: ROUTES.PUBLIC_ATLAS },
     ],
   },
@@ -202,6 +202,9 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Drafts', icon: 'fa-file', to: `${ROUTES.ARTICLES}?status=DRAFT` },
       { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.ARTICLES}?status=IN_REVIEW` },
       { label: 'Published', icon: 'fa-tower-broadcast', tone: 'success', to: `${ROUTES.ARTICLES}?status=PUBLISHED` },
+      { label: 'Podcasts Library', icon: 'fa-podcast', to: ROUTES.PODCASTS },
+      { label: 'Add Podcast', icon: 'fa-circle-plus', to: ROUTES.PODCAST_NEW },
+      { label: 'Public Podcast Hub', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_PODCASTS },
     ],
   },
 
@@ -234,15 +237,16 @@ export const NAVIGATION: NavSection[] = [
     permissions: [PERMISSIONS.VIEW_GALLERY],
     hiddenWhen: [PERMISSIONS.MODERATE_MEDIA],
     items: [
-      { label: 'My Media', icon: 'fa-images' },
+      { label: 'My Media', icon: 'fa-images', to: ROUTES.MY_COMMITTEE_MEDIA },
       {
         label: 'Upload Media',
         icon: 'fa-cloud-arrow-up',
         permissions: [PERMISSIONS.UPLOAD_MEDIA],
+        to: ROUTES.MY_COMMITTEE_MEDIA_CREATE,
       },
-      { label: 'Pending', icon: 'fa-hourglass-half', tone: 'warning' },
-      { label: 'Approved', icon: 'fa-circle-check', tone: 'success' },
-      { label: 'Rejected', icon: 'fa-circle-xmark', tone: 'danger' },
+      { label: 'Pending', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.MY_COMMITTEE_MEDIA}?status=PENDING` },
+      { label: 'Approved', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.MY_COMMITTEE_MEDIA}?status=APPROVED` },
+      { label: 'Rejected', icon: 'fa-circle-xmark', tone: 'danger', to: `${ROUTES.MY_COMMITTEE_MEDIA}?status=REJECTED` },
     ],
   },
 
@@ -251,8 +255,8 @@ export const NAVIGATION: NavSection[] = [
     permissions: [PERMISSIONS.VIEW_ALBUMS],
     hiddenWhen: [PERMISSIONS.MANAGE_ALBUMS],
     items: [
-      { label: 'Albums', icon: 'fa-photo-film' },
-      { label: 'Create Album', icon: 'fa-circle-plus' },
+      { label: 'Albums', icon: 'fa-photo-film', to: ROUTES.MY_COMMITTEE_ALBUMS },
+      { label: 'Create Album', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_ALBUM_NEW },
     ],
   },
 

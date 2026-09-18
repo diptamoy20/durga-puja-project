@@ -27,6 +27,8 @@ storage/uploads/*
 !storage/uploads/.gitkeep
 backend/storage/uploads/*
 !backend/storage/uploads/.gitkeep
+backend/api-gateway/storage/uploads/*
+!backend/api-gateway/storage/uploads/.gitkeep
 
 # Logs
 logs/
@@ -56,3 +58,6 @@ coverage/
 scratch/
 tmp/
 temp/
+
+# Legacy Laravel reference (local only)
+_php_old_extract/

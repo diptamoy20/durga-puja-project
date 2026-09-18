@@ -36,6 +36,7 @@ class ListMediaQueryDto extends shared_1.PaginationQueryDto {
     pujaCommitteeId;
     categoryId;
     subcategoryId;
+    pandal;
 }
 exports.ListMediaQueryDto = ListMediaQueryDto;
 __decorate([
@@ -77,6 +78,12 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], ListMediaQueryDto.prototype, "subcategoryId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by venue / pandal name' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ListMediaQueryDto.prototype, "pandal", void 0);
 class CreateMediaDto {
     mediaType;
     title;
@@ -234,6 +241,8 @@ class CreateAlbumDto {
     title;
     description;
     isPublic;
+    status;
+    mediaIds;
 }
 exports.CreateAlbumDto = CreateAlbumDto;
 __decorate([
@@ -250,9 +259,10 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateAlbumDto.prototype, "subcategoryId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Required for admin album creation; omitted for committee members.' }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateAlbumDto.prototype, "pujaCommitteeId", void 0);
 __decorate([
@@ -277,6 +287,20 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => value === true || value === 'true' || value === '1'),
     __metadata("design:type", Boolean)
 ], CreateAlbumDto.prototype, "isPublic", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE' }),
+    (0, class_validator_1.IsIn)(['ACTIVE', 'INACTIVE']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateAlbumDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: [Number] }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)({ each: true }),
+    __metadata("design:type", Array)
+], CreateAlbumDto.prototype, "mediaIds", void 0);
 class SyncAlbumMediaDto {
     mediaIds;
 }

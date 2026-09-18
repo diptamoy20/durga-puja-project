@@ -14,6 +14,6 @@ let GalleryModule = class GalleryModule {
 exports.GalleryModule = GalleryModule;
 exports.GalleryModule = GalleryModule = __decorate([
     (0, common_1.Module)({
-        controllers: [gallery_controller_1.PublicGalleryController, gallery_controller_1.CommitteeMediaController, gallery_controller_1.AdminMediaController, gallery_controller_1.AlbumsController],
+        controllers: [gallery_controller_1.PublicGalleryController, gallery_controller_1.CommitteeMediaController, gallery_controller_1.AdminMediaController, gallery_controller_1.AlbumsController, gallery_controller_1.CommitteeAlbumsController],
     })
 ], GalleryModule);

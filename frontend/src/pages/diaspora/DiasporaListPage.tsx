@@ -4,35 +4,30 @@ import { Link } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ConfirmDialog } from '@/components/ui/Modal';
+import { ConfirmDialog, Modal } from '@/components/ui/Modal';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Pagination } from '@/components/ui/Pagination';
 import { PERMISSIONS } from '@/constants/permissions';
-import { Spinner } from '@/components/ui/Spinner';
+import { ROUTES } from '@/constants/routes';
 import { StatusBadge } from '@/components/ui/Badge';
 import { diasporaService } from '@/services/registrationService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import type {
-  DiasporaListQuery,
-  DiasporaRegistration,
-  DiasporaStats,
-  DiasporaStatus,
-} from '@/types/registration';
+import type { DiasporaListQuery, DiasporaRegistration, DiasporaStatus } from '@/types/registration';
 import type { PaginationMeta } from '@/types';
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit', month: 'short', year: 'numeric',
-  hour: '2-digit', minute: '2-digit', hour12: true,
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
 });
 
 const STATUS_FILTERS: Array<{ value: DiasporaStatus | ''; label: string }> = [
-  { value: '', label: 'All Statuses' },
+  { value: '', label: 'All statuses' },
   { value: 'PENDING', label: 'Pending' },
   { value: 'VERIFIED', label: 'Verified' },
   { value: 'REJECTED', label: 'Rejected' },
 ];
-
-type PendingAction = { type: 'verify' | 'reject'; id: number; name: string } | null;
 
 export function DiasporaListPage() {
   const toast = useToast();
@@ -40,13 +35,15 @@ export function DiasporaListPage() {
 
   const [items, setItems] = useState<DiasporaRegistration[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
-  const [stats, setStats] = useState<DiasporaStats | null>(null);
   const [query, setQuery] = useState<DiasporaListQuery>({ page: 1, perPage: 15, sortDir: 'desc' });
+  const [draftSearch, setDraftSearch] = useState('');
+  const [draftStatus, setDraftStatus] = useState<DiasporaStatus | ''>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [pending, setPending] = useState<PendingAction>(null);
-  const [reason, setReason] = useState('');
+
+  const [verifyTarget, setVerifyTarget] = useState<DiasporaRegistration | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<DiasporaRegistration | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [busy, setBusy] = useState(false);
 
   const canVerify = can(PERMISSIONS.VERIFY_DIASPORA);
@@ -56,13 +53,9 @@ export function DiasporaListPage() {
     setLoading(true);
     setError(null);
     try {
-      const [result, statsResult] = await Promise.all([
-        diasporaService.list(query),
-        diasporaService.stats(),
-      ]);
+      const result = await diasporaService.list(query);
       setItems(result.items);
       setPagination(result.pagination);
-      setStats(statsResult);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load registrations.');
     } finally {
@@ -70,140 +63,145 @@ export function DiasporaListPage() {
     }
   }, [query]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  const handleSearch = () => setQuery((q) => ({ ...q, search, page: 1 }));
+  const applyFilters = (e: React.FormEvent) => {
+    e.preventDefault();
+    setQuery((current) => ({
+      ...current,
+      search: draftSearch.trim() || undefined,
+      status: draftStatus || undefined,
+      page: 1,
+    }));
+  };
 
-  const confirmPending = async () => {
-    if (!pending) return;
+  const resetFilters = () => {
+    setDraftSearch('');
+    setDraftStatus('');
+    setQuery({ page: 1, perPage: 15, sortDir: 'desc' });
+  };
+
+  const confirmVerify = async () => {
+    if (!verifyTarget) return;
     setBusy(true);
     try {
-      if (pending.type === 'verify') {
-        await diasporaService.verify(pending.id, reason || undefined);
-        toast.success(`${pending.name} verified successfully.`);
-      } else {
-        if (!reason.trim()) { toast.warning('Please provide a reason for rejection.'); setBusy(false); return; }
-        await diasporaService.reject(pending.id, reason);
-        toast.success(`${pending.name} rejected.`);
-      }
-      setPending(null);
-      setReason('');
+      await diasporaService.verify(verifyTarget.id);
+      toast.success('Registration verified and login credentials sent.');
+      setVerifyTarget(null);
       void load();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Action failed.');
+      toast.error(err instanceof Error ? err.message : 'Verification failed.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget || !rejectReason.trim()) {
+      toast.warning('Rejection reason is required.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await diasporaService.reject(rejectTarget.id, rejectReason.trim());
+      toast.success('Registration rejected.');
+      setRejectTarget(null);
+      setRejectReason('');
+      void load();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Rejection failed.');
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="users-page">
-      <div className="users-page__head">
-        <h1 className="users-page__title">Diaspora Verification</h1>
-      </div>
+    <div className="page">
+      <PageHeader
+        title="Diaspora Verification"
+        breadcrumbs={[{ label: 'Dashboard', to: ROUTES.DASHBOARD }, { label: 'Diaspora Verification' }]}
+      />
 
-      {stats && (
-        <div className="dashboard-grid" style={{ marginBottom: 'var(--space-400)' }}>
-          {[
-            { label: 'Total', value: stats.total, tone: 'info' as const },
-            { label: 'Pending', value: stats.pending, tone: 'warning' as const },
-            { label: 'Verified', value: stats.verified, tone: 'success' as const },
-            { label: 'Rejected', value: stats.rejected, tone: 'danger' as const },
-          ].map((s) => (
-            <div key={s.label} className={`metric-card metric-card--${s.tone}`}>
-              <div className="metric-card__value">{s.value}</div>
-              <div className="metric-card__label">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      {error && <Alert tone="danger">{error}</Alert>}
 
-      {error && <Alert variant="error">{error}</Alert>}
-
-      <Card className="card--filters">
-        <div className="filters">
-          <div className="filters__row">
-            <div className="field field--search">
-              <input
-                className="field__control"
-                type="text"
-                placeholder="Search name, email, registration no."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <Button variant="secondary" size="sm" onClick={handleSearch}>Search</Button>
-            </div>
-
+      <Card className="mb-4">
+        <form className="form-grid form-grid--3" onSubmit={applyFilters}>
+          <div className="field">
+            <label className="field__label" htmlFor="diasporaSearch">Search</label>
+            <input
+              id="diasporaSearch"
+              className="field__control"
+              placeholder="Registration ID, name, or email"
+              value={draftSearch}
+              onChange={(e) => setDraftSearch(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label className="field__label" htmlFor="diasporaStatus">Status</label>
             <select
-              className="field__control field__control--sm"
-              value={query.status ?? ''}
-              onChange={(e) => setQuery((q) => ({ ...q, status: (e.target.value || undefined) as DiasporaStatus | undefined, page: 1 }))}
+              id="diasporaStatus"
+              className="field__control"
+              value={draftStatus}
+              onChange={(e) => setDraftStatus(e.target.value as DiasporaStatus | '')}
             >
-              {STATUS_FILTERS.map((f) => (
-                <option key={f.value} value={f.value}>{f.label}</option>
+              {STATUS_FILTERS.map((filter) => (
+                <option key={filter.label} value={filter.value}>{filter.label}</option>
               ))}
             </select>
           </div>
-        </div>
+          <div className="field" style={{ alignSelf: 'end' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <Button type="submit" variant="primary" size="md">Search</Button>
+              <Button type="button" variant="secondary" size="md" onClick={resetFilters}>Reset</Button>
+            </div>
+          </div>
+        </form>
       </Card>
 
-      <Card className="card--table" title="Registrations">
+      <Card title="Registrations">
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Reg. No</th>
-                <th scope="col">Full Name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Country</th>
-                <th scope="col">Status</th>
-                <th scope="col">Date</th>
-                <th scope="col" className="table__actions">Actions</th>
+                <th>Registration ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Country</th>
+                <th>Registration Date</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && items.length === 0 ? (
-                <tr><td colSpan={7} className="table__placeholder"><Spinner label="Loading" /></td></tr>
+              {loading ? (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-6)' }}>Loading registrations…</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={7} className="table__placeholder">No registrations found.</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-6)' }}>No diaspora registrations match the current filters.</td></tr>
               ) : (
                 items.map((reg) => (
                   <tr key={reg.id}>
-                    <td><code>{reg.registrationNo}</code></td>
+                    <td><strong>{reg.registrationNo}</strong></td>
                     <td>{reg.fullName}</td>
                     <td>{reg.email}</td>
                     <td>{reg.country}</td>
+                    <td>{dateFormat.format(new Date(reg.createdAt))}</td>
                     <td><StatusBadge status={reg.status} /></td>
-                    <td>{dateTimeFormat.format(new Date(reg.createdAt))}</td>
-                    <td className="table__actions">
-                      <div className="row-actions">
-                        <Link
-                          to={`/diaspora-verifications/${reg.id}`}
-                          className="icon-button icon-button--primary"
-                          aria-label={`View ${reg.fullName}`}
-                        >
-                          <i className="fas fa-eye" aria-hidden="true" />
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', gap: 'var(--space-150)', justifyContent: 'flex-end' }}>
+                        <Link to={ROUTES.DIASPORA_DETAIL(reg.id)} className="btn btn--secondary btn--sm" aria-label={`View ${reg.fullName}`}>
+                          View
                         </Link>
                         {canVerify && reg.status === 'PENDING' && (
-                          <button
-                            type="button"
-                            className="icon-button icon-button--success"
-                            aria-label={`Verify ${reg.fullName}`}
-                            onClick={() => setPending({ type: 'verify', id: reg.id, name: reg.fullName })}
-                          >
-                            <i className="fas fa-circle-check" aria-hidden="true" />
-                          </button>
+                          <Button variant="secondary" size="sm" onClick={() => setVerifyTarget(reg)}>
+                            Verify
+                          </Button>
                         )}
                         {canReject && reg.status === 'PENDING' && (
-                          <button
-                            type="button"
-                            className="icon-button icon-button--danger"
-                            aria-label={`Reject ${reg.fullName}`}
-                            onClick={() => setPending({ type: 'reject', id: reg.id, name: reg.fullName })}
-                          >
-                            <i className="fas fa-circle-xmark" aria-hidden="true" />
-                          </button>
+                          <Button variant="danger" size="sm" onClick={() => setRejectTarget(reg)}>
+                            Reject
+                          </Button>
                         )}
                       </div>
                     </td>
@@ -213,43 +211,56 @@ export function DiasporaListPage() {
             </tbody>
           </table>
         </div>
-
-        {pagination && (
-          <Pagination
-            pagination={pagination}
-            onPageChange={(page) => setQuery((q) => ({ ...q, page }))}
-          />
-        )}
+        <Pagination pagination={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
       </Card>
 
       <ConfirmDialog
-        open={pending !== null}
-        title={pending?.type === 'verify' ? 'Verify Registration' : 'Reject Registration'}
-        message={
-          <div>
-            <p>{pending?.type === 'verify'
-              ? `Verify ${pending?.name}'s diaspora registration?`
-              : `Reject ${pending?.name}'s diaspora registration?`}</p>
-            <div style={{ marginTop: 'var(--space-200)' }}>
-              <label className="field__label" htmlFor="reason">
-                {pending?.type === 'reject' ? 'Reason (required)' : 'Remarks (optional)'}
-              </label>
-              <textarea
-                id="reason"
-                className="field__control"
-                rows={3}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-            </div>
-          </div>
-        }
-        confirmLabel={pending?.type === 'verify' ? 'Verify' : 'Reject'}
-        destructive={pending?.type === 'reject'}
+        open={verifyTarget !== null}
+        title="Verify Registration"
+        message="Verify this registration and create the login account?"
+        confirmLabel="Verify"
         busy={busy}
-        onConfirm={confirmPending}
-        onCancel={() => { setPending(null); setReason(''); }}
+        onConfirm={confirmVerify}
+        onCancel={() => setVerifyTarget(null)}
       />
+
+      <Modal
+        open={rejectTarget !== null}
+        title="Reject Registration"
+        onClose={() => {
+          setRejectTarget(null);
+          setRejectReason('');
+        }}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void confirmReject();
+          }}
+        >
+          <div className="field">
+            <label className="field__label" htmlFor="rejectReason">
+              Rejection reason <span className="field__required">*</span>
+            </label>
+            <textarea
+              id="rejectReason"
+              rows={4}
+              required
+              className="field__control"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </div>
+          <div className="form-actions">
+            <Button type="button" variant="secondary" size="md" onClick={() => { setRejectTarget(null); setRejectReason(''); }}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="danger" size="md" disabled={busy}>
+              {busy ? 'Rejecting…' : 'Reject'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

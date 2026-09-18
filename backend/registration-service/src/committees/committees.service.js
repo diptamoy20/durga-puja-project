@@ -59,10 +59,20 @@ const bcrypt = __importStar(require("bcryptjs"));
  * portal account. Encoding the state machine here prevents that.
  */
 const ALLOWED_TRANSITIONS = {
-    [database_1.CommitteeStatus.PENDING]: [database_1.CommitteeStatus.UNDER_REVIEW, database_1.CommitteeStatus.APPROVED, database_1.CommitteeStatus.REJECTED],
-    [database_1.CommitteeStatus.UNDER_REVIEW]: [database_1.CommitteeStatus.APPROVED, database_1.CommitteeStatus.REJECTED],
+    [database_1.CommitteeStatus.PENDING]: [
+        database_1.CommitteeStatus.UNDER_REVIEW,
+        database_1.CommitteeStatus.APPROVED,
+        database_1.CommitteeStatus.REJECTED,
+        database_1.CommitteeStatus.INACTIVE,
+    ],
+    [database_1.CommitteeStatus.UNDER_REVIEW]: [
+        database_1.CommitteeStatus.APPROVED,
+        database_1.CommitteeStatus.REJECTED,
+        database_1.CommitteeStatus.INACTIVE,
+    ],
+    [database_1.CommitteeStatus.APPROVED]: [database_1.CommitteeStatus.INACTIVE],
     [database_1.CommitteeStatus.REJECTED]: [database_1.CommitteeStatus.UNDER_REVIEW],
-    [database_1.CommitteeStatus.APPROVED]: [],
+    [database_1.CommitteeStatus.INACTIVE]: [],
 };
 let CommitteesService = CommitteesService_1 = class CommitteesService {
     prisma;
@@ -72,13 +82,11 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
         this.prisma = prisma;
         this.config = config;
     }
-    /** Sequential, year-scoped reference number, e.g. PC-2026-000042. */
+    /** Sequential, year-scoped reference number matching the legacy Laravel format. */
     async nextRegistrationNo() {
         const year = new Date().getFullYear();
-        const count = await this.prisma.pujaCommittee.count({
-            where: { createdAt: { gte: new Date(`${year}-01-01T00:00:00Z`) } },
-        });
-        return `PC-${year}-${String(count + 1).padStart(6, '0')}`;
+        const suffix = (0, node_crypto_1.randomBytes)(4).toString('hex').toUpperCase();
+        return `DGC-C-${year}-${suffix}`;
     }
     generatePassword(length = 12) {
         const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
@@ -113,7 +121,7 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
                 take,
                 orderBy: { [query.sortBy ?? 'createdAt']: query.sortDir },
                 include: {
-                    user: { select: { id: true, email: true, status: true } },
+                    user: { select: { id: true, email: true, status: true, initialPassword: true, createdAt: true } },
                     approvedBy: { select: { id: true, name: true } },
                 },
             }),
@@ -125,7 +133,7 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
         const committee = await this.prisma.pujaCommittee.findFirst({
             where: { id, deletedAt: null },
             include: {
-                user: { select: { id: true, email: true, status: true } },
+                user: { select: { id: true, email: true, status: true, initialPassword: true, createdAt: true } },
                 approvedBy: { select: { id: true, name: true } },
                 rejectedBy: { select: { id: true, name: true } },
                 reviewedBy: { select: { id: true, name: true } },
@@ -186,11 +194,14 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
         if (!ALLOWED_TRANSITIONS[committee.status].includes(status)) {
             throw shared_1.ServiceException.badRequest(`A committee cannot move from ${committee.status} to ${status}.`, { from: committee.status, to: status, allowed: ALLOWED_TRANSITIONS[committee.status] });
         }
+        if (status === database_1.CommitteeStatus.UNDER_REVIEW && committee.status !== database_1.CommitteeStatus.PENDING) {
+            throw shared_1.ServiceException.badRequest('Only pending applications can be moved under review.');
+        }
         if (status === database_1.CommitteeStatus.REJECTED && !reason?.trim()) {
             throw shared_1.ServiceException.badRequest('A reason is required when rejecting an application.');
         }
         const now = new Date();
-        const updated = await this.prisma.$transaction(async (tx) => {
+        await this.prisma.$transaction(async (tx) => {
             const result = await tx.pujaCommittee.update({
                 where: { id },
                 data: {
@@ -199,8 +210,7 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
                         ? {
                             approvedById: actorId,
                             approvedAt: now,
-                            // Issue the public-facing committee code on approval.
-                            committeeId: committee.committeeId ?? `DPGC-${String(id).padStart(5, '0')}`,
+                            committeeId: committee.committeeId ?? `DPCOM-${new Date().getFullYear()}-${(0, node_crypto_1.randomBytes)(4).toString('hex').toUpperCase()}`,
                         }
                         : {}),
                     ...(status === database_1.CommitteeStatus.REJECTED
@@ -220,10 +230,71 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
                     changedById: actorId,
                 },
             });
+            if (status === database_1.CommitteeStatus.APPROVED) {
+                await this.provisionPortalAccountTx(tx, id, actorId);
+            }
             return result;
         });
         this.logger.log(`Committee #${id} moved ${committee.status} -> ${status} by user #${actorId}`);
-        return updated;
+        return this.findOne(id);
+    }
+    async provisionPortalAccountTx(tx, id, actorId) {
+        const committee = await tx.pujaCommittee.findFirst({
+            where: { id, deletedAt: null },
+            select: {
+                id: true,
+                email: true,
+                contactPersonName: true,
+                mobile: true,
+                country: true,
+                state: true,
+                city: true,
+                userId: true,
+            },
+        });
+        if (!committee || committee.userId)
+            return;
+        const existingUser = await tx.user.findUnique({
+            where: { email: committee.email },
+            select: { id: true, deletedAt: true, pujaCommittee: { select: { id: true } } },
+        });
+        if (existingUser) {
+            if (existingUser.deletedAt || (existingUser.pujaCommittee && existingUser.pujaCommittee.id !== id)) {
+                throw shared_1.ServiceException.conflict('The contact email is already associated with another user account.');
+            }
+            await tx.pujaCommittee.update({ where: { id }, data: { userId: existingUser.id } });
+            return;
+        }
+        const role = await tx.role.findUnique({ where: { slug: 'committee-member' }, select: { id: true } });
+        if (!role) {
+            throw shared_1.ServiceException.internal('The Committee Member role is missing. Run the database seed.');
+        }
+        const password = this.generatePassword();
+        const storeInitialPassword = (this.config.get('nodeEnv') ?? process.env.NODE_ENV) !== 'production';
+        const rounds = this.config.get('registration.bcryptRounds') ?? 12;
+        const [firstName, ...rest] = committee.contactPersonName.split(' ');
+        const created = await tx.user.create({
+            data: {
+                firstName,
+                lastName: rest.join(' ') || null,
+                name: committee.contactPersonName,
+                email: committee.email,
+                phone: committee.mobile,
+                country: committee.country,
+                state: committee.state,
+                city: committee.city,
+                password: await bcrypt.hash(password, rounds),
+                initialPassword: storeInitialPassword ? password : null,
+                mustChangePassword: true,
+                status: database_1.UserStatus.ACTIVE,
+                emailVerified: true,
+                emailVerifiedAt: new Date(),
+                createdById: actorId,
+                roles: { create: [{ roleId: role.id, assignedById: actorId }] },
+            },
+            select: { id: true },
+        });
+        await tx.pujaCommittee.update({ where: { id }, data: { userId: created.id } });
     }
     /**
      * Provisions the committee's portal login after approval.
@@ -257,59 +328,48 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
         if (committee.userId) {
             throw shared_1.ServiceException.conflict('This committee already has a portal account.');
         }
-        const emailTaken = await this.prisma.user.findUnique({
-            where: { email: committee.email },
-            select: { id: true },
+        const user = await this.prisma.$transaction(async (tx) => {
+            await this.provisionPortalAccountTx(tx, id, actorId);
+            return tx.pujaCommittee.findFirst({
+                where: { id },
+                select: { user: { select: { id: true, email: true, initialPassword: true } } },
+            });
         });
-        if (emailTaken) {
-            throw shared_1.ServiceException.conflict(`A user account already exists for ${committee.email}.`);
+        if (!user?.user) {
+            throw shared_1.ServiceException.internal('Portal account could not be created.');
         }
-        const role = await this.prisma.role.findUnique({
-            where: { slug: 'committee-member' },
-            select: { id: true },
+        this.logger.log(`Portal account ${user.user.email} created for committee #${id}`);
+        return {
+            userId: user.user.id,
+            email: user.user.email,
+            generatedPassword: user.user.initialPassword ?? undefined,
+            mustChangePassword: true,
+        };
+    }
+    async generateLocalPassword(payload) {
+        const { id, actorId } = payload;
+        const isDev = (this.config.get('nodeEnv') ?? process.env.NODE_ENV) !== 'production';
+        if (!isDev) {
+            throw shared_1.ServiceException.notFound('Not found.');
+        }
+        const committee = await this.prisma.pujaCommittee.findFirst({
+            where: { id, deletedAt: null },
+            select: { id: true, userId: true },
         });
-        if (!role) {
-            throw shared_1.ServiceException.internal('The Committee Member role is missing. Run the database seed.');
+        if (!committee?.userId) {
+            throw shared_1.ServiceException.notFound('Not found.');
         }
         const password = this.generatePassword();
         const rounds = this.config.get('registration.bcryptRounds') ?? 12;
-        const [firstName, ...rest] = committee.contactPersonName.split(' ');
-        const user = await this.prisma.$transaction(async (tx) => {
-            const created = await tx.user.create({
-                data: {
-                    firstName,
-                    lastName: rest.join(' ') || null,
-                    name: committee.contactPersonName,
-                    email: committee.email,
-                    phone: committee.mobile,
-                    country: committee.country,
-                    state: committee.state,
-                    city: committee.city,
-                    password: await bcrypt.hash(password, rounds),
-                    mustChangePassword: true,
-                    status: database_1.UserStatus.ACTIVE,
-                    emailVerified: true,
-                    emailVerifiedAt: new Date(),
-                    createdById: actorId,
-                    roles: { create: [{ roleId: role.id, assignedById: actorId }] },
-                },
-                select: { id: true, email: true },
-            });
-            await tx.pujaCommittee.update({
-                where: { id },
-                data: { userId: created.id },
-            });
-            return created;
+        await this.prisma.user.update({
+            where: { id: committee.userId },
+            data: {
+                password: await bcrypt.hash(password, rounds),
+                initialPassword: password,
+                updatedById: actorId,
+            },
         });
-        this.logger.log(`Portal account ${user.email} created for committee #${id}`);
-        // The password is returned once so the administrator can pass it on; it is
-        // never stored in plain text.
-        return {
-            userId: user.id,
-            email: user.email,
-            generatedPassword: password,
-            mustChangePassword: true,
-        };
+        return { generatedPassword: password };
     }
     async update(payload) {
         const { id, data } = payload;
@@ -365,6 +425,7 @@ let CommitteesService = CommitteesService_1 = class CommitteesService {
             under_review: byStatus.under_review ?? 0,
             approved: byStatus.approved ?? 0,
             rejected: byStatus.rejected ?? 0,
+            inactive: byStatus.inactive ?? 0,
         };
     }
 };

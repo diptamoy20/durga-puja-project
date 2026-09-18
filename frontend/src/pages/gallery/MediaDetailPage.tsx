@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { adminMediaService, committeeMediaService } from '@/services/galleryService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { mediaStreamUrl } from '@/utils/galleryHelpers';
 import type { CommitteeMedia, MediaModerationStatus } from '@/types/gallery';
 
 const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
@@ -35,10 +36,18 @@ function statusTone(status: MediaModerationStatus): 'default' | 'success' | 'war
   }
 }
 
-export function MediaDetailPage() {
+interface MediaDetailPageProps {
+  mode?: 'admin' | 'committee';
+}
+
+export function MediaDetailPage({ mode }: MediaDetailPageProps) {
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const { can } = useAuth();
+
+  const isAdmin = mode === 'admin' || can(PERMISSIONS.MODERATE_MEDIA);
+  const listRoute = isAdmin ? ROUTES.GALLERY_MEDIA : ROUTES.MY_COMMITTEE_MEDIA;
+  const editRoute = isAdmin ? ROUTES.GALLERY_MEDIA_EDIT : ROUTES.MY_COMMITTEE_MEDIA_EDIT;
 
   const [media, setMedia] = useState<CommitteeMedia | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,16 +58,17 @@ export function MediaDetailPage() {
   const [busy, setBusy] = useState(false);
 
   const canModerate = can(PERMISSIONS.MODERATE_MEDIA);
+  const canEdit = can(PERMISSIONS.UPLOAD_MEDIA) || canModerate;
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    const fetcher = canModerate ? adminMediaService.get : committeeMediaService.get;
+    const fetcher = isAdmin ? adminMediaService.get : committeeMediaService.get;
     fetcher(Number(id))
       .then(setMedia)
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load media.'))
       .finally(() => setLoading(false));
-  }, [id, canModerate]);
+  }, [id, isAdmin]);
 
   const handleModerate = async () => {
     if (!moderateAction || !media) return;
@@ -85,7 +95,7 @@ export function MediaDetailPage() {
     return (
       <div className="page">
         <Alert tone="danger">{error ?? 'Media not found.'}</Alert>
-        <Link to={ROUTES.GALLERY_MEDIA} className="btn btn--secondary btn--md">
+        <Link to={listRoute} className="btn btn--secondary btn--md">
           Back to Gallery
         </Link>
       </div>
@@ -97,7 +107,7 @@ export function MediaDetailPage() {
       <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-200)', marginBottom: 'var(--space-100)' }}>
-            <Link to={ROUTES.GALLERY_MEDIA} className="btn btn--secondary btn--sm">
+            <Link to={listRoute} className="btn btn--secondary btn--sm">
               ← Back
             </Link>
             <StatusBadge tone={statusTone(media.status)}>{media.status}</StatusBadge>
@@ -109,16 +119,23 @@ export function MediaDetailPage() {
           </p>
         </div>
 
-        {canModerate && media.status === 'PENDING' && (
-          <div style={{ display: 'flex', gap: 'var(--space-200)' }}>
-            <Button variant="primary" size="md" onClick={() => setModerateAction('APPROVED')}>
-              Approve Media
-            </Button>
-            <Button variant="danger" size="md" onClick={() => setModerateAction('REJECTED')}>
-              Reject Media
-            </Button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 'var(--space-200)', flexWrap: 'wrap' }}>
+          {canEdit && (
+            <Link to={editRoute(media.id)} className="btn btn--secondary btn--md">
+              Edit Media
+            </Link>
+          )}
+          {canModerate && media.status === 'PENDING' && (
+            <>
+              <Button variant="primary" size="md" onClick={() => setModerateAction('APPROVED')}>
+                Approve Media
+              </Button>
+              <Button variant="danger" size="md" onClick={() => setModerateAction('REJECTED')}>
+                Reject Media
+              </Button>
+            </>
+          )}
+        </div>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 'var(--space-400)' }}>
@@ -126,49 +143,51 @@ export function MediaDetailPage() {
           <div style={{ textAlign: 'center', background: 'var(--color-surface-sunken)', borderRadius: 'var(--radius-md)', padding: 'var(--space-300)' }}>
             {media.mediaType === 'PHOTO' ? (
               <img
-                src={media.storedPath}
+                src={mediaStreamUrl(media)}
                 alt={media.title || media.originalFilename}
                 style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }}
               />
             ) : (
-              <video controls style={{ maxWidth: '100%', maxHeight: '500px' }} src={media.storedPath} />
+              <video controls style={{ maxWidth: '100%', maxHeight: '500px' }} src={mediaStreamUrl(media)} />
             )}
           </div>
 
           {media.description && (
             <div style={{ marginTop: 'var(--space-300)' }}>
-              <h4>Description</h4>
+              <h3 style={{ fontSize: 'var(--font-sm)', marginBottom: 'var(--space-100)' }}>Description</h3>
               <p>{media.description}</p>
             </div>
           )}
         </Card>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-400)' }}>
-          <Card title="Media Information">
-            <dl className="detail-list">
-              <div><dt>File Name</dt><dd>{media.originalFilename}</dd></div>
-              <div><dt>File Size</dt><dd>{(media.fileSize / 1024 / 1024).toFixed(2)} MB</dd></div>
-              <div><dt>MIME Type</dt><dd><code>{media.mimeType}</code></dd></div>
-              <div><dt>Venue</dt><dd>{media.venueName || '—'}</dd></div>
-              <div><dt>Category</dt><dd>{media.category?.name ?? '—'}</dd></div>
-              <div><dt>Subcategory</dt><dd>{media.subcategory?.name ?? '—'}</dd></div>
-              <div><dt>Uploader</dt><dd>{media.uploadedBy?.name ?? '—'}</dd></div>
-            </dl>
-          </Card>
-
-          {media.status !== 'PENDING' && (
-            <Card title="Moderation Record">
-              <dl className="detail-list">
-                <div><dt>Decision</dt><dd><StatusBadge tone={statusTone(media.status)}>{media.status}</StatusBadge></dd></div>
-                <div><dt>Moderator</dt><dd>{media.moderatedBy?.name ?? '—'}</dd></div>
-                <div><dt>Moderated At</dt><dd>{media.moderatedAt ? dateTimeFormat.format(new Date(media.moderatedAt)) : '—'}</dd></div>
-                {media.rejectionReason && (
-                  <div><dt>Rejection Reason</dt><dd style={{ color: 'var(--color-danger)' }}>{media.rejectionReason}</dd></div>
-                )}
-              </dl>
-            </Card>
-          )}
-        </div>
+        <Card title="Details">
+          <dl className="detail-list">
+            <div className="detail-list__row">
+              <dt>Committee</dt>
+              <dd>{media.committee?.committeeName ?? '—'}</dd>
+            </div>
+            <div className="detail-list__row">
+              <dt>Category</dt>
+              <dd>{media.category?.name ?? '—'}</dd>
+            </div>
+            {media.subcategory && (
+              <div className="detail-list__row">
+                <dt>Subcategory</dt>
+                <dd>{media.subcategory.name}</dd>
+              </div>
+            )}
+            <div className="detail-list__row">
+              <dt>Original filename</dt>
+              <dd>{media.originalFilename}</dd>
+            </div>
+            {media.rejectionReason && (
+              <div className="detail-list__row">
+                <dt>Rejection reason</dt>
+                <dd>{media.rejectionReason}</dd>
+              </div>
+            )}
+          </dl>
+        </Card>
       </div>
 
       <ConfirmDialog

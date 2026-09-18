@@ -15,36 +15,71 @@ exports.GalleryService = void 0;
 const database_1 = require("@dpgc/database");
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
+const FILES_BASE = (process.env.PUBLIC_FILES_BASE_URL ?? 'http://localhost:5050/api/v1/gallery/files').replace(/\/$/, '');
 let GalleryService = GalleryService_1 = class GalleryService {
     prisma;
     logger = new common_1.Logger(GalleryService_1.name);
     constructor(prisma) {
         this.prisma = prisma;
     }
+    resolveFileUrl(path) {
+        if (!path || typeof path !== 'string')
+            return null;
+        if (path.startsWith('http://') || path.startsWith('https://'))
+            return path;
+        return `${FILES_BASE}/${path.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+    }
+    serialiseMedia(row) {
+        if (!row)
+            return row;
+        const fileSize = row.fileSize !== undefined ? Number(row.fileSize) : row.fileSize;
+        return {
+            ...row,
+            fileSize,
+            streamUrl: this.resolveFileUrl(row.storedPath),
+            thumbnailUrl: this.resolveFileUrl(row.thumbnailPath ?? row.storedPath),
+        };
+    }
+    mapMediaPage(result) {
+        return {
+            items: result.items.map((row) => this.serialiseMedia(row)),
+            pagination: result.pagination,
+        };
+    }
     buildWhere(query) {
+        const searchClause = query.search
+            ? {
+                OR: [
+                    { title: { contains: query.search, mode: 'insensitive' } },
+                    { description: { contains: query.search, mode: 'insensitive' } },
+                    { venueName: { contains: query.search, mode: 'insensitive' } },
+                    { originalFilename: { contains: query.search, mode: 'insensitive' } },
+                    { category: { name: { contains: query.search, mode: 'insensitive' } } },
+                    { subcategory: { name: { contains: query.search, mode: 'insensitive' } } },
+                ],
+            }
+            : undefined;
         return {
             deletedAt: null,
             ...(query.status ? { status: query.status } : {}),
             ...(query.mediaType ? { mediaType: query.mediaType } : {}),
             ...(query.categoryId ? { categoryId: query.categoryId } : {}),
             ...(query.subcategoryId ? { subcategoryId: query.subcategoryId } : {}),
-            // An explicit committee filter is narrowed further by the caller's own
-            // scope, so a Committee Member cannot read another committee's uploads.
             ...(query.scopeToCommitteeId
                 ? { pujaCommitteeId: query.scopeToCommitteeId }
                 : query.pujaCommitteeId
                     ? { pujaCommitteeId: query.pujaCommitteeId }
                     : {}),
             ...(query.uploadedById ? { uploadedById: query.uploadedById } : {}),
-            ...(query.search
+            ...(query.pandal
                 ? {
                     OR: [
-                        { title: { contains: query.search, mode: 'insensitive' } },
-                        { description: { contains: query.search, mode: 'insensitive' } },
-                        { venueName: { contains: query.search, mode: 'insensitive' } },
+                        { venueName: { contains: query.pandal, mode: 'insensitive' } },
+                        { committee: { venueName: { contains: query.pandal, mode: 'insensitive' } } },
                     ],
                 }
                 : {}),
+            ...(searchClause ?? {}),
         };
     }
     async findAll(query) {
@@ -65,7 +100,10 @@ let GalleryService = GalleryService_1 = class GalleryService {
             }),
             this.prisma.committeeMedia.count({ where }),
         ]);
-        return { items, pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total) };
+        return this.mapMediaPage({
+            items,
+            pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total),
+        });
     }
     /** Approved media only, for the public gallery. */
     async publicList(query) {
@@ -75,11 +113,30 @@ let GalleryService = GalleryService_1 = class GalleryService {
             scopeToCommitteeId: undefined,
         });
     }
+    async publicFilterOptions() {
+        const committees = await this.prisma.pujaCommittee.findMany({
+            where: { deletedAt: null, status: database_1.CommitteeStatus.APPROVED },
+            select: { id: true, committeeName: true },
+            orderBy: { committeeName: 'asc' },
+        });
+        return {
+            committees,
+            mediaTypes: [database_1.MediaType.PHOTO, database_1.MediaType.VIDEO],
+        };
+    }
     async findOne(payload) {
         const media = await this.prisma.committeeMedia.findFirst({
             where: { id: payload.id, deletedAt: null },
             include: {
-                committee: { select: { id: true, committeeName: true } },
+                committee: {
+                    select: {
+                        id: true,
+                        committeeName: true,
+                        city: true,
+                        state: true,
+                        venueName: true,
+                    },
+                },
                 category: true,
                 subcategory: true,
                 uploadedBy: { select: { id: true, name: true } },
@@ -88,13 +145,16 @@ let GalleryService = GalleryService_1 = class GalleryService {
         });
         if (!media)
             throw shared_1.ServiceException.notFound(`No media exists with id ${payload.id}.`);
+        if (payload.publicOnly && media.status !== database_1.MediaModerationStatus.APPROVED) {
+            throw shared_1.ServiceException.notFound(`No media exists with id ${payload.id}.`);
+        }
         if (payload.scopeToCommitteeId !== undefined &&
             media.pujaCommitteeId !== payload.scopeToCommitteeId) {
             // Reported as "not found" rather than "forbidden" so the response does
             // not confirm that someone else's media with this id exists.
             throw shared_1.ServiceException.notFound(`No media exists with id ${payload.id}.`);
         }
-        return media;
+        return this.serialiseMedia(media);
     }
     async create(payload) {
         const actorId = payload.actorId ?? payload.uploadedById;
@@ -121,6 +181,9 @@ let GalleryService = GalleryService_1 = class GalleryService {
                     uploadedById: actorId,
                     // Uploads await the moderation pipeline before becoming visible.
                     status: database_1.MediaModerationStatus.PENDING,
+                    processingStatus: database_1.ProcessingStatus.COMPLETE,
+                    virusScanStatus: database_1.VirusScanStatus.SKIPPED,
+                    aiModerationStatus: database_1.AiModerationStatus.SKIPPED,
                 },
             });
             this.logger.log(`Media #${media.id} uploaded for committee #${data.pujaCommitteeId}`);
@@ -133,11 +196,31 @@ let GalleryService = GalleryService_1 = class GalleryService {
     }
     async update(payload) {
         await this.findOne({ id: payload.id, scopeToCommitteeId: payload.scopeToCommitteeId });
+        const { fileReplaced, fileSize, ...fields } = payload.data ?? {};
+        const data = { ...fields };
+        if (fileSize !== undefined) {
+            data.fileSize = BigInt(fileSize);
+        }
+        if (fileReplaced) {
+            data.status = database_1.MediaModerationStatus.PENDING;
+            data.rejectionReason = null;
+            data.moderatedById = null;
+            data.moderatedAt = null;
+        }
+        if (data.pujaCommitteeId) {
+            const committee = await this.prisma.pujaCommittee.findFirst({
+                where: { id: data.pujaCommitteeId, deletedAt: null },
+                select: { id: true },
+            });
+            if (!committee) {
+                throw shared_1.ServiceException.badRequest('The selected committee does not exist.');
+            }
+        }
         const media = await this.prisma.committeeMedia.update({
             where: { id: payload.id },
-            data: payload.data,
+            data,
         });
-        return { ...media, fileSize: media.fileSize.toString() };
+        return this.serialiseMedia({ ...media, fileSize: media.fileSize.toString() });
     }
     async remove(payload) {
         await this.findOne({ id: payload.id, scopeToCommitteeId: payload.scopeToCommitteeId });
@@ -168,22 +251,28 @@ let GalleryService = GalleryService_1 = class GalleryService {
         if (media.status !== database_1.MediaModerationStatus.PENDING) {
             throw shared_1.ServiceException.badRequest(`This item has already been ${media.status.toLowerCase()}.`);
         }
-        if (decision === 'reject' && !reason?.trim()) {
+        const normalized = String(decision).toLowerCase();
+        const approve = normalized === 'approve' || normalized === 'approved';
+        const reject = normalized === 'reject' || normalized === 'rejected';
+        if (!approve && !reject) {
+            throw shared_1.ServiceException.badRequest('Decision must be approve or reject.');
+        }
+        if (reject && !reason?.trim()) {
             throw shared_1.ServiceException.badRequest('A reason is required when rejecting an upload.');
         }
         const updated = await this.prisma.committeeMedia.update({
             where: { id },
             data: {
-                status: decision === 'approve'
+                status: approve
                     ? database_1.MediaModerationStatus.APPROVED
                     : database_1.MediaModerationStatus.REJECTED,
-                rejectionReason: decision === 'reject' ? (reason ?? null) : null,
+                rejectionReason: reject ? (reason ?? null) : null,
                 moderatedById: actorId,
                 moderatedAt: new Date(),
             },
         });
-        this.logger.log(`Media #${id} ${decision}d by user #${actorId}`);
-        return { ...updated, fileSize: updated.fileSize.toString() };
+        this.logger.log(`Media #${id} ${approve ? 'approve' : 'reject'}d by user #${actorId}`);
+        return this.serialiseMedia({ ...updated, fileSize: updated.fileSize.toString() });
     }
     // -------------------------------------------------------------------------
     // Albums
@@ -191,14 +280,24 @@ let GalleryService = GalleryService_1 = class GalleryService {
     async findAllAlbums(query) {
         const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
         const where = {
-            status: database_1.RecordStatus.ACTIVE,
             ...(query.publicOnly ? { isPublic: true } : {}),
+            ...(query.visibility === 'public' ? { isPublic: true } : query.visibility === 'private' ? { isPublic: false } : {}),
+            ...(query.status ? { status: query.status } : {}),
             ...(query.scopeToCommitteeId
                 ? { pujaCommitteeId: query.scopeToCommitteeId }
                 : query.pujaCommitteeId
                     ? { pujaCommitteeId: query.pujaCommitteeId }
                     : {}),
-            ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
+            ...(query.categoryId ? { categoryId: query.categoryId } : {}),
+            ...(query.subcategoryId ? { subcategoryId: query.subcategoryId } : {}),
+            ...(query.search
+                ? {
+                    OR: [
+                        { title: { contains: query.search, mode: 'insensitive' } },
+                        { description: { contains: query.search, mode: 'insensitive' } },
+                    ],
+                }
+                : {}),
         };
         const [items, total] = await this.prisma.$transaction([
             this.prisma.album.findMany({
@@ -219,9 +318,18 @@ let GalleryService = GalleryService_1 = class GalleryService {
     }
     async createAlbum(payload) {
         try {
-            return await this.prisma.album.create({
-                data: { ...payload.data, isPublic: payload.data.isPublic ?? false },
+            const { mediaIds, ...albumFields } = payload.data ?? {};
+            const album = await this.prisma.album.create({
+                data: {
+                    ...albumFields,
+                    isPublic: albumFields.isPublic ?? false,
+                    status: albumFields.status ?? database_1.RecordStatus.ACTIVE,
+                },
             });
+            if (Array.isArray(mediaIds) && mediaIds.length > 0) {
+                await this.syncAlbumMedia({ id: album.id, mediaIds });
+            }
+            return this.findOneAlbum({ id: album.id, scopeToCommitteeId: payload.scopeToCommitteeId });
         }
         catch (error) {
             (0, shared_1.translatePrismaError)(error, 'album');
@@ -269,6 +377,120 @@ let GalleryService = GalleryService_1 = class GalleryService {
             }
         });
         return { id, mediaCount: mediaIds.length };
+    }
+    async findOneAlbum(payload) {
+        const album = await this.prisma.album.findUnique({
+            where: { id: payload.id },
+            include: {
+                category: { select: { id: true, name: true } },
+                subcategory: { select: { id: true, name: true } },
+                committee: { select: { id: true, committeeName: true, committeeId: true } },
+                media: {
+                    orderBy: { sortOrder: 'asc' },
+                    include: {
+                        media: {
+                            include: {
+                                category: { select: { id: true, name: true } },
+                                subcategory: { select: { id: true, name: true } },
+                            },
+                        },
+                    },
+                },
+                _count: { select: { media: true } },
+            },
+        });
+        if (!album) {
+            throw shared_1.ServiceException.notFound(`No album exists with id ${payload.id}.`);
+        }
+        if (payload.scopeToCommitteeId !== undefined &&
+            album.pujaCommitteeId !== payload.scopeToCommitteeId) {
+            throw shared_1.ServiceException.notFound(`No album exists with id ${payload.id}.`);
+        }
+        return {
+            ...album,
+            media: album.media.map((row) => this.serialiseMedia(row.media)),
+        };
+    }
+    async updateAlbum(payload) {
+        const { id, data, scopeToCommitteeId } = payload;
+        await this.findOneAlbum({ id, scopeToCommitteeId });
+        try {
+            const updated = await this.prisma.album.update({
+                where: { id },
+                data: {
+                    ...(data.title !== undefined ? { title: data.title } : {}),
+                    ...(data.description !== undefined ? { description: data.description } : {}),
+                    ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
+                    ...(data.subcategoryId !== undefined ? { subcategoryId: data.subcategoryId } : {}),
+                    ...(data.isPublic !== undefined ? { isPublic: data.isPublic } : {}),
+                    ...(data.status !== undefined ? { status: data.status } : {}),
+                    ...(data.pujaCommitteeId !== undefined ? { pujaCommitteeId: data.pujaCommitteeId } : {}),
+                },
+                include: {
+                    category: { select: { id: true, name: true } },
+                    subcategory: { select: { id: true, name: true } },
+                    committee: { select: { id: true, committeeName: true } },
+                    _count: { select: { media: true } },
+                },
+            });
+            if (data.mediaIds) {
+                await this.syncAlbumMedia({ id, mediaIds: data.mediaIds });
+            }
+            return this.findOneAlbum({ id, scopeToCommitteeId });
+        }
+        catch (error) {
+            (0, shared_1.translatePrismaError)(error, 'album');
+        }
+    }
+    async removeAlbum(payload) {
+        await this.findOneAlbum({ id: payload.id, scopeToCommitteeId: payload.scopeToCommitteeId });
+        await this.prisma.albumMedia.deleteMany({ where: { albumId: payload.id } });
+        await this.prisma.album.delete({ where: { id: payload.id } });
+        return { id: payload.id, deleted: true };
+    }
+    async mediaPicker(query) {
+        const committeeId = query.scopeToCommitteeId ?? query.pujaCommitteeId;
+        if (!committeeId) {
+            throw shared_1.ServiceException.badRequest('A committee id is required for the media picker.');
+        }
+        const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
+        const where = {
+            deletedAt: null,
+            pujaCommitteeId: committeeId,
+            status: database_1.MediaModerationStatus.APPROVED,
+            ...(query.mediaType ? { mediaType: query.mediaType } : {}),
+            ...(query.search
+                ? {
+                    OR: [
+                        { title: { contains: query.search, mode: 'insensitive' } },
+                        { originalFilename: { contains: query.search, mode: 'insensitive' } },
+                    ],
+                }
+                : {}),
+        };
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.committeeMedia.findMany({
+                where,
+                skip,
+                take,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    title: true,
+                    originalFilename: true,
+                    mediaType: true,
+                    mimeType: true,
+                    thumbnailPath: true,
+                    storedPath: true,
+                    createdAt: true,
+                },
+            }),
+            this.prisma.committeeMedia.count({ where }),
+        ]);
+        return this.mapMediaPage({
+            items,
+            pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total),
+        });
     }
 };
 exports.GalleryService = GalleryService;

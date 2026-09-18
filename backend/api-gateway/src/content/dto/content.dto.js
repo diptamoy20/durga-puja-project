@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateSubcategoryDto = exports.CreateSubcategoryDto = exports.UpdateCategoryDto = exports.CreateCategoryDto = exports.ArticleWorkflowDto = exports.UpdateArticleDto = exports.CreateArticleDto = exports.ListArticlesQueryDto = exports.ArticleStatusDto = void 0;
+exports.UpdateSubcategoryDto = exports.CreateSubcategoryDto = exports.UpdateCategoryDto = exports.CreateCategoryDto = exports.ListSubcategoriesQueryDto = exports.ListCategoriesQueryDto = exports.ArticleWorkflowDto = exports.UpdateArticleDto = exports.CreateArticleDto = exports.ListArticlesQueryDto = exports.ArticleStatusDto = void 0;
 const shared_1 = require("@dpgc/shared");
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
@@ -245,9 +245,40 @@ __decorate([
 // ---------------------------------------------------------------------------
 // Categories / Subcategories
 // ---------------------------------------------------------------------------
+const RECORD_STATUSES = ['ACTIVE', 'INACTIVE'];
+class ListCategoriesQueryDto extends shared_1.PaginationQueryDto {
+    status;
+}
+exports.ListCategoriesQueryDto = ListCategoriesQueryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: RECORD_STATUSES }),
+    (0, class_validator_1.IsIn)(RECORD_STATUSES),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ListCategoriesQueryDto.prototype, "status", void 0);
+class ListSubcategoriesQueryDto extends shared_1.PaginationQueryDto {
+    status;
+    categoryId;
+}
+exports.ListSubcategoriesQueryDto = ListSubcategoriesQueryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: RECORD_STATUSES }),
+    (0, class_validator_1.IsIn)(RECORD_STATUSES),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ListSubcategoriesQueryDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], ListSubcategoriesQueryDto.prototype, "categoryId", void 0);
 class CreateCategoryDto {
     name;
+    slug;
     description;
+    status;
 }
 exports.CreateCategoryDto = CreateCategoryDto;
 __decorate([
@@ -259,14 +290,29 @@ __decorate([
     __metadata("design:type", String)
 ], CreateCategoryDto.prototype, "name", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Auto-generated from name when omitted.' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(180),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], CreateCategoryDto.prototype, "slug", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
 ], CreateCategoryDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: RECORD_STATUSES, default: 'ACTIVE' }),
+    (0, class_validator_1.IsIn)(RECORD_STATUSES),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateCategoryDto.prototype, "status", void 0);
 class UpdateCategoryDto {
     name;
+    slug;
     description;
     status;
 }
@@ -284,6 +330,14 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(180),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], UpdateCategoryDto.prototype, "slug", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
 ], UpdateCategoryDto.prototype, "description", void 0);
@@ -296,7 +350,9 @@ __decorate([
 class CreateSubcategoryDto {
     categoryId;
     name;
+    slug;
     description;
+    status;
 }
 exports.CreateSubcategoryDto = CreateSubcategoryDto;
 __decorate([
@@ -314,18 +370,41 @@ __decorate([
     __metadata("design:type", String)
 ], CreateSubcategoryDto.prototype, "name", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Auto-generated from name when omitted.' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(180),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], CreateSubcategoryDto.prototype, "slug", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
 ], CreateSubcategoryDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: RECORD_STATUSES, default: 'ACTIVE' }),
+    (0, class_validator_1.IsIn)(RECORD_STATUSES),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateSubcategoryDto.prototype, "status", void 0);
 class UpdateSubcategoryDto {
+    categoryId;
     name;
+    slug;
     description;
     status;
 }
 exports.UpdateSubcategoryDto = UpdateSubcategoryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdateSubcategoryDto.prototype, "categoryId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
@@ -335,6 +414,14 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
     __metadata("design:type", String)
 ], UpdateSubcategoryDto.prototype, "name", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(180),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], UpdateSubcategoryDto.prototype, "slug", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),

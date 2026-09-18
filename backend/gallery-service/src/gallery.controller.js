@@ -32,10 +32,15 @@ let GalleryController = class GalleryController {
     publicList(query) {
         return this.gallery.publicList(query);
     }
+    publicFilterOptions() {
+        return this.gallery.publicFilterOptions();
+    }
     myUploads(query) {
         return this.gallery.findAll({
             ...query,
-            uploadedById: query.uploadedById ?? query.actorId,
+            ...(query.scopeToCommitteeId
+                ? { scopeToCommitteeId: query.scopeToCommitteeId }
+                : { uploadedById: query.uploadedById ?? query.actorId }),
         });
     }
     findOne(payload) {
@@ -65,6 +70,18 @@ let GalleryController = class GalleryController {
     syncAlbumMedia(payload) {
         return this.gallery.syncAlbumMedia(payload);
     }
+    findOneAlbum(payload) {
+        return this.gallery.findOneAlbum(payload);
+    }
+    updateAlbum(payload) {
+        return this.gallery.updateAlbum(payload);
+    }
+    removeAlbum(payload) {
+        return this.gallery.removeAlbum(payload);
+    }
+    mediaPicker(query) {
+        return this.gallery.mediaPicker(query);
+    }
 };
 exports.GalleryController = GalleryController;
 __decorate([
@@ -87,6 +104,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof gallery_service_1.ListMediaPayload !== "undefined" && gallery_service_1.ListMediaPayload) === "function" ? _c : Object]),
     __metadata("design:returntype", void 0)
 ], GalleryController.prototype, "publicList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.MEDIA_PUBLIC_FILTER_OPTIONS),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], GalleryController.prototype, "publicFilterOptions", null);
 __decorate([
     (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.MEDIA_MY_UPLOADS),
     __param(0, (0, microservices_1.Payload)()),
@@ -157,6 +180,34 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], GalleryController.prototype, "syncAlbumMedia", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.ALBUM_FIND_ONE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GalleryController.prototype, "findOneAlbum", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.ALBUM_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GalleryController.prototype, "updateAlbum", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.ALBUM_REMOVE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GalleryController.prototype, "removeAlbum", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.ALBUM_MEDIA_PICKER),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GalleryController.prototype, "mediaPicker", null);
 exports.GalleryController = GalleryController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof gallery_service_1.GalleryService !== "undefined" && gallery_service_1.GalleryService) === "function" ? _a : Object])

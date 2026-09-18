@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubcategoriesController = exports.CategoriesController = exports.PublicNewsController = exports.ArticlesController = void 0;
 const shared_1 = require("@dpgc/shared");
@@ -230,7 +230,7 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'List categories with pagination' }),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_m = typeof shared_1.PaginationQueryDto !== "undefined" && shared_1.PaginationQueryDto) === "function" ? _m : Object]),
+    __metadata("design:paramtypes", [typeof (_m = typeof content_dto_1.ListCategoriesQueryDto !== "undefined" && content_dto_1.ListCategoriesQueryDto) === "function" ? _m : Object]),
     __metadata("design:returntype", void 0)
 ], CategoriesController.prototype, "findAll", null);
 __decorate([
@@ -288,10 +288,11 @@ let SubcategoriesController = class SubcategoriesController {
     constructor(client) {
         this.client = client;
     }
-    findAll(categoryId) {
-        return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.CONTENT_PATTERNS.SUBCATEGORY_FIND_ALL, {
-            categoryId: categoryId ? Number(categoryId) : undefined,
-        });
+    findAll(query) {
+        return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.CONTENT_PATTERNS.SUBCATEGORY_FIND_ALL, query);
+    }
+    findOne(id) {
+        return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.CONTENT_PATTERNS.SUBCATEGORY_FIND_ONE, { id });
     }
     create(dto) {
         return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.CONTENT_PATTERNS.SUBCATEGORY_CREATE, { data: dto });
@@ -311,12 +312,22 @@ __decorate([
     (0, common_1.Get)(),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES),
     (0, response_interceptor_1.ResponseMessage)('Subcategories retrieved successfully'),
-    (0, swagger_1.ApiOperation)({ summary: 'List subcategories, optionally filtered by category' }),
-    __param(0, (0, common_1.Query)('categoryId')),
+    (0, swagger_1.ApiOperation)({ summary: 'List subcategories with pagination and filters' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_t = typeof content_dto_1.ListSubcategoriesQueryDto !== "undefined" && content_dto_1.ListSubcategoriesQueryDto) === "function" ? _t : Object]),
+    __metadata("design:returntype", void 0)
+], SubcategoriesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES),
+    (0, response_interceptor_1.ResponseMessage)('Subcategory retrieved successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get a single subcategory' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
-], SubcategoriesController.prototype, "findAll", null);
+], SubcategoriesController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_CATEGORIES),

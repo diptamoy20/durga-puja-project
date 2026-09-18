@@ -39,6 +39,8 @@ class SubmitDiasporaDto {
     volunteer;
     receiveUpdates;
     termsAccepted;
+    captcha;
+    captchaToken;
 }
 exports.SubmitDiasporaDto = SubmitDiasporaDto;
 __decorate([
@@ -55,9 +57,8 @@ __decorate([
     __metadata("design:type", String)
 ], SubmitDiasporaDto.prototype, "dob", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Male' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(30),
+    (0, swagger_1.ApiProperty)({ enum: ['female', 'male', 'non_binary', 'prefer_not_to_say'] }),
+    (0, class_validator_1.IsIn)(['female', 'male', 'non_binary', 'prefer_not_to_say']),
     __metadata("design:type", String)
 ], SubmitDiasporaDto.prototype, "gender", void 0);
 __decorate([
@@ -145,23 +146,24 @@ __decorate([
     __metadata("design:type", String)
 ], SubmitDiasporaDto.prototype, "relationshipWithBengal", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
+    (0, swagger_1.ApiProperty)({ example: 'Bengali, English' }),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.MaxLength)(255),
     __metadata("design:type", String)
 ], SubmitDiasporaDto.prototype, "languages", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ type: [String] }),
+    (0, swagger_1.ApiPropertyOptional)({
+        type: [String],
+        enum: ['culture_heritage', 'durga_puja', 'tourism', 'business_investment', 'education', 'events_live', 'community_services', 'others'],
+    }),
     (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.IsString)({ each: true }),
+    (0, class_validator_1.IsIn)(['culture_heritage', 'durga_puja', 'tourism', 'business_investment', 'education', 'events_live', 'community_services', 'others'], { each: true }),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Array)
 ], SubmitDiasporaDto.prototype, "interests", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
+    (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsBoolean)(),
-    (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Transform)(({ value }) => value === true || value === 'true' || value === '1'),
     __metadata("design:type", Boolean)
 ], SubmitDiasporaDto.prototype, "volunteer", void 0);
@@ -178,6 +180,18 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => value === true || value === 'true' || value === '1'),
     __metadata("design:type", Boolean)
 ], SubmitDiasporaDto.prototype, "termsAccepted", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '12' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(10),
+    __metadata("design:type", String)
+], SubmitDiasporaDto.prototype, "captcha", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(80),
+    __metadata("design:type", String)
+], SubmitDiasporaDto.prototype, "captchaToken", void 0);
 var DiasporaStatusDto;
 (function (DiasporaStatusDto) {
     DiasporaStatusDto["PENDING"] = "PENDING";
@@ -238,6 +252,8 @@ class SubmitCommitteeDto {
     addressProof;
     pandalImage;
     declaration;
+    captcha;
+    captchaToken;
 }
 exports.SubmitCommitteeDto = SubmitCommitteeDto;
 __decorate([
@@ -255,21 +271,20 @@ __decorate([
     __metadata("design:type", Number)
 ], SubmitCommitteeDto.prototype, "establishedYear", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Sarbojanin' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(60),
+    (0, swagger_1.ApiProperty)({ enum: ['sarbojanin', 'barowari', 'private'] }),
+    (0, class_validator_1.IsIn)(['sarbojanin', 'barowari', 'private']),
     __metadata("design:type", String)
 ], SubmitCommitteeDto.prototype, "pujaType", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Traditional' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(100),
+    (0, swagger_1.ApiProperty)({ enum: ['traditional', 'theme_based', 'heritage'] }),
+    (0, class_validator_1.IsIn)(['traditional', 'theme_based', 'heritage']),
     __metadata("design:type", String)
 ], SubmitCommitteeDto.prototype, "pujaCategory", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(10),
+    (0, class_validator_1.MaxLength)(300),
     __metadata("design:type", String)
 ], SubmitCommitteeDto.prototype, "committeeDescription", void 0);
 __decorate([
@@ -367,12 +382,25 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => value === true || value === 'true' || value === '1'),
     __metadata("design:type", Boolean)
 ], SubmitCommitteeDto.prototype, "declaration", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '12' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(10),
+    __metadata("design:type", String)
+], SubmitCommitteeDto.prototype, "captcha", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(80),
+    __metadata("design:type", String)
+], SubmitCommitteeDto.prototype, "captchaToken", void 0);
 var CommitteeStatusDto;
 (function (CommitteeStatusDto) {
     CommitteeStatusDto["PENDING"] = "PENDING";
     CommitteeStatusDto["UNDER_REVIEW"] = "UNDER_REVIEW";
     CommitteeStatusDto["APPROVED"] = "APPROVED";
     CommitteeStatusDto["REJECTED"] = "REJECTED";
+    CommitteeStatusDto["INACTIVE"] = "INACTIVE";
 })(CommitteeStatusDto || (exports.CommitteeStatusDto = CommitteeStatusDto = {}));
 const COMMITTEE_SORTABLE = ['createdAt', 'committeeName', 'status'];
 class ListCommitteesQueryDto extends shared_1.PaginationQueryDto {
@@ -560,6 +588,7 @@ __decorate([
 class BulkCommitteeActionDto {
     ids;
     action;
+    status;
     reason;
 }
 exports.BulkCommitteeActionDto = BulkCommitteeActionDto;
@@ -571,10 +600,16 @@ __decorate([
     __metadata("design:type", Array)
 ], BulkCommitteeActionDto.prototype, "ids", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: CommitteeStatusDto }),
-    (0, class_validator_1.IsEnum)(CommitteeStatusDto),
+    (0, swagger_1.ApiProperty)({ enum: ['approve', 'reject', 'status', 'delete'] }),
+    (0, class_validator_1.IsIn)(['approve', 'reject', 'status', 'delete']),
     __metadata("design:type", String)
 ], BulkCommitteeActionDto.prototype, "action", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: CommitteeStatusDto }),
+    (0, class_validator_1.IsEnum)(CommitteeStatusDto),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], BulkCommitteeActionDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),

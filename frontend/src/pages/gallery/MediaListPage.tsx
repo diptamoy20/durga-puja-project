@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { adminMediaService, committeeMediaService } from '@/services/galleryService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { mediaThumbnailUrl } from '@/utils/galleryHelpers';
 import type { CommitteeMedia, MediaListQuery, MediaModerationStatus, MediaType } from '@/types/gallery';
 import type { PaginationMeta } from '@/types';
 
@@ -33,13 +34,14 @@ export function MediaListPage() {
   const { can } = useAuth();
 
   const statusParam = searchParams.get('status') as MediaModerationStatus | null;
+  const statusFilter = statusParam ?? undefined;
+
   const [media, setMedia] = useState<CommitteeMedia[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
   const [query, setQuery] = useState<MediaListQuery>({
     page: 1,
     perPage: 16,
     sortDir: 'desc',
-    status: statusParam ?? undefined,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +53,25 @@ export function MediaListPage() {
 
   const canModerate = can(PERMISSIONS.MODERATE_MEDIA);
   const canUpload = can(PERMISSIONS.UPLOAD_MEDIA);
+  const showUpload = canModerate || canUpload;
+  const uploadRoute = canModerate ? ROUTES.GALLERY_UPLOAD : ROUTES.MY_COMMITTEE_MEDIA_CREATE;
+
+  const listQuery = useMemo(
+    () => ({ ...query, status: statusFilter }),
+    [query, statusFilter],
+  );
+
+  useEffect(() => {
+    setQuery((q) => ({ ...q, page: 1 }));
+  }, [statusFilter]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = canModerate
-        ? await adminMediaService.list(query)
-        : await committeeMediaService.list(query);
+        ? await adminMediaService.list(listQuery)
+        : await committeeMediaService.list(listQuery);
       setMedia(res.items);
       setPagination(res.pagination);
     } catch (err: unknown) {
@@ -66,7 +79,7 @@ export function MediaListPage() {
     } finally {
       setLoading(false);
     }
-  }, [query, canModerate]);
+  }, [listQuery, canModerate]);
 
   useEffect(() => {
     load();
@@ -105,8 +118,8 @@ export function MediaListPage() {
               Moderation Queue
             </Link>
           )}
-          {canUpload && (
-            <Link to={ROUTES.GALLERY_UPLOAD} className="btn btn--primary btn--md">
+          {showUpload && (
+            <Link to={uploadRoute} className="btn btn--primary btn--md">
               + Upload Media
             </Link>
           )}
@@ -120,10 +133,10 @@ export function MediaListPage() {
           <div className="filter-bar__filters" style={{ display: 'flex', gap: 'var(--space-300)', flexWrap: 'wrap' }}>
             <select
               className="field__control"
-              value={query.status ?? ''}
+              value={statusFilter ?? ''}
               onChange={(e) => {
                 const s = (e.target.value as MediaModerationStatus) || undefined;
-                setQuery((q) => ({ ...q, status: s, page: 1 }));
+                setQuery((q) => ({ ...q, page: 1 }));
                 setSearchParams(s ? { status: s } : {});
               }}
             >
@@ -181,7 +194,7 @@ export function MediaListPage() {
                 <div style={{ height: '160px', background: 'var(--color-surface-sunken)', position: 'relative' }}>
                   {item.mediaType === 'PHOTO' ? (
                     <img
-                      src={item.thumbnailPath || item.storedPath}
+                      src={mediaThumbnailUrl(item)}
                       alt={item.title || item.originalFilename}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

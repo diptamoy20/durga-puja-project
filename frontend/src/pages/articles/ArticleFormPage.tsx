@@ -36,8 +36,8 @@ export function ArticleFormPage() {
 
   useEffect(() => {
     subcategoryService
-      .list()
-      .then((items) => {
+      .list({ perPage: 100, sortDir: 'asc' })
+      .then(({ items }) => {
         setSubcategories(items);
         if (!isEdit && items.length > 0 && !formData.subcategoryId) {
           setFormData((prev) => ({ ...prev, subcategoryId: items[0].id }));

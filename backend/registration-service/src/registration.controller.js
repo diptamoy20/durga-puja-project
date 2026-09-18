@@ -74,6 +74,9 @@ let RegistrationController = class RegistrationController {
     removeCommittee(payload) {
         return this.committees.remove(payload);
     }
+    generateLocalPassword(payload) {
+        return this.committees.generateLocalPassword(payload);
+    }
 };
 exports.RegistrationController = RegistrationController;
 __decorate([
@@ -178,6 +181,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], RegistrationController.prototype, "removeCommittee", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.REGISTRATION_PATTERNS.COMMITTEE_GENERATE_LOCAL_PASSWORD),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], RegistrationController.prototype, "generateLocalPassword", null);
 exports.RegistrationController = RegistrationController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof diaspora_service_1.DiasporaService !== "undefined" && diaspora_service_1.DiasporaService) === "function" ? _a : Object, typeof (_b = typeof committees_service_1.CommitteesService !== "undefined" && committees_service_1.CommitteesService) === "function" ? _b : Object])

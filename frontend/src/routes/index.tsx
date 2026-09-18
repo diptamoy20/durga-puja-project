@@ -50,8 +50,20 @@ const CommitteeEditPage = lazy(() =>
 const CategoriesPage = lazy(() =>
   import('@/pages/categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })),
 );
+const CategoryFormPage = lazy(() =>
+  import('@/pages/categories/CategoryFormPage').then((m) => ({ default: m.CategoryFormPage })),
+);
+const CategoryDetailPage = lazy(() =>
+  import('@/pages/categories/CategoryDetailPage').then((m) => ({ default: m.CategoryDetailPage })),
+);
 const SubcategoriesPage = lazy(() =>
   import('@/pages/categories/SubcategoriesPage').then((m) => ({ default: m.SubcategoriesPage })),
+);
+const SubcategoryFormPage = lazy(() =>
+  import('@/pages/categories/SubcategoryFormPage').then((m) => ({ default: m.SubcategoryFormPage })),
+);
+const SubcategoryDetailPage = lazy(() =>
+  import('@/pages/categories/SubcategoryDetailPage').then((m) => ({ default: m.SubcategoryDetailPage })),
 );
 
 // Articles & Content
@@ -75,11 +87,20 @@ const MediaUploadPage = lazy(() =>
 const MediaDetailPage = lazy(() =>
   import('@/pages/gallery/MediaDetailPage').then((m) => ({ default: m.MediaDetailPage })),
 );
+const MediaEditPage = lazy(() =>
+  import('@/pages/gallery/MediaEditPage').then((m) => ({ default: m.MediaEditPage })),
+);
 const ModerationQueuePage = lazy(() =>
   import('@/pages/gallery/ModerationQueuePage').then((m) => ({ default: m.ModerationQueuePage })),
 );
 const AlbumsPage = lazy(() =>
   import('@/pages/gallery/AlbumsPage').then((m) => ({ default: m.AlbumsPage })),
+);
+const AlbumFormPage = lazy(() =>
+  import('@/pages/gallery/AlbumFormPage').then((m) => ({ default: m.AlbumFormPage })),
+);
+const AlbumDetailPage = lazy(() =>
+  import('@/pages/gallery/AlbumDetailPage').then((m) => ({ default: m.AlbumDetailPage })),
 );
 
 // Atlas & Pandals
@@ -107,6 +128,17 @@ const RsvpManagementPage = lazy(() =>
   import('@/pages/webinars/RsvpManagementPage').then((m) => ({ default: m.RsvpManagementPage })),
 );
 
+// Committee member media pages
+const MyCommitteeMediaListPage = lazy(() =>
+  import('@/pages/committee-media/MyCommitteeMediaListPage').then((m) => ({ default: m.MyCommitteeMediaListPage })),
+);
+const MyCommitteeMediaUploadPage = lazy(() =>
+  import('@/pages/committee-media/MyCommitteeMediaUploadPage').then((m) => ({ default: m.MyCommitteeMediaUploadPage })),
+);
+const CommitteeAlbumListPage = lazy(() =>
+  import('@/pages/committee-albums/CommitteeAlbumListPage').then((m) => ({ default: m.CommitteeAlbumListPage })),
+);
+
 // Public Pages
 const ChooseAccountTypePage = lazy(() =>
   import('@/pages/public/ChooseAccountTypePage').then((m) => ({ default: m.ChooseAccountTypePage })),
@@ -123,16 +155,41 @@ const RegistrationThankYouPage = lazy(() =>
 const PublicGalleryPage = lazy(() =>
   import('@/pages/public/PublicGalleryPage').then((m) => ({ default: m.PublicGalleryPage })),
 );
+const PublicGalleryDetailPage = lazy(() =>
+  import('@/pages/public/PublicGalleryDetailPage').then((m) => ({ default: m.PublicGalleryDetailPage })),
+);
 const PublicAtlasPage = lazy(() =>
   import('@/pages/public/PublicAtlasPage').then((m) => ({ default: m.PublicAtlasPage })),
+);
+const PublicAtlasDetailPage = lazy(() =>
+  import('@/pages/public/PublicAtlasDetailPage').then((m) => ({ default: m.PublicAtlasDetailPage })),
 );
 const PublicWebinarsPage = lazy(() =>
   import('@/pages/public/PublicWebinarsPage').then((m) => ({ default: m.PublicWebinarsPage })),
 );
+const PublicPodcastsPage = lazy(() =>
+  import('@/pages/public/PublicPodcastsPage').then((m) => ({ default: m.PublicPodcastsPage })),
+);
+const PodcastDetailPage = lazy(() =>
+  import('@/pages/public/PodcastDetailPage').then((m) => ({ default: m.PodcastDetailPage })),
+);
+
+// Podcast Admin Pages
+const PodcastListPage = lazy(() =>
+  import('@/pages/podcasts/PodcastListPage').then((m) => ({ default: m.PodcastListPage })),
+);
+const PodcastFormPage = lazy(() =>
+  import('@/pages/podcasts/PodcastFormPage').then((m) => ({ default: m.PodcastFormPage })),
+);
+
 
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Standalone public atlas (full-screen map layout) */}
+      <Route path={ROUTES.PUBLIC_ATLAS} element={<PublicAtlasPage />} />
+      <Route path={ROUTES.PUBLIC_ATLAS_DETAIL()} element={<PublicAtlasDetailPage />} />
+
       {/* Public Pages Layout (Outside auth) */}
       <Route element={<PublicLayout />}>
         <Route path={ROUTES.PUBLIC_CHOOSE_TYPE} element={<ChooseAccountTypePage />} />
@@ -140,8 +197,10 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_REGISTER_COMMITTEE} element={<CommitteeRegistrationPage />} />
         <Route path={ROUTES.PUBLIC_THANK_YOU()} element={<RegistrationThankYouPage />} />
         <Route path={ROUTES.PUBLIC_GALLERY} element={<PublicGalleryPage />} />
-        <Route path={ROUTES.PUBLIC_ATLAS} element={<PublicAtlasPage />} />
+        <Route path={ROUTES.PUBLIC_GALLERY_DETAIL()} element={<PublicGalleryDetailPage />} />
         <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
+        <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
+        <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -278,6 +337,72 @@ export function AppRoutes() {
           }
         />
 
+        {/* Committee member media & albums */}
+        <Route
+          path={ROUTES.MY_COMMITTEE_MEDIA}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_GALLERY]}>
+              <MyCommitteeMediaListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_MEDIA_CREATE}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.UPLOAD_MEDIA]}>
+              <MyCommitteeMediaUploadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_MEDIA_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_GALLERY]}>
+              <MediaDetailPage mode="committee" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_MEDIA_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.UPLOAD_MEDIA]}>
+              <MediaEditPage mode="committee" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_ALBUMS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ALBUMS]}>
+              <CommitteeAlbumListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_ALBUM_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ALBUMS]}>
+              <AlbumFormPage mode="committee" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_ALBUM_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ALBUMS]}>
+              <AlbumDetailPage mode="committee" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_ALBUM_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ALBUMS]}>
+              <AlbumFormPage mode="committee" />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Master: Categories & Subcategories */}
         <Route
           path={ROUTES.CATEGORIES}
@@ -288,10 +413,58 @@ export function AppRoutes() {
           }
         />
         <Route
+          path={ROUTES.CATEGORY_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <CategoryFormPage mode="create" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.CATEGORY_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <CategoryFormPage mode="edit" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.CATEGORY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
+              <CategoryDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path={ROUTES.SUBCATEGORIES}
           element={
             <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
               <SubcategoriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUBCATEGORY_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <SubcategoryFormPage mode="create" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUBCATEGORY_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CATEGORIES]}>
+              <SubcategoryFormPage mode="edit" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SUBCATEGORY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_CATEGORIES]}>
+              <SubcategoryDetailPage />
             </ProtectedRoute>
           }
         />
@@ -330,6 +503,32 @@ export function AppRoutes() {
           }
         />
 
+        {/* Podcasts */}
+        <Route
+          path={ROUTES.PODCASTS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES]}>
+              <PodcastListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PODCAST_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_ARTICLES]}>
+              <PodcastFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.PODCAST_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ARTICLES]}>
+              <PodcastFormPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Gallery & Media */}
         <Route
           path={ROUTES.GALLERY_MEDIA}
@@ -342,7 +541,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.GALLERY_UPLOAD}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.UPLOAD_MEDIA]}>
+            <ProtectedRoute permissions={[PERMISSIONS.UPLOAD_MEDIA, PERMISSIONS.MODERATE_MEDIA]}>
               <MediaUploadPage />
             </ProtectedRoute>
           }
@@ -351,7 +550,15 @@ export function AppRoutes() {
           path={ROUTES.GALLERY_DETAIL()}
           element={
             <ProtectedRoute permissions={[PERMISSIONS.VIEW_GALLERY, PERMISSIONS.MODERATE_MEDIA]}>
-              <MediaDetailPage />
+              <MediaDetailPage mode="admin" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_MEDIA_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MODERATE_MEDIA]}>
+              <MediaEditPage mode="admin" />
             </ProtectedRoute>
           }
         />
@@ -368,6 +575,30 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.VIEW_ALBUMS, PERMISSIONS.MANAGE_ALBUMS]}>
               <AlbumsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_ALBUM_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ALBUMS]}>
+              <AlbumFormPage mode="admin" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_ALBUM_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ALBUMS, PERMISSIONS.MANAGE_ALBUMS]}>
+              <AlbumDetailPage mode="admin" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.GALLERY_ALBUM_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ALBUMS]}>
+              <AlbumFormPage mode="admin" />
             </ProtectedRoute>
           }
         />

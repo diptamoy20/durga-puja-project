@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="90" viewBox="0 0 120 90" role="img" aria-label="Pandal placeholder">
+  <rect width="120" height="90" fill="#f1f5f9"/>
+  <path d="M36 58 L60 28 L84 58 Z" fill="#cbd5e1"/>
+  <rect x="44" y="58" width="32" height="18" fill="#94a3b8"/>
+  <text x="60" y="82" text-anchor="middle" fill="#64748b" font-size="8" font-family="sans-serif">No photo</text>
+</svg>

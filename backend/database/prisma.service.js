@@ -13,6 +13,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
+/** Cap pool size per microservice so 9 services do not exhaust PostgreSQL max_connections. */
+function databaseUrlWithPoolLimit(url, limit = Number(process.env.PRISMA_CONNECTION_LIMIT ?? 2)) {
+    if (!url || url.includes('connection_limit='))
+        return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}connection_limit=${limit}`;
+}
 /**
  * The single Prisma client per service process.
  *
@@ -23,6 +30,9 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
     logger = new common_1.Logger(PrismaService_1.name);
     constructor() {
         super({
+            datasources: {
+                db: { url: databaseUrlWithPoolLimit(process.env.DATABASE_URL) },
+            },
             log: [
                 { emit: 'event', level: 'query' },
                 { emit: 'event', level: 'warn' },

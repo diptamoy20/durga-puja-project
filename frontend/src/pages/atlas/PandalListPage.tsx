@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
@@ -12,7 +12,8 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { adminAtlasService } from '@/services/atlasService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import type { AtlasStatus, PandalAtlas, PandalListQuery } from '@/types/atlas';
+import { atlasFileUrl, atlasStatusTone, formatAtlasStatus } from '@/utils/atlasHelpers';
+import type { AtlasStats, AtlasStatus, PandalAtlas, PandalListQuery } from '@/types/atlas';
 import type { PaginationMeta } from '@/types';
 
 const STATUS_FILTERS: Array<{ value: AtlasStatus | ''; label: string }> = [
@@ -24,41 +25,40 @@ const STATUS_FILTERS: Array<{ value: AtlasStatus | ''; label: string }> = [
   { value: 'REJECTED', label: 'Rejected' },
 ];
 
-function statusTone(status: AtlasStatus): 'default' | 'success' | 'warning' | 'danger' | 'info' {
-  switch (status) {
-    case 'APPROVED':
-      return 'success';
-    case 'UNDER_REVIEW':
-      return 'warning';
-    case 'SUBMITTED':
-      return 'info';
-    case 'REJECTED':
-      return 'danger';
-    case 'DRAFT':
-    default:
-      return 'default';
-  }
-}
+const STAT_CARDS: Array<{
+  key: keyof AtlasStats | 'total';
+  label: string;
+  status?: AtlasStatus;
+  tone?: string;
+}> = [
+  { key: 'total', label: 'Total Entries' },
+  { key: 'APPROVED', label: 'Approved (Live)', status: 'APPROVED', tone: 'success' },
+  { key: 'SUBMITTED', label: 'Submitted', status: 'SUBMITTED', tone: 'info' },
+  { key: 'UNDER_REVIEW', label: 'Under Review', status: 'UNDER_REVIEW', tone: 'warning' },
+  { key: 'REJECTED', label: 'Rejected', status: 'REJECTED', tone: 'danger' },
+  { key: 'DRAFT', label: 'Drafts', status: 'DRAFT', tone: 'default' },
+];
 
 export function PandalListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
   const { can } = useAuth();
+  const isModerator = can(PERMISSIONS.MODERATE_PANDAL_ATLAS);
 
   const statusParam = searchParams.get('status') as AtlasStatus | null;
+  const statusFilter = statusParam ?? undefined;
+
   const [pandals, setPandals] = useState<PandalAtlas[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
-  const [stats, setStats] = useState<Record<string, number> | null>(null);
+  const [stats, setStats] = useState<AtlasStats | null>(null);
   const [query, setQuery] = useState<PandalListQuery>({
     page: 1,
     perPage: 15,
     sortDir: 'desc',
-    status: statusParam ?? undefined,
   });
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [deletingPandal, setDeletingPandal] = useState<PandalAtlas | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -66,13 +66,25 @@ export function PandalListPage() {
   const canEdit = can(PERMISSIONS.EDIT_PANDAL_ATLAS);
   const canDelete = can(PERMISSIONS.DELETE_PANDAL_ATLAS);
 
+  /** Status filter always follows the URL (?status=), like the Laravel index. */
+  const listQuery = useMemo(
+    () => ({ ...query, status: statusFilter }),
+    [query, statusFilter],
+  );
+
+  // Sidebar / stat-card links only change the URL — reset page and text search when status changes.
+  useEffect(() => {
+    setQuery((q) => ({ ...q, page: 1, search: undefined }));
+    setSearch('');
+  }, [statusFilter]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [res, statsRes] = await Promise.all([
-        adminAtlasService.list(query),
-        adminAtlasService.stats().catch(() => ({})),
+        adminAtlasService.list(listQuery),
+        adminAtlasService.stats().catch(() => null),
       ]);
       setPandals(res.items);
       setPagination(res.pagination);
@@ -82,7 +94,7 @@ export function PandalListPage() {
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [listQuery]);
 
   useEffect(() => {
     load();
@@ -110,14 +122,14 @@ export function PandalListPage() {
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
         <div>
-          <h1 className="page__title">Pandal Atlas</h1>
-          <p className="page__subtitle">Geographic directory and interactive mapping of registered puja pandals.</p>
+          <h1 className="page__title">Pandal Atlas Management</h1>
+          <p className="page__subtitle">Manage pandal entries, moderation workflow, and map database publication.</p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-200)' }}>
           <Link to={ROUTES.PUBLIC_ATLAS} className="btn btn--secondary btn--md" target="_blank">
-            🗺 Public Map
+            Public Interactive Map
           </Link>
           {canCreate && (
             <Link to={ROUTES.PANDAL_ATLAS_NEW} className="btn btn--primary btn--md">
@@ -127,24 +139,26 @@ export function PandalListPage() {
         </div>
       </header>
 
-      {stats && Object.keys(stats).length > 0 && (
-        <div className="stat-grid">
-          <div className="stat-card">
-            <p className="stat-card__label">Total Registered</p>
-            <p className="stat-card__value">{Object.values(stats).reduce((a, b) => a + b, 0)}</p>
-          </div>
-          <div className="stat-card stat-card--success">
-            <p className="stat-card__label">Approved (On Map)</p>
-            <p className="stat-card__value">{stats.APPROVED ?? 0}</p>
-          </div>
-          <div className="stat-card stat-card--warning">
-            <p className="stat-card__label">Under Review</p>
-            <p className="stat-card__value">{stats.UNDER_REVIEW ?? 0}</p>
-          </div>
-          <div className="stat-card stat-card--info">
-            <p className="stat-card__label">Submitted Queue</p>
-            <p className="stat-card__value">{stats.SUBMITTED ?? 0}</p>
-          </div>
+      {stats && (
+        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          {STAT_CARDS.map((card) => {
+            const value = stats[card.key as keyof AtlasStats] ?? 0;
+            const active = card.status ? statusFilter === card.status : !statusFilter;
+            const href = card.status
+              ? `${ROUTES.PANDAL_ATLAS}?status=${card.status}`
+              : ROUTES.PANDAL_ATLAS;
+            return (
+              <Link
+                key={card.key}
+                to={href}
+                className={`stat-card ${card.tone ? `stat-card--${card.tone}` : ''}`}
+                style={{ textDecoration: 'none', outline: active ? '2px solid var(--color-primary)' : undefined }}
+              >
+                <p className="stat-card__label">{card.label}</p>
+                <p className="stat-card__value">{value}</p>
+              </Link>
+            );
+          })}
         </div>
       )}
 
@@ -156,28 +170,30 @@ export function PandalListPage() {
             <input
               type="search"
               className="field__control"
-              placeholder="Search pandal by name, location..."
+              placeholder="Search by name, street, locality..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button type="submit" variant="secondary" size="md">
-              Search
-            </Button>
+            <Button type="submit" variant="secondary" size="md">Filter</Button>
+            {(query.search || statusFilter) && (
+              <Link to={ROUTES.PANDAL_ATLAS} className="btn btn--secondary btn--md">Reset</Link>
+            )}
           </form>
 
           <div className="filter-bar__filters">
             <select
               className="field__control"
-              value={query.status ?? ''}
+              value={statusFilter ?? ''}
               onChange={(e) => {
                 const s = (e.target.value as AtlasStatus) || undefined;
-                setQuery((q) => ({ ...q, status: s, page: 1 }));
+                setQuery((q) => ({ ...q, page: 1 }));
                 setSearchParams(s ? { status: s } : {});
               }}
             >
               {STATUS_FILTERS.map((f) => (
-                <option key={f.value} value={f.value}>
+                <option key={f.value || 'all'} value={f.value}>
                   {f.label}
+                  {stats && f.value ? ` (${stats[f.value] ?? 0})` : stats ? ` (${stats.total})` : ''}
                 </option>
               ))}
             </select>
@@ -188,64 +204,67 @@ export function PandalListPage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Pandal Name</th>
-                <th>Committee</th>
-                <th>Location</th>
+                <th style={{ width: 70 }}>Photo</th>
+                <th>Pandal Name & Location</th>
+                {isModerator && <th>Puja Committee</th>}
                 <th>Coordinates</th>
-                <th>Timing</th>
+                <th>Visiting Hours</th>
+                <th>Features</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
-                    Loading pandals…
-                  </td>
-                </tr>
+                <tr><td colSpan={isModerator ? 8 : 7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>Loading pandals…</td></tr>
               ) : pandals.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
-                    No pandals found.
-                  </td>
-                </tr>
+                <tr><td colSpan={isModerator ? 8 : 7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>No pandal entries found.</td></tr>
               ) : (
                 pandals.map((p) => (
                   <tr key={p.id}>
                     <td>
-                      <div>
-                        <strong>{p.name}</strong>
-                        {p.theme && (
-                          <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
-                            Theme: {p.theme}
-                          </div>
-                        )}
+                      <img
+                        src={p.primaryPhotoUrl ?? atlasFileUrl(p.photoUrls?.[0])}
+                        alt={p.name}
+                        style={{ width: 56, height: 42, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }}
+                      />
+                    </td>
+                    <td>
+                      <Link to={ROUTES.PANDAL_ATLAS_DETAIL(p.id)}><strong>{p.name}</strong></Link>
+                      <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{p.location}</div>
+                    </td>
+                    {isModerator && (
+                      <td>
+                        <div>{p.committee?.committeeName ?? 'Unassigned'}</div>
+                        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
+                          Reg: {p.committee?.committeeId ?? 'N/A'}
+                        </div>
+                      </td>
+                    )}
+                    <td><code>{p.latitude.toFixed(5)}, {p.longitude.toFixed(5)}</code></td>
+                    <td>{p.timing}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 'var(--space-100)', flexWrap: 'wrap' }}>
+                        {p.hasLivestream && <StatusBadge tone="danger">Live</StatusBadge>}
+                        {p.hasVirtualTour && <StatusBadge tone="info">360°</StatusBadge>}
+                        {p.ritualSchedule && <StatusBadge tone="default">Rituals</StatusBadge>}
                       </div>
                     </td>
-                    <td>{p.committee?.committeeName ?? `#${p.pujaCommitteeId}`}</td>
-                    <td>{p.location}</td>
                     <td>
-                      <code>{p.latitude.toFixed(4)}, {p.longitude.toFixed(4)}</code>
-                    </td>
-                    <td>{p.timing || '—'}</td>
-                    <td>
-                      <StatusBadge tone={statusTone(p.status)}>{p.status}</StatusBadge>
+                      <StatusBadge tone={atlasStatusTone(p.status)}>{formatAtlasStatus(p.status)}</StatusBadge>
+                      {p.status === 'REJECTED' && p.rejectionRemarks && (
+                        <span title={p.rejectionRemarks} style={{ marginLeft: 4, cursor: 'help' }}>ℹ️</span>
+                      )}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 'var(--space-150)' }}>
-                        <Link to={ROUTES.PANDAL_ATLAS_DETAIL(p.id)} className="btn btn--secondary btn--sm">
-                          View
-                        </Link>
-                        {canEdit && (
-                          <Link to={ROUTES.PANDAL_ATLAS_EDIT(p.id)} className="btn btn--secondary btn--sm">
-                            Edit
-                          </Link>
+                      <div style={{ display: 'flex', gap: 'var(--space-150)', flexWrap: 'wrap' }}>
+                        <Link to={ROUTES.PANDAL_ATLAS_DETAIL(p.id)} className="btn btn--secondary btn--sm">View</Link>
+                        {canEdit && <Link to={ROUTES.PANDAL_ATLAS_EDIT(p.id)} className="btn btn--secondary btn--sm">Edit</Link>}
+                        {p.status === 'APPROVED' && (
+                          <Link to={ROUTES.PUBLIC_ATLAS_DETAIL(p.id)} target="_blank" className="btn btn--secondary btn--sm">Map ↗</Link>
                         )}
                         {canDelete && (
-                          <Button variant="danger" size="sm" onClick={() => setDeletingPandal(p)}>
-                            Delete
-                          </Button>
+                          <Button variant="danger" size="sm" onClick={() => setDeletingPandal(p)}>Delete</Button>
                         )}
                       </div>
                     </td>
@@ -257,10 +276,7 @@ export function PandalListPage() {
         </div>
 
         {pagination && pagination.lastPage > 1 && (
-          <Pagination
-            meta={pagination}
-            onPageChange={(page) => setQuery((q) => ({ ...q, page }))}
-          />
+          <Pagination meta={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
         )}
       </Card>
 

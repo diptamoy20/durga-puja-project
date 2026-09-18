@@ -9,11 +9,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContentModule = void 0;
 const common_1 = require("@nestjs/common");
 const content_controller_1 = require("./content.controller");
+const podcasts_controller_1 = require("./podcasts.controller");
 let ContentModule = class ContentModule {
 };
 exports.ContentModule = ContentModule;
 exports.ContentModule = ContentModule = __decorate([
     (0, common_1.Module)({
-        controllers: [content_controller_1.ArticlesController, content_controller_1.PublicNewsController, content_controller_1.CategoriesController, content_controller_1.SubcategoriesController],
+        controllers: [
+            content_controller_1.ArticlesController,
+            content_controller_1.PublicNewsController,
+            content_controller_1.CategoriesController,
+            content_controller_1.SubcategoriesController,
+            podcasts_controller_1.PublicPodcastsController,
+            podcasts_controller_1.AdminPodcastsController,
+        ],
     })
 ], ContentModule);

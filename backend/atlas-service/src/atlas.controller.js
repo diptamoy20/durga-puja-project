@@ -39,7 +39,10 @@ let AtlasController = class AtlasController {
         return this.atlas.publicList(query);
     }
     mapData(query) {
-        return this.atlas.publicList(query);
+        return this.atlas.mapData(query);
+    }
+    formOptions(payload) {
+        return this.atlas.formOptions(payload);
     }
     create(payload) {
         return this.atlas.create(payload);
@@ -98,6 +101,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AtlasController.prototype, "mapData", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.ATLAS_PATTERNS.FORM_OPTIONS),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AtlasController.prototype, "formOptions", null);
 __decorate([
     (0, microservices_1.MessagePattern)(shared_1.ATLAS_PATTERNS.CREATE),
     __param(0, (0, microservices_1.Payload)()),

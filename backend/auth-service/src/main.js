@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
 const core_1 = require("@nestjs/core");
 const microservices_1 = require("@nestjs/microservices");
 const app_module_1 = require("./app.module");
@@ -12,13 +11,8 @@ const app_module_1 = require("./app.module");
  */
 async function bootstrap() {
     const logger = new common_1.Logger('AuthService');
-    // A temporary context is created first so the port can come from
-    // ConfigService (with .env loading and validation) rather than raw env vars.
-    const configApp = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule, { logger: false });
-    const config = configApp.get(config_1.ConfigService);
-    const host = config.get('auth.host') ?? 'localhost';
-    const port = config.get('auth.port') ?? 5001;
-    await configApp.close();
+    const host = process.env.AUTH_SERVICE_HOST ?? 'localhost';
+    const port = Number(process.env.AUTH_SERVICE_PORT ?? 5001);
     const app = await core_1.NestFactory.createMicroservice(app_module_1.AppModule, {
         transport: microservices_1.Transport.TCP,
         options: { host, port },
