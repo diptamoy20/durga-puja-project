@@ -59,6 +59,7 @@ export const ROUTES = {
   GALLERY_MEDIA: '/gallery/media',
   GALLERY_UPLOAD: '/gallery/upload',
   GALLERY_DETAIL: (id: number | string = ':id') => `/gallery/media/${id}`,
+  GALLERY_MEDIA_EDIT: (id: number | string = ':id') => `/gallery/media/${id}/edit`,
   GALLERY_MODERATION: '/gallery/moderation',
   GALLERY_ALBUMS: '/gallery/albums',
   GALLERY_ALBUM_NEW: '/gallery/albums/new',
@@ -85,7 +86,9 @@ export const ROUTES = {
   PUBLIC_THANK_YOU: (type: string = ':type', registrationNo: string = ':registrationNo') =>
     `/register/thank-you/${type}/${registrationNo}`,
   PUBLIC_GALLERY: '/public/gallery',
+  PUBLIC_GALLERY_DETAIL: (id: number | string = ':id') => `/public/gallery/${id}`,
   PUBLIC_ATLAS: '/public/atlas',
+  PUBLIC_ATLAS_DETAIL: (id: number | string = ':id') => `/public/atlas/${id}`,
   PUBLIC_WEBINARS: '/public/webinars',
 
   FORBIDDEN: '/forbidden',

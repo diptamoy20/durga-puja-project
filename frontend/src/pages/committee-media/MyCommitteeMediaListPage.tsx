@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
@@ -38,7 +38,9 @@ function mediaStatusTone(status: MediaModerationStatus): 'default' | 'success' |
 export function MyCommitteeMediaListPage() {
   const toast = useToast();
   const { can } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get('status') as MediaModerationStatus | null;
+  const statusFilter = statusParam ?? undefined;
 
   const [items, setItems] = useState<CommitteeMedia[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
@@ -48,18 +50,27 @@ export function MyCommitteeMediaListPage() {
     page: 1,
     perPage: 12,
     sortDir: 'desc',
-    status: (searchParams.get('status') as MediaModerationStatus) || undefined,
   });
   const [draftSearch, setDraftSearch] = useState('');
   const [draftPandal, setDraftPandal] = useState('');
   const [draftMediaType, setDraftMediaType] = useState<MediaType | ''>('');
   const [draftCategoryId, setDraftCategoryId] = useState<number | ''>('');
   const [draftSubcategoryId, setDraftSubcategoryId] = useState<number | ''>('');
-  const [draftStatus, setDraftStatus] = useState<MediaModerationStatus | ''>(query.status ?? '');
+  const [draftStatus, setDraftStatus] = useState<MediaModerationStatus | ''>(statusFilter ?? '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const canUpload = can(PERMISSIONS.UPLOAD_MEDIA);
+
+  const listQuery = useMemo(
+    () => ({ ...query, status: statusFilter }),
+    [query, statusFilter],
+  );
+
+  useEffect(() => {
+    setDraftStatus(statusFilter ?? '');
+    setQuery((q) => ({ ...q, page: 1 }));
+  }, [statusFilter]);
 
   useEffect(() => {
     categoryService.list().then((r) => setCategories(r.items)).catch(() => {});
@@ -80,7 +91,7 @@ export function MyCommitteeMediaListPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await committeeMediaService.list(query);
+      const result = await committeeMediaService.list(listQuery);
       setItems(result.items);
       setPagination(result.pagination);
     } catch (err: unknown) {
@@ -88,7 +99,7 @@ export function MyCommitteeMediaListPage() {
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [listQuery]);
 
   useEffect(() => {
     void load();
@@ -99,12 +110,13 @@ export function MyCommitteeMediaListPage() {
     setQuery((current) => ({
       ...current,
       search: draftSearch.trim() || undefined,
+      pandal: draftPandal.trim() || undefined,
       mediaType: draftMediaType || undefined,
       categoryId: draftCategoryId ? Number(draftCategoryId) : undefined,
       subcategoryId: draftSubcategoryId ? Number(draftSubcategoryId) : undefined,
-      status: draftStatus || undefined,
       page: 1,
     }));
+    setSearchParams(draftStatus ? { status: draftStatus } : {});
   };
 
   const resetFilters = () => {
@@ -114,6 +126,7 @@ export function MyCommitteeMediaListPage() {
     setDraftCategoryId('');
     setDraftSubcategoryId('');
     setDraftStatus('');
+    setSearchParams({});
     setQuery({ page: 1, perPage: 12, sortDir: 'desc' });
   };
 

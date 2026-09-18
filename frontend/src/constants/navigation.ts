@@ -132,7 +132,7 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Approved (Map DB)', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.PANDAL_ATLAS}?status=APPROVED` },
       { label: 'Rejected', icon: 'fa-circle-xmark', tone: 'danger', to: `${ROUTES.PANDAL_ATLAS}?status=REJECTED` },
       { label: 'Drafts', icon: 'fa-pen-to-square', to: `${ROUTES.PANDAL_ATLAS}?status=DRAFT` },
-      { label: 'Add New Pandal', icon: 'fa-circle-plus', to: ROUTES.PANDAL_ATLAS_NEW },
+      { label: 'Add New Pandal', icon: 'fa-circle-plus', to: ROUTES.PANDAL_ATLAS_NEW, end: true },
       { label: 'Public Map View', icon: 'fa-location-dot', tone: 'warning', to: ROUTES.PUBLIC_ATLAS },
     ],
   },

@@ -116,6 +116,7 @@ exports.GALLERY_PATTERNS = {
     MEDIA_REMOVE: 'gallery.remove',
     MEDIA_MODERATION_QUEUE: 'gallery.moderation_queue',
     MEDIA_MODERATE: 'gallery.moderate',
+    MEDIA_PUBLIC_FILTER_OPTIONS: 'gallery.public_filter_options',
     ALBUM_FIND_ALL: 'album.find_all',
     ALBUM_FIND_ONE: 'album.find_one',
     ALBUM_CREATE: 'album.create',
@@ -135,6 +136,7 @@ exports.ATLAS_PATTERNS = {
     PUBLIC_LIST: 'atlas.public_list',
     MAP_DATA: 'atlas.map_data',
     STATS: 'atlas.stats',
+    FORM_OPTIONS: 'atlas.form_options',
 };
 exports.EVENTS_PATTERNS = {
     WEBINAR_FIND_ALL: 'webinar.find_all',

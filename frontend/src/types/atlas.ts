@@ -1,5 +1,18 @@
 export type AtlasStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED';
 
+export interface PandalCommitteeRef {
+  id: number;
+  committeeName: string;
+  committeeId?: string | null;
+  city?: string | null;
+}
+
+export interface PandalUserRef {
+  id: number;
+  name: string;
+  email?: string | null;
+}
+
 export interface PandalAtlas {
   id: number;
   pujaCommitteeId: number;
@@ -8,24 +21,30 @@ export interface PandalAtlas {
   location: string;
   latitude: number;
   longitude: number;
-  photos: unknown;
+  photos: string[] | null;
+  photoUrls?: string[];
+  primaryPhotoUrl?: string;
   timing: string;
-  specialFeatures: string;
-  history: string | null;
-  artisan: string | null;
-  theme: string | null;
-  pujaType: string | null;
-  footfall: string | null;
-  contactPhone: string | null;
-  contactEmail: string | null;
-  website: string | null;
+  ritualSchedule: string | null;
+  livestreamUrl: string | null;
+  virtualTourUrl: string | null;
+  livestreamEmbedUrl?: string | null;
+  virtualTourEmbedUrl?: string | null;
+  fullVirtualTourUrl?: string | null;
+  hasLivestream?: boolean;
+  hasVirtualTour?: boolean;
+  is360Image?: boolean;
+  detailsUrl?: string;
   status: AtlasStatus;
-  remarks: string | null;
+  rejectionRemarks: string | null;
+  reviewedAt?: string | null;
+  approvedAt?: string | null;
   createdAt: string;
   updatedAt: string;
-  committee?: { id: number; committeeName: string };
-  reviewedBy?: { id: number; name: string } | null;
-  approvedBy?: { id: number; name: string } | null;
+  committee?: PandalCommitteeRef;
+  user?: PandalUserRef | null;
+  reviewedBy?: PandalUserRef | null;
+  approvedBy?: PandalUserRef | null;
 }
 
 export interface PandalListQuery {
@@ -45,13 +64,37 @@ export interface PandalFormValues {
   longitude: number;
   pujaCommitteeId: number;
   timing: string;
-  specialFeatures: string;
-  history?: string;
-  artisan?: string;
-  theme?: string;
-  pujaType?: string;
-  footfall?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  website?: string;
+  ritualSchedule?: string;
+  livestreamUrl?: string;
+  virtualTourUrl?: string;
+  action?: 'draft' | 'submit' | 'save';
 }
+
+export interface AtlasStats {
+  total: number;
+  DRAFT: number;
+  SUBMITTED: number;
+  UNDER_REVIEW: number;
+  APPROVED: number;
+  REJECTED: number;
+}
+
+export interface AtlasMapDataResponse {
+  count: number;
+  data: PandalAtlas[];
+}
+
+export interface AtlasFormCommitteeOption {
+  id: number;
+  committeeName: string;
+  registrationNo: string;
+  committeeId: string | null;
+}
+
+export interface AtlasFormOptions {
+  isModerator: boolean;
+  defaultCommitteeId: number | null;
+  committees: AtlasFormCommitteeOption[];
+}
+
+export type AtlasFilterChip = 'all' | 'live' | 'tour';

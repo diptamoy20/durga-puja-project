@@ -17,12 +17,13 @@ exports.AlbumsController = exports.CommitteeAlbumsController = exports.AdminMedi
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const platform_express_1 = require("@nestjs/platform-express");
+const node_fs_1 = require("node:fs");
+const node_path_1 = require("node:path");
 const microservice_client_1 = require("../clients/microservice.client");
 const response_interceptor_1 = require("../interceptors/response.interceptor");
 const gallery_dto_1 = require("./dto/gallery.dto");
 const gallery_upload_util_1 = require("./gallery-upload.util");
-const node_path_1 = require("node:path");
-const platform_express_1 = require("@nestjs/platform-express");
 const PUBLIC_UPLOAD_DIR = process.env.UPLOAD_DIR ?? './storage/uploads';
 function parseOptionalInt(value) {
     if (value === undefined || value === null || value === '')
@@ -49,6 +50,38 @@ function buildMediaPayloadFromUpload(file, body, pujaCommitteeId, venueName) {
         fileSize: file.size,
     };
 }
+function validateMediaUploadBody(body, pujaCommitteeId) {
+    if (!pujaCommitteeId) {
+        throw new common_1.BadRequestException('A puja committee is required.');
+    }
+    if (!body.categoryId) {
+        throw new common_1.BadRequestException('Category is required.');
+    }
+}
+function buildUpdateDataFromBody(body, file, pujaCommitteeId) {
+    const data = {
+        ...(body.title !== undefined ? { title: body.title?.trim() || null } : {}),
+        ...(body.description !== undefined ? { description: body.description?.trim() || null } : {}),
+        ...(parseOptionalInt(body.categoryId) !== undefined ? { categoryId: parseOptionalInt(body.categoryId) } : {}),
+        ...(parseOptionalInt(body.subcategoryId) !== undefined ? { subcategoryId: parseOptionalInt(body.subcategoryId) ?? null } : {}),
+    };
+    const committeeId = parseOptionalInt(body.pujaCommitteeId) ?? pujaCommitteeId;
+    if (committeeId) {
+        data.pujaCommitteeId = committeeId;
+    }
+    if (file) {
+        const filePayload = buildMediaPayloadFromUpload(file, body, committeeId ?? pujaCommitteeId, body.venueName);
+        Object.assign(data, {
+            mediaType: filePayload.mediaType,
+            originalFilename: filePayload.originalFilename,
+            storedPath: filePayload.storedPath,
+            mimeType: filePayload.mimeType,
+            fileSize: filePayload.fileSize,
+            fileReplaced: true,
+        });
+    }
+    return data;
+}
 // ============================================================================
 // Public Gallery
 // ============================================================================
@@ -60,8 +93,22 @@ let PublicGalleryController = class PublicGalleryController {
     index(query) {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_PUBLIC_LIST, query);
     }
+    filterOptions() {
+        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_PUBLIC_FILTER_OPTIONS, {});
+    }
+    async file(relativePath, res) {
+        const safePath = decodeURIComponent(relativePath).replace(/\\/g, '/');
+        if (!safePath.startsWith('committee-media/') || safePath.includes('..')) {
+            throw new common_1.NotFoundException('File not found.');
+        }
+        const absolutePath = (0, node_path_1.join)(PUBLIC_UPLOAD_DIR, safePath);
+        if (!(0, node_fs_1.existsSync)(absolutePath)) {
+            throw new common_1.NotFoundException('File not found.');
+        }
+        return res.sendFile(absolutePath);
+    }
     show(id) {
-        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_FIND_ONE, { id });
+        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_FIND_ONE, { id, publicOnly: true });
     }
 };
 exports.PublicGalleryController = PublicGalleryController;
@@ -75,6 +122,24 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_b = typeof gallery_dto_1.ListMediaQueryDto !== "undefined" && gallery_dto_1.ListMediaQueryDto) === "function" ? _b : Object]),
     __metadata("design:returntype", void 0)
 ], PublicGalleryController.prototype, "index", null);
+__decorate([
+    (0, shared_1.Public)(),
+    (0, common_1.Get)('filter-options'),
+    (0, response_interceptor_1.ResponseMessage)('Gallery filter options retrieved successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Committees and media types for the public gallery filters' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PublicGalleryController.prototype, "filterOptions", null);
+__decorate([
+    (0, shared_1.Public)(),
+    (0, common_1.Get)('files/*'),
+    __param(0, (0, common_1.Param)('0')),
+    __param(1, (0, common_1.Res)({ passthrough: false })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], PublicGalleryController.prototype, "file", null);
 __decorate([
     (0, shared_1.Public)(),
     (0, common_1.Get)(':id'),
@@ -114,26 +179,30 @@ let CommitteeMediaController = class CommitteeMediaController {
             scopeToCommitteeId: actor.committeeId ?? undefined,
         });
     }
-    create(file, body, actor) {
+    async create(files, body, actor) {
         if (!actor.committeeId) {
             throw new common_1.BadRequestException('No approved committee is linked to this account.');
         }
-        if (!file) {
-            throw new common_1.BadRequestException('A media file is required.');
+        const uploadFiles = Array.isArray(files) ? files : [];
+        if (uploadFiles.length === 0) {
+            throw new common_1.BadRequestException('At least one media file is required.');
         }
-        if (!body.categoryId) {
-            throw new common_1.BadRequestException('Category is required.');
+        validateMediaUploadBody(body, actor.committeeId);
+        const created = [];
+        for (const uploadFile of uploadFiles) {
+            const payload = buildMediaPayloadFromUpload(uploadFile, body, actor.committeeId, body.venueName);
+            const item = await this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_CREATE, {
+                ...payload,
+                uploadedById: actor.id,
+            });
+            created.push(item);
         }
-        const payload = buildMediaPayloadFromUpload(file, body, actor.committeeId, body.venueName);
-        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_CREATE, {
-            ...payload,
-            uploadedById: actor.id,
-        });
+        return created.length === 1 ? created[0] : { items: created, count: created.length };
     }
-    update(id, dto, actor) {
+    update(id, file, body, actor) {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_UPDATE, {
             id,
-            data: dto,
+            data: buildUpdateDataFromBody(body, file, actor.committeeId ?? undefined),
             actorId: actor.id,
             scopeToCommitteeId: actor.committeeId ?? undefined,
         });
@@ -170,11 +239,11 @@ __decorate([
 ], CommitteeMediaController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, gallery_upload_util_1.committeeMediaUploadOptions)(PUBLIC_UPLOAD_DIR))),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 20, (0, gallery_upload_util_1.committeeMediaUploadOptions)(PUBLIC_UPLOAD_DIR))),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.UPLOAD_MEDIA),
     (0, response_interceptor_1.ResponseMessage)('Media uploaded successfully'),
-    (0, swagger_1.ApiOperation)({ summary: 'Upload new media' }),
-    __param(0, (0, common_1.UploadedFile)()),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload new media (single or multiple files)' }),
+    __param(0, (0, common_1.UploadedFiles)()),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, shared_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -183,13 +252,15 @@ __decorate([
 ], CommitteeMediaController.prototype, "create", null);
 __decorate([
     (0, common_1.Put)(':id'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, gallery_upload_util_1.committeeMediaUploadOptions)(PUBLIC_UPLOAD_DIR))),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.UPLOAD_MEDIA),
     (0, response_interceptor_1.ResponseMessage)('Media updated successfully'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, shared_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, shared_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, typeof (_g = typeof gallery_dto_1.UpdateMediaDto !== "undefined" && gallery_dto_1.UpdateMediaDto) === "function" ? _g : Object, typeof (_h = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _h : Object]),
+    __metadata("design:paramtypes", [Number, Object, Object, typeof (_h = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _h : Object]),
     __metadata("design:returntype", void 0)
 ], CommitteeMediaController.prototype, "update", null);
 __decorate([
@@ -233,10 +304,29 @@ let AdminMediaController = class AdminMediaController {
             actorId: actor.id,
         });
     }
-    create(dto, actor) {
-        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_CREATE, {
-            ...dto,
-            uploadedById: actor.id,
+    async create(files, body, actor) {
+        const pujaCommitteeId = parseOptionalInt(body.pujaCommitteeId);
+        const uploadFiles = Array.isArray(files) ? files : [];
+        if (uploadFiles.length === 0) {
+            throw new common_1.BadRequestException('At least one media file is required.');
+        }
+        validateMediaUploadBody(body, pujaCommitteeId);
+        const created = [];
+        for (const uploadFile of uploadFiles) {
+            const payload = buildMediaPayloadFromUpload(uploadFile, body, pujaCommitteeId, body.venueName);
+            const item = await this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_CREATE, {
+                ...payload,
+                uploadedById: actor.id,
+            });
+            created.push(item);
+        }
+        return created.length === 1 ? created[0] : { items: created, count: created.length };
+    }
+    update(id, file, body, actor) {
+        return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.MEDIA_UPDATE, {
+            id,
+            data: buildUpdateDataFromBody(body, file),
+            actorId: actor.id,
         });
     }
 };
@@ -285,15 +375,31 @@ __decorate([
 ], AdminMediaController.prototype, "moderate", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 20, (0, gallery_upload_util_1.committeeMediaUploadOptions)(PUBLIC_UPLOAD_DIR))),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MODERATE_MEDIA),
     (0, response_interceptor_1.ResponseMessage)('Media created successfully'),
-    (0, swagger_1.ApiOperation)({ summary: 'Upload media as admin' }),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, shared_1.CurrentUser)()),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload media as admin for a selected committee' }),
+    __param(0, (0, common_1.UploadedFiles)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, shared_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_q = typeof gallery_dto_1.CreateMediaDto !== "undefined" && gallery_dto_1.CreateMediaDto) === "function" ? _q : Object, typeof (_r = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _r : Object]),
+    __metadata("design:paramtypes", [Object, Object, typeof (_r = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _r : Object]),
     __metadata("design:returntype", void 0)
 ], AdminMediaController.prototype, "create", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, gallery_upload_util_1.committeeMediaUploadOptions)(PUBLIC_UPLOAD_DIR))),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MODERATE_MEDIA),
+    (0, response_interceptor_1.ResponseMessage)('Media updated successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update media metadata or replace file (admin)' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, shared_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, Object, typeof (_r = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _r : Object]),
+    __metadata("design:returntype", void 0)
+], AdminMediaController.prototype, "update", null);
 exports.AdminMediaController = AdminMediaController = __decorate([
     (0, swagger_1.ApiTags)('Admin Media'),
     (0, swagger_1.ApiBearerAuth)(),
@@ -312,6 +418,9 @@ let AlbumsController = class AlbumsController {
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_FIND_ALL, query);
     }
     create(dto, actor) {
+        if (!dto.pujaCommitteeId) {
+            throw new common_1.BadRequestException('A puja committee is required.');
+        }
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_CREATE, {
             data: dto,
             actorId: actor.id,
@@ -444,9 +553,11 @@ let CommitteeAlbumsController = class CommitteeAlbumsController {
         if (!actor.committeeId) {
             throw new common_1.BadRequestException('No approved committee is linked to this account.');
         }
+        const { pujaCommitteeId: _ignored, ...rest } = dto;
         return this.client.send(shared_1.SERVICE_TOKENS.GALLERY, shared_1.GALLERY_PATTERNS.ALBUM_CREATE, {
-            data: { ...dto, pujaCommitteeId: actor.committeeId, isPublic: dto.isPublic ?? false },
+            data: { ...rest, pujaCommitteeId: actor.committeeId, isPublic: dto.isPublic ?? false },
             actorId: actor.id,
+            scopeToCommitteeId: actor.committeeId,
         });
     }
     findOne(id, actor) {

@@ -79,6 +79,7 @@ export function CommitteeAlbumListPage() {
       categoryId: draftCategoryId ? Number(draftCategoryId) : undefined,
       subcategoryId: draftSubcategoryId ? Number(draftSubcategoryId) : undefined,
       albumStatus: draftStatus || undefined,
+      visibility: draftVisibility || undefined,
       page: 1,
     }));
   };
@@ -94,11 +95,7 @@ export function CommitteeAlbumListPage() {
     }
   };
 
-  const filteredAlbums = albums.filter((album) => {
-    if (draftVisibility === 'public') return album.isPublic;
-    if (draftVisibility === 'private') return !album.isPublic;
-    return true;
-  });
+  const filteredAlbums = albums;
 
   return (
     <div className="page">

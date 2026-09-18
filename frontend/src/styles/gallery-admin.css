@@ -1,0 +1,137 @@
+.gallery-upload-form__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: var(--space-400);
+}
+
+.gallery-upload-form__summary {
+  margin-top: var(--space-200);
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
+.gallery-upload-form__previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-200);
+  margin-top: var(--space-300);
+}
+
+.gallery-upload-form__preview-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.gallery-upload-form__preview-media {
+  aspect-ratio: 4 / 3;
+  background: var(--color-bg-muted);
+}
+
+.gallery-upload-form__preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-upload-form__preview-video {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-100);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-200);
+}
+
+.gallery-upload-form__preview-meta {
+  padding: var(--space-200);
+  display: grid;
+  gap: var(--space-150);
+}
+
+.gallery-upload-form__preview-name {
+  font-size: var(--font-xs);
+  word-break: break-word;
+}
+
+.album-form__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+  gap: var(--space-400);
+}
+
+.album-form__media-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-200);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-300);
+}
+
+.album-form__media-counts {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
+.album-form__selected-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-200);
+}
+
+.album-form__selected-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.album-form__selected-media {
+  aspect-ratio: 4 / 3;
+  background: var(--color-bg-muted);
+}
+
+.album-form__selected-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.album-form__selected-video {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-2xl);
+}
+
+.album-form__selected-body {
+  padding: var(--space-200);
+  display: grid;
+  gap: var(--space-150);
+}
+
+.album-form__selected-title {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+  .gallery-upload-form__grid,
+  .album-form__grid {
+    grid-template-columns: 1fr;
+  }
+}

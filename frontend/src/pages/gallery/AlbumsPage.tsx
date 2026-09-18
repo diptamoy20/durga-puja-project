@@ -1,270 +1,249 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/Modal';
+import { Pagination } from '@/components/ui/Pagination';
+import { StatusBadge } from '@/components/ui/Badge';
+import { ROUTES } from '@/constants/routes';
 import { albumService } from '@/services/galleryService';
 import { categoryService, subcategoryService } from '@/services/contentService';
-import { committeeService } from '@/services/registrationService';
+import { adminAtlasService } from '@/services/atlasService';
 import { useToast } from '@/hooks/useToast';
-import type { Album } from '@/types/gallery';
+import type { Album, MediaListQuery } from '@/types/gallery';
 import type { Category, Subcategory } from '@/types/content';
-import type { PujaCommittee } from '@/types/registration';
+import type { AtlasFormCommitteeOption } from '@/types/atlas';
+import type { PaginationMeta } from '@/types';
 
 export function AlbumsPage() {
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | undefined>();
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [committees, setCommittees] = useState<PujaCommittee[]>([]);
+  const [committees, setCommittees] = useState<AtlasFormCommitteeOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Album | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // Create album modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState<number | ''>('');
-  const [subcategoryId, setSubcategoryId] = useState<number | ''>('');
-  const [committeeId, setCommitteeId] = useState<number | ''>('');
-  const [isPublic, setIsPublic] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState<MediaListQuery>({ page: 1, perPage: 15, sortDir: 'desc' });
+  const [draftSearch, setDraftSearch] = useState(searchParams.get('search') ?? '');
+  const [draftCommitteeId, setDraftCommitteeId] = useState(searchParams.get('puja_committee_id') ?? '');
+  const [draftCategoryId, setDraftCategoryId] = useState(searchParams.get('category_id') ?? '');
+  const [draftSubcategoryId, setDraftSubcategoryId] = useState(searchParams.get('subcategory_id') ?? '');
+  const [draftStatus, setDraftStatus] = useState(searchParams.get('status') ?? '');
+  const [draftVisibility, setDraftVisibility] = useState(searchParams.get('visibility') ?? '');
+
+  const listQuery = useMemo(
+    () => ({
+      ...query,
+      search: searchParams.get('search') || undefined,
+      pujaCommitteeId: searchParams.get('puja_committee_id') ? Number(searchParams.get('puja_committee_id')) : undefined,
+      categoryId: searchParams.get('category_id') ? Number(searchParams.get('category_id')) : undefined,
+      subcategoryId: searchParams.get('subcategory_id') ? Number(searchParams.get('subcategory_id')) : undefined,
+      albumStatus: (searchParams.get('status') as 'ACTIVE' | 'INACTIVE' | null) || undefined,
+      visibility: (searchParams.get('visibility') as 'public' | 'private' | null) || undefined,
+    }),
+    [query, searchParams],
+  );
 
   useEffect(() => {
     categoryService.list().then((r) => setCategories(r.items)).catch(() => {});
-    committeeService.list({ perPage: 100 }).then((r) => setCommittees(r.items)).catch(() => {});
+    adminAtlasService.formOptions().then((opts) => setCommittees(opts.committees)).catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (categoryId) {
+    if (draftCategoryId) {
       subcategoryService
-        .list({ categoryId: Number(categoryId), perPage: 100, sortDir: 'asc' })
+        .list({ categoryId: Number(draftCategoryId), perPage: 100, sortDir: 'asc' })
         .then((res) => setSubcategories(res.items))
         .catch(() => {});
     } else {
       setSubcategories([]);
     }
-  }, [categoryId]);
+  }, [draftCategoryId]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await albumService.list();
+      const res = await albumService.list(listQuery);
       setAlbums(res.items);
+      setPagination(res.pagination);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load albums.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [listQuery]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const applyFilters = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !categoryId || !committeeId) {
-      toast.warning('Please select title, category, and committee.');
-      return;
-    }
-    setSaving(true);
+    const params: Record<string, string> = {};
+    if (draftSearch.trim()) params.search = draftSearch.trim();
+    if (draftCommitteeId) params.puja_committee_id = draftCommitteeId;
+    if (draftCategoryId) params.category_id = draftCategoryId;
+    if (draftSubcategoryId) params.subcategory_id = draftSubcategoryId;
+    if (draftStatus) params.status = draftStatus;
+    if (draftVisibility) params.visibility = draftVisibility;
+    setSearchParams(params);
+    setQuery((q) => ({ ...q, page: 1 }));
+  };
+
+  const resetFilters = () => {
+    setDraftSearch('');
+    setDraftCommitteeId('');
+    setDraftCategoryId('');
+    setDraftSubcategoryId('');
+    setDraftStatus('');
+    setDraftVisibility('');
+    setSearchParams({});
+    setQuery({ page: 1, perPage: 15, sortDir: 'desc' });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await albumService.create({
-        title,
-        description: description || undefined,
-        categoryId: Number(categoryId),
-        subcategoryId: subcategoryId ? Number(subcategoryId) : undefined,
-        pujaCommitteeId: Number(committeeId),
-        isPublic,
-      });
-      toast.success('Album created successfully.');
-      setModalOpen(false);
-      setTitle('');
-      setDescription('');
-      load();
+      await albumService.remove(deleteTarget.id);
+      toast.success('Album deleted.');
+      setDeleteTarget(null);
+      void load();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create album.');
+      toast.error(err instanceof Error ? err.message : 'Delete failed.');
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   };
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
         <div>
-          <h1 className="page__title">Photo Albums</h1>
-          <p className="page__subtitle">Curate and group festival media into public or private thematic albums.</p>
+          <h1 className="page__title">Albums</h1>
+          <p className="page__subtitle">Organize approved committee media into albums.</p>
         </div>
-        <Button variant="primary" size="md" onClick={() => setModalOpen(true)}>
+        <Link to={ROUTES.GALLERY_ALBUM_NEW} className="btn btn--primary btn--md">
           + Create Album
-        </Button>
+        </Link>
       </header>
 
       {error && <Alert tone="danger">{error}</Alert>}
 
       <Card>
+        <div className="filter-bar">
+          <form className="filter-bar__search" onSubmit={applyFilters}>
+            <input
+              type="search"
+              className="field__control"
+              placeholder="Search title or description"
+              value={draftSearch}
+              onChange={(e) => setDraftSearch(e.target.value)}
+            />
+            <select className="field__control" value={draftCommitteeId} onChange={(e) => setDraftCommitteeId(e.target.value)}>
+              <option value="">All committees</option>
+              {committees.map((c) => <option key={c.id} value={c.id}>{c.committeeName}</option>)}
+            </select>
+            <select className="field__control" value={draftCategoryId} onChange={(e) => setDraftCategoryId(e.target.value)}>
+              <option value="">All categories</option>
+              {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
+            <select className="field__control" value={draftSubcategoryId} onChange={(e) => setDraftSubcategoryId(e.target.value)}>
+              <option value="">All subcategories</option>
+              {subcategories.map((sub) => <option key={sub.id} value={sub.id}>{sub.name}</option>)}
+            </select>
+            <select className="field__control" value={draftStatus} onChange={(e) => setDraftStatus(e.target.value)}>
+              <option value="">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+            <select className="field__control" value={draftVisibility} onChange={(e) => setDraftVisibility(e.target.value)}>
+              <option value="">All visibility</option>
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+            <Button type="submit" variant="secondary" size="md">Filter</Button>
+            <Button type="button" variant="secondary" size="md" onClick={resetFilters}>Reset</Button>
+          </form>
+        </div>
+
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
-                <th>Album Title</th>
-                <th>Committee</th>
+                <th>Title</th>
                 <th>Category</th>
-                <th>Media Items</th>
+                <th>Committee</th>
+                <th>Media</th>
                 <th>Visibility</th>
-                <th>Created</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
-                    Loading albums…
-                  </td>
-                </tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>Loading albums…</td></tr>
               ) : albums.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
-                    No albums created yet. Click "+ Create Album" to get started.
-                  </td>
-                </tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>No albums found.</td></tr>
               ) : (
                 albums.map((album) => (
                   <tr key={album.id}>
                     <td>
                       <strong>{album.title}</strong>
                       {album.description && (
-                        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
-                          {album.description}
-                        </div>
+                        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{album.description}</div>
                       )}
                     </td>
-                    <td>{album.committee?.committeeName ?? `#${album.pujaCommitteeId}`}</td>
-                    <td>{album.category?.name ?? '—'}</td>
-                    <td>{album._count?.media ?? album.media?.length ?? 0} photos/videos</td>
                     <td>
-                      {album.isPublic ? (
-                        <span className="badge badge--success">Public</span>
-                      ) : (
-                        <span className="badge badge--muted">Private</span>
-                      )}
+                      {album.category?.name ?? '—'}
+                      {album.subcategory && <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{album.subcategory.name}</div>}
                     </td>
-                    <td>{new Date(album.createdAt).toLocaleDateString()}</td>
+                    <td>{album.committee?.committeeName ?? '—'}</td>
+                    <td>{album._count?.media ?? album.media?.length ?? 0}</td>
+                    <td>{album.isPublic ? 'Public' : 'Private'}</td>
+                    <td>
+                      <StatusBadge tone={album.status === 'ACTIVE' ? 'success' : 'default'}>
+                        {album.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                      </StatusBadge>
+                    </td>
+                    <td>
+                      <div className="committee-row-actions">
+                        <Link to={ROUTES.GALLERY_ALBUM_DETAIL(album.id)} className="btn btn--secondary btn--sm">View</Link>
+                        <Link to={ROUTES.GALLERY_ALBUM_EDIT(album.id)} className="btn btn--secondary btn--sm">Edit</Link>
+                        <Button variant="danger" size="sm" onClick={() => setDeleteTarget(album)}>Delete</Button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+
+        {pagination && pagination.lastPage > 1 && (
+          <Pagination meta={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
+        )}
       </Card>
 
-      <Modal open={modalOpen} title="Create New Album" onClose={() => setModalOpen(false)}>
-        <form onSubmit={handleCreate}>
-          <div className="field">
-            <label className="field__label" htmlFor="albTitle">Album Title *</label>
-            <input
-              id="albTitle"
-              type="text"
-              required
-              className="field__control"
-              placeholder="e.g. Durga Puja 2026 - Idol Sculpting"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          <div className="field">
-            <label className="field__label" htmlFor="albCommittee">Puja Committee *</label>
-            <select
-              id="albCommittee"
-              required
-              className="field__control"
-              value={committeeId}
-              onChange={(e) => setCommitteeId(e.target.value ? Number(e.target.value) : '')}
-            >
-              <option value="">Select Committee</option>
-              {committees.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.committeeName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="field">
-            <label className="field__label" htmlFor="albCat">Category *</label>
-            <select
-              id="albCat"
-              required
-              className="field__control"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : '')}
-            >
-              <option value="">Select Category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {subcategories.length > 0 && (
-            <div className="field">
-              <label className="field__label" htmlFor="albSubCat">Subcategory</label>
-              <select
-                id="albSubCat"
-                className="field__control"
-                value={subcategoryId}
-                onChange={(e) => setSubcategoryId(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">Select Subcategory</option>
-                {subcategories.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="field">
-            <label className="field__label" htmlFor="albDesc">Description</label>
-            <textarea
-              id="albDesc"
-              rows={2}
-              className="field__control"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          <div className="field">
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-150)', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
-              />
-              <span>Make Album Publicly Visible</span>
-            </label>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-200)', marginTop: 'var(--space-400)' }}>
-            <Button type="button" variant="secondary" size="md" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" size="md" disabled={saving}>
-              {saving ? 'Creating…' : 'Create Album'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Album"
+        message={`Delete album "${deleteTarget?.title}"?`}
+        confirmLabel="Delete"
+        destructive
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

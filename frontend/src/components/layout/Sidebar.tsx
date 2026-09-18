@@ -14,11 +14,57 @@ interface SidebarProps {
   onNavigate: () => void;
 }
 
+function navItemIsActive(item: NavItem, pathname: string, search: string): boolean {
+  if (!item.to) return false;
+
+  const [itemPath, itemQuery = ''] = item.to.split('?');
+  const currentParams = new URLSearchParams(search);
+  const itemParams = new URLSearchParams(itemQuery);
+
+  const pathMatches = itemQuery
+    ? pathname === itemPath
+    : item.end === true
+      ? pathname === itemPath
+      : pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+
+  if (!pathMatches) return false;
+
+  if (itemQuery) {
+    for (const [key, value] of itemParams.entries()) {
+      if (currentParams.get(key) !== value) return false;
+    }
+    return true;
+  }
+
+  if (item.to === ROUTES.PUBLIC_ATLAS) {
+    return pathname === ROUTES.PUBLIC_ATLAS || pathname.startsWith(`${ROUTES.PUBLIC_ATLAS}/`);
+  }
+
+  // Unfiltered list links stay inactive when a status query is present.
+  if (item.to === ROUTES.PANDAL_ATLAS || item.to === ROUTES.COMMITTEES || item.to === ROUTES.ARTICLES) {
+    return !currentParams.get('status');
+  }
+
+  if (item.to === ROUTES.GALLERY_MEDIA) {
+    return !currentParams.get('status');
+  }
+
+  if (item.to === ROUTES.MY_COMMITTEE_MEDIA) {
+    return !currentParams.get('status');
+  }
+
+  if (item.to === ROUTES.WEBINARS) {
+    return !currentParams.get('status');
+  }
+
+  return true;
+}
+
 export function Sidebar({ open, onNavigate }: SidebarProps) {
   const { can } = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   const appName = import.meta.env.VITE_APP_NAME ?? 'Durga Puja Global Summit';
 
@@ -33,33 +79,24 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
           ...section,
           items: section.items.filter((item) => !item.permissions || can(...item.permissions)),
         }))
-        // Hide items the user cannot use, then drop sections left empty.
         .filter((section) => section.items.length > 0),
     [can],
   );
 
-  /** Label of the section holding the current route, if any. */
   const activeSection = useMemo(() => {
-    const matches = (item: NavItem) =>
-      item.to !== undefined && (item.end ? pathname === item.to : pathname.startsWith(item.to));
-
-    return sections.find((section) => section.items.some(matches))?.label;
-  }, [sections, pathname]);
+    return sections.find((section) =>
+      section.items.some((item) => navItemIsActive(item, pathname, search)),
+    )?.label;
+  }, [sections, pathname, search]);
 
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
 
-  // Following a link into a collapsed section should reveal where you landed.
   useEffect(() => {
     if (activeSection) setToggled((prev) => ({ ...prev, [activeSection]: true }));
   }, [activeSection]);
 
-  /**
-   * `open` is read here rather than inside the updater: React clears
-   * `currentTarget` once the handler returns, and the updater runs later.
-   */
   const handleToggle = (label: string, event: SyntheticEvent<HTMLDetailsElement>) => {
     const { open: isOpen } = event.currentTarget;
-
     setToggled((prev) => ({ ...prev, [label]: isOpen }));
   };
 
@@ -100,10 +137,10 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
                     <NavLink
                       to={item.to}
                       end={item.end}
-                      // Closing the drawer on navigate matters on mobile, where
-                      // the sidebar overlays the content it just linked to.
                       onClick={onNavigate}
-                      className={({ isActive }) => `sidebar__link ${isActive ? 'is-active' : ''}`}
+                      className={() =>
+                        `sidebar__link ${navItemIsActive(item, pathname, search) ? 'is-active' : ''}`
+                      }
                     >
                       <i
                         className={`fas ${item.icon} sidebar__icon ${
@@ -114,8 +151,6 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
                       <span className="sidebar__text">{item.label}</span>
                     </NavLink>
                   ) : (
-                    /* No screen behind it yet, so it is shown but inert rather
-                       than linking nowhere. */
                     <span className="sidebar__link is-pending" aria-disabled="true">
                       <i className={`fas ${item.icon} sidebar__icon`} aria-hidden="true" />
                       <span className="sidebar__text">{item.label}</span>

@@ -32,6 +32,9 @@ let GalleryController = class GalleryController {
     publicList(query) {
         return this.gallery.publicList(query);
     }
+    publicFilterOptions() {
+        return this.gallery.publicFilterOptions();
+    }
     myUploads(query) {
         return this.gallery.findAll({
             ...query,
@@ -101,6 +104,12 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof gallery_service_1.ListMediaPayload !== "undefined" && gallery_service_1.ListMediaPayload) === "function" ? _c : Object]),
     __metadata("design:returntype", void 0)
 ], GalleryController.prototype, "publicList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.MEDIA_PUBLIC_FILTER_OPTIONS),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], GalleryController.prototype, "publicFilterOptions", null);
 __decorate([
     (0, microservices_1.MessagePattern)(shared_1.GALLERY_PATTERNS.MEDIA_MY_UPLOADS),
     __param(0, (0, microservices_1.Payload)()),

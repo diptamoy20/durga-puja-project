@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -34,6 +34,38 @@ const dateFormat = new Intl.DateTimeFormat('en-GB', {
 
 const ALL_STATUSES: CommitteeStatus[] = ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'INACTIVE'];
 
+const STATUS_FILTERS: Array<{ value: CommitteeStatus | ''; label: string }> = [
+  { value: '', label: 'All Statuses' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'UNDER_REVIEW', label: 'Under Review' },
+  { value: 'APPROVED', label: 'Approved' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'INACTIVE', label: 'Inactive' },
+];
+
+const PAGE_TITLES: Record<string, string> = {
+  '': 'Committee Applications',
+  PENDING: 'Pending Approvals',
+  UNDER_REVIEW: 'Under Review',
+  APPROVED: 'Approved Committees',
+  REJECTED: 'Rejected Applications',
+  INACTIVE: 'Inactive Committees',
+};
+
+const STAT_CARDS: Array<{
+  key: keyof CommitteeStats | 'total';
+  label: string;
+  status?: CommitteeStatus;
+  tone?: string;
+}> = [
+  { key: 'total', label: 'Total Applications' },
+  { key: 'pending', label: 'Pending', status: 'PENDING', tone: 'warning' },
+  { key: 'under_review', label: 'Under Review', status: 'UNDER_REVIEW', tone: 'info' },
+  { key: 'approved', label: 'Approved', status: 'APPROVED', tone: 'success' },
+  { key: 'rejected', label: 'Rejected', status: 'REJECTED', tone: 'danger' },
+  { key: 'inactive', label: 'Inactive', status: 'INACTIVE', tone: 'default' },
+];
+
 const BULK_ACTIONS: Array<{ value: CommitteeBulkAction | ''; label: string }> = [
   { value: '', label: 'Bulk actions' },
   { value: 'approve', label: 'Approve' },
@@ -58,33 +90,14 @@ function statusTone(status: CommitteeStatus): 'default' | 'success' | 'warning' 
   }
 }
 
-function RowActionButton({
-  title,
-  label,
-  onClick,
-  variant = 'secondary',
-}: {
-  title: string;
-  label: string;
-  onClick: () => void;
-  variant?: 'secondary' | 'primary' | 'danger' | 'success' | 'info';
-}) {
-  return (
-    <button
-      type="button"
-      className={`committee-row-action committee-row-action--${variant}`}
-      title={title}
-      aria-label={title}
-      onClick={onClick}
-    >
-      {label}
-    </button>
-  );
-}
-
 export function CommitteeListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
   const { can } = useAuth();
+
+  const statusParam = searchParams.get('status') as CommitteeStatus | null;
+  const statusFilter = statusParam ?? undefined;
+  const pageTitle = PAGE_TITLES[statusFilter ?? ''] ?? 'Committee Applications';
 
   const [items, setItems] = useState<PujaCommittee[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
@@ -108,12 +121,23 @@ export function CommitteeListPage() {
   const canDelete = can(PERMISSIONS.DELETE_COMMITTEES);
   const canExport = can(PERMISSIONS.EXPORT_COMMITTEES);
 
+  /** Status filter always follows the URL (?status=), like the Laravel index. */
+  const listQuery = useMemo(
+    () => ({ ...query, status: statusFilter }),
+    [query, statusFilter],
+  );
+
+  useEffect(() => {
+    setQuery((q) => ({ ...q, page: 1, search: undefined }));
+    setSearch('');
+  }, [statusFilter]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [result, statsResult] = await Promise.all([
-        committeeService.list(query),
+        committeeService.list(listQuery),
         committeeService.stats(),
       ]);
       setItems(result.items);
@@ -124,7 +148,7 @@ export function CommitteeListPage() {
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [listQuery]);
 
   useEffect(() => {
     load();
@@ -231,10 +255,15 @@ export function CommitteeListPage() {
         </nav>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
           <div>
-            <h1 className="page__title">Committee Applications</h1>
+            <h1 className="page__title">{pageTitle}</h1>
+            <p className="page__subtitle">
+              {statusFilter
+                ? `Showing ${formatCommitteeStatus(statusFilter)} committee applications.`
+                : 'Review and manage all puja committee registration applications.'}
+            </p>
           </div>
           {canExport && (
-            <Button variant="secondary" size="sm" onClick={() => committeeService.exportCsv(query)}>
+            <Button variant="secondary" size="sm" onClick={() => committeeService.exportCsv(listQuery)}>
               Export CSV
             </Button>
           )}
@@ -242,31 +271,25 @@ export function CommitteeListPage() {
       </header>
 
       {stats && (
-        <div className="stat-grid">
-          <div className="stat-card">
-            <p className="stat-card__label">Total Applications</p>
-            <p className="stat-card__value">{stats.total}</p>
-          </div>
-          <div className="stat-card stat-card--warning">
-            <p className="stat-card__label">Pending</p>
-            <p className="stat-card__value">{stats.pending}</p>
-          </div>
-          <div className="stat-card stat-card--info">
-            <p className="stat-card__label">Under Review</p>
-            <p className="stat-card__value">{stats.under_review}</p>
-          </div>
-          <div className="stat-card stat-card--success">
-            <p className="stat-card__label">Approved</p>
-            <p className="stat-card__value">{stats.approved}</p>
-          </div>
-          <div className="stat-card stat-card--danger">
-            <p className="stat-card__label">Rejected</p>
-            <p className="stat-card__value">{stats.rejected}</p>
-          </div>
-          <div className="stat-card">
-            <p className="stat-card__label">Inactive</p>
-            <p className="stat-card__value">{stats.inactive ?? 0}</p>
-          </div>
+        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          {STAT_CARDS.map((card) => {
+            const value = stats[card.key as keyof CommitteeStats] ?? 0;
+            const active = card.status ? statusFilter === card.status : !statusFilter;
+            const href = card.status
+              ? `${ROUTES.COMMITTEES}?status=${card.status}`
+              : ROUTES.COMMITTEES;
+            return (
+              <Link
+                key={card.key}
+                to={href}
+                className={`stat-card ${card.tone ? `stat-card--${card.tone}` : ''}`}
+                style={{ textDecoration: 'none', outline: active ? '2px solid var(--color-primary)' : undefined }}
+              >
+                <p className="stat-card__label">{card.label}</p>
+                <p className="stat-card__value">{value}</p>
+              </Link>
+            );
+          })}
         </div>
       )}
 
@@ -282,32 +305,42 @@ export function CommitteeListPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button type="submit" variant="secondary" size="md">Search</Button>
+            <Button type="submit" variant="secondary" size="md">Filter</Button>
+            {(query.search || statusFilter) && (
+              <Link to={ROUTES.COMMITTEES} className="btn btn--secondary btn--md">
+                Reset
+              </Link>
+            )}
           </form>
           <div className="filter-bar__filters">
             <select
               className="field__control"
-              value={query.status ?? ''}
-              onChange={(e) =>
-                setQuery((q) => ({
-                  ...q,
-                  status: (e.target.value as CommitteeStatus) || undefined,
-                  page: 1,
-                }))
-              }
+              value={statusFilter ?? ''}
+              onChange={(e) => {
+                const status = (e.target.value as CommitteeStatus) || undefined;
+                setQuery((q) => ({ ...q, page: 1 }));
+                setSearchParams(status ? { status } : {});
+              }}
             >
-              <option value="">All Status</option>
-              {ALL_STATUSES.map((status) => (
-                <option key={status} value={status}>{formatCommitteeStatus(status)}</option>
+              {STATUS_FILTERS.map((option) => (
+                <option key={option.value || 'all'} value={option.value}>
+                  {option.label}
+                  {stats && option.value === 'PENDING' ? ` (${stats.pending})` : ''}
+                  {stats && option.value === 'UNDER_REVIEW' ? ` (${stats.under_review})` : ''}
+                  {stats && option.value === 'APPROVED' ? ` (${stats.approved})` : ''}
+                  {stats && option.value === 'REJECTED' ? ` (${stats.rejected})` : ''}
+                  {stats && option.value === 'INACTIVE' ? ` (${stats.inactive})` : ''}
+                  {stats && !option.value ? ` (${stats.total})` : ''}
+                </option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="committee-bulk-toolbar">
-          <h2 className="committee-bulk-toolbar__title">Applications</h2>
+        <div className="list-toolbar">
+          <h2 className="list-toolbar__title">Applications</h2>
           {(canApprove || canDelete) && (
-            <div className="committee-bulk-toolbar__actions">
+            <div className="list-toolbar__actions">
               <select
                 className="field__control field__control--sm"
                 value={bulkAction}
@@ -343,7 +376,7 @@ export function CommitteeListPage() {
               )}
               <Button
                 size="sm"
-                variant="secondary"
+                variant="primary"
                 disabled={busy || selectedIds.length === 0 || !bulkAction}
                 onClick={executeBulkAction}
               >
@@ -424,61 +457,93 @@ export function CommitteeListPage() {
                       <div className="committee-row-actions">
                         <Link
                           to={ROUTES.COMMITTEE_DETAIL(committee.id)}
-                          className="committee-row-action committee-row-action--secondary"
+                          className="btn btn--secondary btn--sm"
                           title="View application"
-                          aria-label="View application"
                         >
                           View
                         </Link>
                         {canEdit && (
                           <Link
                             to={ROUTES.COMMITTEE_EDIT(committee.id)}
-                            className="committee-row-action committee-row-action--primary"
+                            className="btn btn--secondary btn--sm"
                             title="Edit application"
-                            aria-label="Edit application"
                           >
                             Edit
                           </Link>
                         )}
                         {showRowAction(committee, 'APPROVED') && (
-                          <RowActionButton
-                            title="Approve application"
-                            label="✓"
+                          <Button
+                            size="sm"
                             variant="success"
-                            onClick={() => setStatusTarget({ id: committee.id, status: 'APPROVED', name: committee.committeeName })}
-                          />
+                            title="Approve application"
+                            onClick={() =>
+                              setStatusTarget({
+                                id: committee.id,
+                                status: 'APPROVED',
+                                name: committee.committeeName,
+                              })
+                            }
+                          >
+                            Approve
+                          </Button>
                         )}
                         {showRowAction(committee, 'REJECTED') && (
-                          <RowActionButton
-                            title="Reject application"
-                            label="✕"
+                          <Button
+                            size="sm"
                             variant="danger"
-                            onClick={() => setStatusTarget({ id: committee.id, status: 'REJECTED', name: committee.committeeName })}
-                          />
+                            title="Reject application"
+                            onClick={() =>
+                              setStatusTarget({
+                                id: committee.id,
+                                status: 'REJECTED',
+                                name: committee.committeeName,
+                              })
+                            }
+                          >
+                            Reject
+                          </Button>
                         )}
                         {showRowAction(committee, 'UNDER_REVIEW') && (
-                          <RowActionButton
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             title="Put under review"
-                            label="Review"
-                            variant="info"
-                            onClick={() => setStatusTarget({ id: committee.id, status: 'UNDER_REVIEW', name: committee.committeeName })}
-                          />
+                            onClick={() =>
+                              setStatusTarget({
+                                id: committee.id,
+                                status: 'UNDER_REVIEW',
+                                name: committee.committeeName,
+                              })
+                            }
+                          >
+                            Review
+                          </Button>
                         )}
                         {showRowAction(committee, 'INACTIVE') && (
-                          <RowActionButton
-                            title="Deactivate application"
-                            label="Pause"
+                          <Button
+                            size="sm"
                             variant="secondary"
-                            onClick={() => setStatusTarget({ id: committee.id, status: 'INACTIVE', name: committee.committeeName })}
-                          />
+                            title="Deactivate application"
+                            onClick={() =>
+                              setStatusTarget({
+                                id: committee.id,
+                                status: 'INACTIVE',
+                                name: committee.committeeName,
+                              })
+                            }
+                          >
+                            Deactivate
+                          </Button>
                         )}
                         {canDelete && (
-                          <RowActionButton
-                            title="Delete application"
-                            label="Del"
+                          <Button
+                            size="sm"
                             variant="danger"
+                            title="Delete application"
                             onClick={() => setDeleteTarget(committee)}
-                          />
+                          >
+                            Delete
+                          </Button>
                         )}
                       </div>
                     </td>

@@ -26,12 +26,19 @@ export interface CommitteeMedia {
   moderatedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  committee?: { id: number; committeeName: string };
+  streamUrl?: string;
+  thumbnailUrl?: string;
+  committee?: { id: number; committeeName: string; city?: string; state?: string; venueName?: string };
   category?: { id: number; name: string } | null;
   subcategory?: { id: number; name: string } | null;
   uploadedBy?: { id: number; name: string };
   moderatedBy?: { id: number; name: string } | null;
   processingStatus?: string;
+}
+
+export interface PublicGalleryFilterOptions {
+  committees: Array<{ id: number; committeeName: string }>;
+  mediaTypes: MediaType[];
 }
 
 export interface MediaListQuery {
@@ -45,6 +52,7 @@ export interface MediaListQuery {
   pujaCommitteeId?: number;
   categoryId?: number;
   subcategoryId?: number;
+  pandal?: string;
   albumStatus?: 'ACTIVE' | 'INACTIVE';
   visibility?: 'public' | 'private';
 }

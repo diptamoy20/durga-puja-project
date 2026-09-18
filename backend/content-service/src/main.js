@@ -2,17 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
 const core_1 = require("@nestjs/core");
 const microservices_1 = require("@nestjs/microservices");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
     const logger = new common_1.Logger('ContentService');
-    const configApp = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule, { logger: false });
-    const config = configApp.get(config_1.ConfigService);
-    const host = config.get('content.host') ?? 'localhost';
-    const port = config.get('content.port') ?? 5004;
-    await configApp.close();
+    const host = process.env.CONTENT_SERVICE_HOST ?? 'localhost';
+    const port = Number(process.env.CONTENT_SERVICE_PORT ?? 5004);
     const app = await core_1.NestFactory.createMicroservice(app_module_1.AppModule, {
         transport: microservices_1.Transport.TCP,
         options: { host, port },
