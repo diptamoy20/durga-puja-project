@@ -271,6 +271,7 @@ exports.AdminPodcastsController = AdminPodcastsController;
 
 __decorate([
     (0, common_1.Get)(),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_PODCASTS, shared_1.PERMISSIONS.VIEW_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Admin podcast list retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Admin episode list with full filters' }),
     __param(0, (0, common_1.Query)()),
@@ -281,6 +282,7 @@ __decorate([
 
 __decorate([
     (0, common_1.Get)('stats'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_PODCASTS, shared_1.PERMISSIONS.VIEW_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Podcast statistics retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get total listens, duration, and subscriber metrics' }),
     __metadata("design:type", Function),
@@ -290,6 +292,7 @@ __decorate([
 
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_PODCASTS, shared_1.PERMISSIONS.VIEW_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Podcast episode retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get podcast episode by ID' }),
     __param(0, (0, common_1.Param)('id')),
@@ -300,6 +303,7 @@ __decorate([
 
 __decorate([
     (0, common_1.Post)(),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.CREATE_PODCASTS, shared_1.PERMISSIONS.CREATE_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Podcast episode created successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Publish or draft a new podcast episode' }),
     __param(0, (0, common_1.Body)()),
@@ -311,6 +315,7 @@ __decorate([
 
 __decorate([
     (0, common_1.Put)(':id'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_PODCASTS, shared_1.PERMISSIONS.EDIT_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Podcast episode updated successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Update podcast episode metadata and audio' }),
     __param(0, (0, common_1.Param)('id')),
@@ -323,6 +328,7 @@ __decorate([
 
 __decorate([
     (0, common_1.Patch)(':id/status'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_PODCASTS, shared_1.PERMISSIONS.EDIT_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Podcast status toggled successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Toggle podcast published/draft status' }),
     __param(0, (0, common_1.Param)('id')),
@@ -333,6 +339,7 @@ __decorate([
 
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.DELETE_PODCASTS, shared_1.PERMISSIONS.DELETE_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Podcast episode deleted successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete podcast episode' }),
     __param(0, (0, common_1.Param)('id')),

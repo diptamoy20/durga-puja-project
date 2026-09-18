@@ -76,6 +76,11 @@ exports.PERMISSIONS = {
     REVIEW_ARTICLES: 'review_articles',
     APPROVE_ARTICLES: 'approve_articles',
     PUBLISH_ARTICLES: 'publish_articles',
+    // Podcasts
+    VIEW_PODCASTS: 'view_podcasts',
+    CREATE_PODCASTS: 'create_podcasts',
+    EDIT_PODCASTS: 'edit_podcasts',
+    DELETE_PODCASTS: 'delete_podcasts',
     // Webinars / events
     VIEW_WEBINARS: 'view_webinars',
     CREATE_WEBINARS: 'create_webinars',
@@ -143,6 +148,10 @@ exports.PERMISSION_DEFINITIONS = [
     { module: 'Content Management', permissionName: 'Review Articles', permissionKey: exports.PERMISSIONS.REVIEW_ARTICLES },
     { module: 'Content Management', permissionName: 'Approve Articles', permissionKey: exports.PERMISSIONS.APPROVE_ARTICLES },
     { module: 'Content Management', permissionName: 'Publish Articles', permissionKey: exports.PERMISSIONS.PUBLISH_ARTICLES },
+    { module: 'Podcast Management', permissionName: 'View Podcasts', permissionKey: exports.PERMISSIONS.VIEW_PODCASTS },
+    { module: 'Podcast Management', permissionName: 'Create Podcasts', permissionKey: exports.PERMISSIONS.CREATE_PODCASTS },
+    { module: 'Podcast Management', permissionName: 'Edit Podcasts', permissionKey: exports.PERMISSIONS.EDIT_PODCASTS },
+    { module: 'Podcast Management', permissionName: 'Delete Podcasts', permissionKey: exports.PERMISSIONS.DELETE_PODCASTS },
     { module: 'Webinars', permissionName: 'View Webinars', permissionKey: exports.PERMISSIONS.VIEW_WEBINARS },
     { module: 'Webinars', permissionName: 'Create Webinars', permissionKey: exports.PERMISSIONS.CREATE_WEBINARS },
     { module: 'Webinars', permissionName: 'Edit Webinars', permissionKey: exports.PERMISSIONS.EDIT_WEBINARS },

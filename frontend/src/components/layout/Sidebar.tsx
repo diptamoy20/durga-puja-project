@@ -57,6 +57,10 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
     return !currentParams.get('status');
   }
 
+  if (item.to === ROUTES.PODCASTS) {
+    return !currentParams.get('status');
+  }
+
   return true;
 }
 
