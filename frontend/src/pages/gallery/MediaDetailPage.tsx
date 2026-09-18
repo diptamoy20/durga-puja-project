@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { MediaPreviewThumb } from '@/components/gallery/MediaPreviewThumb';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { PERMISSIONS } from '@/constants/permissions';
 import { PageLoader } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/ui/Badge';
@@ -30,6 +31,7 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
   const isAdmin = mode === 'admin' || can(PERMISSIONS.MODERATE_MEDIA);
   const listRoute = isAdmin ? ROUTES.GALLERY_MEDIA : ROUTES.MY_COMMITTEE_MEDIA;
   const editRoute = isAdmin ? ROUTES.GALLERY_MEDIA_EDIT : ROUTES.MY_COMMITTEE_MEDIA_EDIT;
+  const listLabel = isAdmin ? 'All Media' : 'My Media';
 
   const [media, setMedia] = useState<CommitteeMedia | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,58 +79,68 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
   };
 
   if (loading) return <PageLoader />;
+
   if (error || !media) {
     return (
       <div className="page">
         <Alert tone="danger">{error ?? 'Media not found.'}</Alert>
-        <Link to={listRoute} className="btn btn--secondary btn--md">
-          Back to Gallery
-        </Link>
+        <div className="media-page-footer">
+          <Link to={listRoute} className="btn btn--secondary btn--md">
+            <i className="fas fa-arrow-left" aria-hidden="true" /> Back to Gallery
+          </Link>
+        </div>
       </div>
     );
   }
 
   const streamUrl = mediaStreamUrl(media);
   const detailRows = mediaDetailRows(media);
+  const displayName = media.title || media.originalFilename;
+  const pageTitle = displayName.length > 60 ? `${displayName.slice(0, 60)}…` : displayName;
 
   return (
     <div className="page">
-      <header className="page__header media-detail__header">
-        <div>
-          <div className="media-detail__breadcrumb">
-            <Link to={listRoute} className="btn btn--secondary btn--sm">
-              ← Back
-            </Link>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: listLabel, to: listRoute },
+          { label: pageTitle },
+        ]}
+        title={media.title || media.originalFilename}
+        subtitle={`${media.committee?.committeeName ?? 'Puja Committee'}${
+          media.venueName || media.committee?.venueName
+            ? ` · ${media.venueName || media.committee?.venueName}`
+            : ''
+        }`}
+        meta={
+          <div className="media-detail-header__meta" style={{ marginBottom: 'var(--space-2)' }}>
             <StatusBadge tone={mediaStatusTone(media.status)}>{media.status}</StatusBadge>
-            <span className="badge badge--info">{media.mediaType}</span>
+            <span className="media-detail-header__type">{media.mediaType}</span>
           </div>
-          <h1 className="page__title">{media.title || media.originalFilename}</h1>
-          <p className="page__subtitle">
-            {media.committee?.committeeName ?? 'Puja Committee'}
-          </p>
-        </div>
-
-        <div className="media-detail__actions">
-          {canEdit && (
-            <Link to={editRoute(media.id)} className="btn btn--secondary btn--md">
-              Edit Media
-            </Link>
-          )}
-          {canModerate && media.status === 'PENDING' && (
-            <>
-              <Button variant="primary" size="md" onClick={() => setModerateAction('APPROVED')}>
-                Approve Media
-              </Button>
-              <Button variant="danger" size="md" onClick={() => setModerateAction('REJECTED')}>
-                Reject Media
-              </Button>
-            </>
-          )}
-        </div>
-      </header>
+        }
+        actions={
+          <>
+            {canEdit && (
+              <Link to={editRoute(media.id)} className="btn btn--outline-secondary btn--md">
+                <i className="fas fa-pencil" aria-hidden="true" /> Edit Media
+              </Link>
+            )}
+            {canModerate && media.status === 'PENDING' && (
+              <>
+                <Button variant="primary" size="md" onClick={() => setModerateAction('APPROVED')}>
+                  <i className="fas fa-check" aria-hidden="true" /> Approve
+                </Button>
+                <Button variant="danger" size="md" onClick={() => setModerateAction('REJECTED')}>
+                  <i className="fas fa-xmark" aria-hidden="true" /> Reject
+                </Button>
+              </>
+            )}
+          </>
+        }
+      />
 
       <div className="media-detail__grid">
-        <Card title="Preview">
+        <Card className="media-detail-card" title="Preview">
           <div className="media-detail__preview">
             {media.mediaType === 'PHOTO' ? (
               <img
@@ -148,21 +160,28 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
           )}
         </Card>
 
-        <Card title="Media Details">
-          <dl className="detail-list">
+        <Card className="media-detail-card" title="Media Details">
+          <dl className="media-detail-list">
             {detailRows.map((row) => (
-              <div key={row.label} className="detail-list__row">
+              <div key={row.label} className="media-detail-list__row">
                 <dt>{row.label}</dt>
                 <dd>{row.value}</dd>
               </div>
             ))}
           </dl>
+
+          <div className="media-detail__thumbnail">
+            <h3 className="media-detail__thumbnail-title">Listing Thumbnail</h3>
+            <MediaPreviewThumb item={media} size="lg" />
+          </div>
         </Card>
       </div>
 
-      <Card title="Thumbnail">
-        <MediaPreviewThumb item={media} size="lg" />
-      </Card>
+      <div className="media-page-footer">
+        <Link to={listRoute} className="btn btn--secondary btn--sm">
+          <i className="fas fa-arrow-left" aria-hidden="true" /> Back to {listLabel}
+        </Link>
+      </div>
 
       <ConfirmDialog
         open={moderateAction !== null}
@@ -173,9 +192,9 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
               Are you sure you want to mark this media item as <strong>{moderateAction}</strong>?
             </p>
             {moderateAction === 'REJECTED' && (
-              <div className="field" style={{ marginTop: 'var(--space-200)' }}>
+              <div className="field gallery-dialog-field">
                 <label className="field__label" htmlFor="rejectionReasonInput">
-                  Rejection Reason *
+                  Rejection Reason <span className="field__required">*</span>
                 </label>
                 <textarea
                   id="rejectionReasonInput"

@@ -3,9 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/Spinner';
 import { AlbumMediaPicker } from '@/components/gallery/AlbumMediaPicker';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { MediaPreviewModal } from '@/components/gallery/MediaPreviewModal';
 import { MediaPreviewThumb } from '@/components/gallery/MediaPreviewThumb';
 import { ROUTES } from '@/constants/routes';
@@ -33,6 +33,7 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
   const service = isAdmin ? albumService : committeeAlbumService;
   const listRoute = isAdmin ? ROUTES.GALLERY_ALBUMS : ROUTES.MY_COMMITTEE_ALBUMS;
   const detailRoute = isAdmin ? ROUTES.GALLERY_ALBUM_DETAIL : ROUTES.MY_COMMITTEE_ALBUM_DETAIL;
+  const listLabel = isAdmin ? 'Albums' : 'My Albums';
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -65,9 +66,10 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
       subcategoryService
         .list({ categoryId: Number(categoryId), perPage: 100, sortDir: 'asc' })
         .then((res) => setSubcategories(res.items))
-        .catch(() => {});
+        .catch(() => setSubcategoryId(''));
     } else {
       setSubcategories([]);
+      setSubcategoryId('');
     }
   }, [categoryId]);
 
@@ -182,129 +184,224 @@ export function AlbumFormPage({ mode }: AlbumFormPageProps) {
 
   return (
     <div className="page">
-      <header className="page__header">
-        <Link to={listRoute} className="btn btn--secondary btn--sm" style={{ marginBottom: 'var(--space-200)' }}>
-          ← Back to albums
-        </Link>
-        <h1 className="page__title">{isEdit ? 'Edit Album' : 'Create Album'}</h1>
-        <p className="page__subtitle">Organize approved committee media into albums.</p>
-      </header>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: listLabel, to: listRoute },
+          { label: isEdit ? 'Edit Album' : 'Create Album' },
+        ]}
+        title={isEdit ? 'Edit Album' : 'Create Album'}
+        subtitle="Organize approved committee media into curated albums for public galleries."
+      />
 
       {error && <Alert tone="danger">{error}</Alert>}
 
       <form onSubmit={save}>
         <div className="album-form__grid">
-          <Card title="Album Information" className="widget-card">
-            {isAdmin && (
+          <section className="gallery-widget-card">
+            <div className="gallery-widget-card__header">
+              <h2 className="gallery-widget-card__title">
+                <i className="fas fa-circle-info" aria-hidden="true" /> Album Information
+              </h2>
+            </div>
+            <div className="gallery-widget-card__body">
+              {isAdmin && (
+                <div className="field">
+                  <label className="field__label" htmlFor="albumCommittee">
+                    Puja Committee <span className="field__required">*</span>
+                  </label>
+                  <select
+                    id="albumCommittee"
+                    className="field__control"
+                    required
+                    value={pujaCommitteeId}
+                    onChange={(e) => {
+                      setPujaCommitteeId(e.target.value ? Number(e.target.value) : '');
+                      setSelectedMedia([]);
+                    }}
+                  >
+                    <option value="">Select committee</option>
+                    {committees.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.committeeName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="field">
-                <label className="field__label" htmlFor="albumCommittee">Puja Committee *</label>
-                <select
-                  id="albumCommittee"
+                <label className="field__label" htmlFor="albumTitle">
+                  Title <span className="field__required">*</span>
+                </label>
+                <input
+                  id="albumTitle"
                   className="field__control"
                   required
-                  value={pujaCommitteeId}
-                  onChange={(e) => {
-                    setPujaCommitteeId(e.target.value ? Number(e.target.value) : '');
-                    setSelectedMedia([]);
-                  }}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="albumCategory">
+                  Category <span className="field__required">*</span>
+                </label>
+                <select
+                  id="albumCategory"
+                  className="field__control"
+                  required
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : '')}
                 >
-                  <option value="">Select committee</option>
-                  {committees.map((c) => (
-                    <option key={c.id} value={c.id}>{c.committeeName}</option>
+                  <option value="">Select category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
                   ))}
                 </select>
               </div>
-            )}
 
-            <div className="field">
-              <label className="field__label" htmlFor="albumTitle">Title *</label>
-              <input id="albumTitle" className="field__control" required value={title} onChange={(e) => setTitle(e.target.value)} />
-            </div>
+              {subcategories.length > 0 && (
+                <div className="field">
+                  <label className="field__label" htmlFor="albumSubcategory">
+                    Subcategory
+                  </label>
+                  <select
+                    id="albumSubcategory"
+                    className="field__control"
+                    value={subcategoryId}
+                    onChange={(e) => setSubcategoryId(e.target.value ? Number(e.target.value) : '')}
+                  >
+                    <option value="">Select subcategory</option>
+                    {subcategories.map((sub) => (
+                      <option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-            <div className="field">
-              <label className="field__label" htmlFor="albumCategory">Category *</label>
-              <select id="albumCategory" className="field__control" required value={categoryId} onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : '')}>
-                <option value="">Select category</option>
-                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-              </select>
-            </div>
-
-            {subcategories.length > 0 && (
               <div className="field">
-                <label className="field__label" htmlFor="albumSubcategory">Subcategory</label>
-                <select id="albumSubcategory" className="field__control" value={subcategoryId} onChange={(e) => setSubcategoryId(e.target.value ? Number(e.target.value) : '')}>
-                  <option value="">Select subcategory</option>
-                  {subcategories.map((sub) => <option key={sub.id} value={sub.id}>{sub.name}</option>)}
+                <label className="field__label" htmlFor="albumDescription">
+                  Description
+                </label>
+                <textarea
+                  id="albumDescription"
+                  className="field__control"
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="albumStatus">
+                  Status <span className="field__required">*</span>
+                </label>
+                <select
+                  id="albumStatus"
+                  className="field__control"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
                 </select>
               </div>
-            )}
 
-            <div className="field">
-              <label className="field__label" htmlFor="albumDescription">Description</label>
-              <textarea id="albumDescription" className="field__control" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+              <fieldset className="field">
+                <legend className="field__label">Visibility</legend>
+                <div className="album-form__radio-group">
+                  <label className="album-form__radio">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={!isPublic}
+                      onChange={() => setIsPublic(false)}
+                    />
+                    Private
+                  </label>
+                  <label className="album-form__radio">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={isPublic}
+                      onChange={() => setIsPublic(true)}
+                    />
+                    Public
+                  </label>
+                </div>
+              </fieldset>
             </div>
+          </section>
 
-            <div className="field">
-              <label className="field__label" htmlFor="albumStatus">Status *</label>
-              <select id="albumStatus" className="field__control" value={status} onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-              </select>
-            </div>
-
-            <fieldset className="field">
-              <legend className="field__label">Visibility</legend>
-              <label className="album-form__radio">
-                <input type="radio" name="visibility" checked={!isPublic} onChange={() => setIsPublic(false)} />
-                Private
-              </label>
-              <label className="album-form__radio">
-                <input type="radio" name="visibility" checked={isPublic} onChange={() => setIsPublic(true)} />
-                Public
-              </label>
-            </fieldset>
-          </Card>
-
-          <Card title="Album Media" className="widget-card">
-            <div className="album-form__media-toolbar">
-              <div className="album-form__media-counts">
-                Selected: <strong>{photoCount}</strong> image{photoCount === 1 ? '' : 's'},{' '}
-                <strong>{videoCount}</strong> video{videoCount === 1 ? '' : 's'}
-              </div>
+          <section className="gallery-widget-card">
+            <div className="gallery-widget-card__header">
+              <h2 className="gallery-widget-card__title">
+                <i className="fas fa-images" aria-hidden="true" /> Album Media
+              </h2>
               <Button type="button" variant="secondary" size="sm" onClick={openPicker}>
-                Select Images & Videos
+                <i className="fas fa-plus" aria-hidden="true" /> Select Media
               </Button>
             </div>
+            <div className="gallery-widget-card__body">
+              <div className="album-form__media-toolbar">
+                <div className="album-form__media-counts">
+                  Selected: <strong>{photoCount}</strong> image{photoCount === 1 ? '' : 's'},{' '}
+                  <strong>{videoCount}</strong> video{videoCount === 1 ? '' : 's'}
+                </div>
+              </div>
 
-            {selectedMedia.length === 0 ? (
-              <p className="album-form__empty">No media selected yet. Choose approved committee photos and videos.</p>
-            ) : (
-              <div className="album-form__selected-grid">
-                {selectedMedia.map((item) => (
-                  <div key={item.id} className="album-form__selected-card">
-                    <MediaPreviewThumb item={item} size="md" onClick={() => setPreviewItem(item)} />
-                    <div className="album-form__selected-body">
-                      <div className="album-form__selected-title">{item.title || item.originalFilename}</div>
-                      <div className="album-form__selected-type">{formatMediaType(item.mediaType)}</div>
-                      <div className="album-form__selected-actions">
-                        <Button type="button" variant="secondary" size="sm" onClick={() => setPreviewItem(item)}>
-                          Preview
-                        </Button>
-                        <Button type="button" variant="danger" size="sm" onClick={() => removeMedia(item.id)}>
-                          Remove
-                        </Button>
+              {selectedMedia.length === 0 ? (
+                <p className="album-form__empty">
+                  No media selected yet. Choose approved committee photos and videos.
+                </p>
+              ) : (
+                <div className="album-form__selected-grid">
+                  {selectedMedia.map((item) => (
+                    <div key={item.id} className="album-form__selected-card">
+                      <MediaPreviewThumb item={item} size="md" onClick={() => setPreviewItem(item)} />
+                      <div className="album-form__selected-body">
+                        <div className="album-form__selected-title">
+                          {item.title || item.originalFilename}
+                        </div>
+                        <div className="album-form__selected-type">{formatMediaType(item.mediaType)}</div>
+                        <div className="album-form__selected-actions">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setPreviewItem(item)}
+                          >
+                            Preview
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            onClick={() => removeMedia(item.id)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
         </div>
 
         <div className="album-form__footer">
-          <Link to={listRoute} className="btn btn--secondary btn--md">Cancel</Link>
+          <Link to={listRoute} className="btn btn--secondary btn--md">
+            Cancel
+          </Link>
           <Button type="submit" variant="primary" size="md" disabled={saving}>
+            <i className="fas fa-save" aria-hidden="true" />{' '}
             {saving ? 'Saving…' : isEdit ? 'Update Album' : 'Create Album'}
           </Button>
         </div>

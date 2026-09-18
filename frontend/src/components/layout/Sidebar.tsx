@@ -54,7 +54,11 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
   }
 
   if (item.to === ROUTES.WEBINARS) {
-    return !currentParams.get('status');
+    return !currentParams.get('status') && !currentParams.get('livePlatform');
+  }
+
+  if (item.to === ROUTES.WEBINARS_NEW) {
+    return pathname === ROUTES.WEBINARS_NEW;
   }
 
   if (item.to === ROUTES.PODCASTS) {

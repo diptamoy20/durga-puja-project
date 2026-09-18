@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 
-import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/Badge';
 import { MediaPreviewThumb } from '@/components/gallery/MediaPreviewThumb';
 import {
@@ -37,6 +36,7 @@ export function MediaTable({
   emptyMessage = 'No media found matching current filters.',
 }: MediaTableProps) {
   const colCount = 11;
+  const showModeration = canModerate && onApprove && onReject;
 
   return (
     <div className="table-wrapper media-table-wrapper">
@@ -53,7 +53,7 @@ export function MediaTable({
             <th>File</th>
             <th>Size</th>
             <th>Uploaded</th>
-            <th className="table__actions">Actions</th>
+            <th className="table__actions media-table__actions-col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -89,7 +89,7 @@ export function MediaTable({
                 <td>
                   <StatusBadge tone={mediaStatusTone(item.status)}>{item.status}</StatusBadge>
                 </td>
-                <td>{item.committee?.committeeName ?? '—'}</td>
+                <td className="media-table__committee">{item.committee?.committeeName ?? '—'}</td>
                 <td>
                   <span className="table__primary">{item.category?.name ?? '—'}</span>
                   {item.subcategory && (
@@ -111,28 +111,50 @@ export function MediaTable({
                 </td>
                 <td className="table__actions">
                   <div className="media-table__actions">
-                    {onPreview && (
-                      <Button variant="secondary" size="sm" type="button" onClick={() => onPreview(item)}>
-                        Preview
-                      </Button>
-                    )}
-                    <Link to={detailRoute(item.id)} className="btn btn--secondary btn--sm">
-                      View
-                    </Link>
-                    {canEdit && editRoute && (
-                      <Link to={editRoute(item.id)} className="btn btn--secondary btn--sm">
-                        Edit
+                    <div className="media-action-group">
+                      {onPreview && (
+                        <button
+                          type="button"
+                          className="media-action-btn"
+                          title="Preview"
+                          onClick={() => onPreview(item)}
+                        >
+                          <i className="fas fa-eye" aria-hidden="true" />
+                        </button>
+                      )}
+                      <Link
+                        to={detailRoute(item.id)}
+                        className="media-action-btn"
+                        title="View details"
+                      >
+                        <i className="fas fa-arrow-up-right-from-square" aria-hidden="true" />
                       </Link>
-                    )}
-                    {canModerate && item.status === 'PENDING' && onApprove && onReject && (
-                      <>
-                        <Button variant="primary" size="sm" type="button" onClick={() => onApprove(item)}>
-                          Approve
-                        </Button>
-                        <Button variant="danger" size="sm" type="button" onClick={() => onReject(item)}>
-                          Reject
-                        </Button>
-                      </>
+                      {canEdit && editRoute && (
+                        <Link to={editRoute(item.id)} className="media-action-btn" title="Edit">
+                          <i className="fas fa-pencil" aria-hidden="true" />
+                        </Link>
+                      )}
+                    </div>
+
+                    {showModeration && item.status === 'PENDING' && (
+                      <div className="media-action-group media-action-group--moderation">
+                        <button
+                          type="button"
+                          className="media-action-btn media-action-btn--success"
+                          title="Approve"
+                          onClick={() => onApprove(item)}
+                        >
+                          <i className="fas fa-check" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          className="media-action-btn media-action-btn--danger"
+                          title="Reject"
+                          onClick={() => onReject(item)}
+                        >
+                          <i className="fas fa-xmark" aria-hidden="true" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </td>

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { MediaFiltersBar } from '@/components/gallery/MediaFiltersBar';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { MediaPreviewModal } from '@/components/gallery/MediaPreviewModal';
 import { MediaTable } from '@/components/gallery/MediaTable';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -55,7 +56,7 @@ export function MediaListPage() {
 
   const pageTitle = statusFilter
     ? `${statusFilter.charAt(0)}${statusFilter.slice(1).toLowerCase()} Media`
-    : 'Media Gallery';
+    : 'All Media';
 
   const listQuery = useMemo(
     () => ({ ...query, status: statusFilter }),
@@ -132,30 +133,36 @@ export function MediaListPage() {
 
   return (
     <div className="page">
-      <header className="page__header media-page__header">
-        <div>
-          <h1 className="page__title">{pageTitle}</h1>
-          <p className="page__subtitle">
-            Browse and manage photos and videos uploaded by puja committees.
-          </p>
-        </div>
-        <div className="media-page__header-actions">
-          {canModerate && (
-            <Link to={ROUTES.GALLERY_MODERATION} className="btn btn--secondary btn--md">
-              Moderation Queue
-            </Link>
-          )}
-          {showUpload && (
-            <Link to={uploadRoute} className="btn btn--primary btn--md">
-              + Upload Media
-            </Link>
-          )}
-        </div>
-      </header>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: 'All Media' },
+        ]}
+        title={pageTitle}
+        subtitle={
+          statusFilter
+            ? `Showing ${statusFilter.charAt(0)}${statusFilter.slice(1).toLowerCase()} media submissions.`
+            : 'Browse and manage photos and videos uploaded by puja committees.'
+        }
+        actions={
+          <>
+            {canModerate && (
+              <Link to={ROUTES.GALLERY_MODERATION} className="btn btn--outline-primary btn--md">
+                <i className="fas fa-clock" aria-hidden="true" /> Moderation Queue
+              </Link>
+            )}
+            {showUpload && (
+              <Link to={uploadRoute} className="btn btn--primary btn--md">
+                <i className="fas fa-cloud-arrow-up" aria-hidden="true" /> Upload Media
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {error && <Alert tone="danger">{error}</Alert>}
 
-      <Card>
+      <Card className="media-list-card">
         <MediaFiltersBar
           search={search}
           onSearchChange={setSearch}
@@ -192,10 +199,12 @@ export function MediaListPage() {
         />
 
         {pagination && pagination.lastPage > 1 && (
-          <Pagination
-            meta={pagination}
-            onPageChange={(page) => setQuery((q) => ({ ...q, page }))}
-          />
+          <div className="media-list-card__pagination">
+            <Pagination
+              meta={pagination}
+              onPageChange={(page) => setQuery((q) => ({ ...q, page }))}
+            />
+          </div>
         )}
       </Card>
 
@@ -215,9 +224,9 @@ export function MediaListPage() {
               <strong>{moderateAction?.decision}</strong>?
             </p>
             {moderateAction?.decision === 'REJECTED' && (
-              <div className="field" style={{ marginTop: 'var(--space-200)' }}>
+              <div className="field gallery-dialog-field">
                 <label className="field__label" htmlFor="galleryRejection">
-                  Rejection Reason *
+                  Rejection Reason <span className="field__required">*</span>
                 </label>
                 <textarea
                   id="galleryRejection"

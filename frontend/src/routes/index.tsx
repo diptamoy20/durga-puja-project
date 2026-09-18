@@ -167,6 +167,15 @@ const PublicAtlasDetailPage = lazy(() =>
 const PublicWebinarsPage = lazy(() =>
   import('@/pages/public/PublicWebinarsPage').then((m) => ({ default: m.PublicWebinarsPage })),
 );
+const PublicWebinarDetailPage = lazy(() =>
+  import('@/pages/public/PublicWebinarDetailPage').then((m) => ({ default: m.PublicWebinarDetailPage })),
+);
+const PublicWebinarLivePage = lazy(() =>
+  import('@/pages/public/PublicWebinarLivePage').then((m) => ({ default: m.PublicWebinarLivePage })),
+);
+const PublicWebinarReplaysPage = lazy(() =>
+  import('@/pages/public/PublicWebinarReplaysPage').then((m) => ({ default: m.PublicWebinarReplaysPage })),
+);
 const PublicPodcastsPage = lazy(() =>
   import('@/pages/public/PublicPodcastsPage').then((m) => ({ default: m.PublicPodcastsPage })),
 );
@@ -190,6 +199,12 @@ export function AppRoutes() {
       <Route path={ROUTES.PUBLIC_ATLAS} element={<PublicAtlasPage />} />
       <Route path={ROUTES.PUBLIC_ATLAS_DETAIL()} element={<PublicAtlasDetailPage />} />
 
+      {/* Standalone public webinars (custom festival layout) */}
+      <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
+      <Route path={ROUTES.PUBLIC_WEBINAR_REPLAYS} element={<PublicWebinarReplaysPage />} />
+      <Route path={ROUTES.PUBLIC_WEBINAR_DETAIL()} element={<PublicWebinarDetailPage />} />
+      <Route path={ROUTES.PUBLIC_WEBINAR_LIVE()} element={<PublicWebinarLivePage />} />
+
       {/* Public Pages Layout (Outside auth) */}
       <Route element={<PublicLayout />}>
         <Route path={ROUTES.PUBLIC_CHOOSE_TYPE} element={<ChooseAccountTypePage />} />
@@ -198,7 +213,6 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_THANK_YOU()} element={<RegistrationThankYouPage />} />
         <Route path={ROUTES.PUBLIC_GALLERY} element={<PublicGalleryPage />} />
         <Route path={ROUTES.PUBLIC_GALLERY_DETAIL()} element={<PublicGalleryDetailPage />} />
-        <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
         <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
         <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
       </Route>

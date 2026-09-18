@@ -171,6 +171,7 @@ export const NAVIGATION: NavSection[] = [
         icon: 'fa-cloud-arrow-up',
         permissions: [PERMISSIONS.UPLOAD_MEDIA],
         to: ROUTES.GALLERY_UPLOAD,
+        end: true,
       },
       { label: 'Albums', icon: 'fa-photo-film', permissions: [PERMISSIONS.MANAGE_ALBUMS], to: ROUTES.GALLERY_ALBUMS },
       { label: 'Live Streaming', icon: 'fa-tower-broadcast' },
@@ -187,9 +188,10 @@ export const NAVIGATION: NavSection[] = [
         icon: 'fa-circle-plus',
         permissions: [PERMISSIONS.CREATE_WEBINARS],
         to: ROUTES.WEBINARS_NEW,
+        end: true,
       },
       { label: 'Live Now', icon: 'fa-tower-broadcast', tone: 'danger', to: `${ROUTES.WEBINARS}?status=LIVE` },
-      { label: 'Replay Recordings', icon: 'fa-circle-play', tone: 'success', to: `${ROUTES.WEBINARS}?status=RECORDED` },
+      { label: 'Replay Recordings', icon: 'fa-circle-play', tone: 'success', to: `${ROUTES.WEBINARS}?status=COMPLETED` },
       { label: 'Public Hub', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_WEBINARS },
     ],
   },
@@ -204,6 +206,7 @@ export const NAVIGATION: NavSection[] = [
         icon: 'fa-circle-plus',
         permissions: [PERMISSIONS.CREATE_PODCASTS, PERMISSIONS.CREATE_ARTICLES],
         to: ROUTES.PODCAST_NEW,
+        end: true,
       },
       {
         label: 'Published',
@@ -279,7 +282,7 @@ export const NAVIGATION: NavSection[] = [
     hiddenWhen: [PERMISSIONS.MANAGE_ALBUMS],
     items: [
       { label: 'Albums', icon: 'fa-photo-film', to: ROUTES.MY_COMMITTEE_ALBUMS },
-      { label: 'Create Album', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_ALBUM_NEW },
+      { label: 'Create Album', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_ALBUM_NEW, end: true },
     ],
   },
 

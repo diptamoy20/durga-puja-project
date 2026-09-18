@@ -95,6 +95,9 @@ export const ROUTES = {
   PUBLIC_ATLAS: '/public/atlas',
   PUBLIC_ATLAS_DETAIL: (id: number | string = ':id') => `/public/atlas/${id}`,
   PUBLIC_WEBINARS: '/public/webinars',
+  PUBLIC_WEBINAR_REPLAYS: '/public/webinars/replays',
+  PUBLIC_WEBINAR_DETAIL: (slug: string = ':slug') => `/public/webinars/${slug}`,
+  PUBLIC_WEBINAR_LIVE: (slug: string = ':slug') => `/public/webinars/${slug}/live`,
   PUBLIC_PODCASTS: '/public/podcasts',
   PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
 

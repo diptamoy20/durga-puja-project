@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { MediaFiltersBar } from '@/components/gallery/MediaFiltersBar';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { MediaPreviewModal } from '@/components/gallery/MediaPreviewModal';
 import { MediaTable } from '@/components/gallery/MediaTable';
 import { ROUTES } from '@/constants/routes';
@@ -106,17 +106,15 @@ export function ModerationQueuePage() {
 
   return (
     <div className="page">
-      <header className="page__header">
-        <div>
-          <Link to={ROUTES.GALLERY_MEDIA} className="btn btn--secondary btn--sm" style={{ marginBottom: 'var(--space-200)' }}>
-            ← Back to All Media
-          </Link>
-          <h1 className="page__title">Pending Moderation</h1>
-          <p className="page__subtitle">
-            Review and approve uploaded photos and videos before they appear in public galleries.
-          </p>
-        </div>
-      </header>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: 'All Media', to: ROUTES.GALLERY_MEDIA },
+          { label: 'Pending Moderation' },
+        ]}
+        title="Pending Moderation"
+        subtitle="Review and approve uploaded photos and videos before they appear in public galleries."
+      />
 
       {error && <Alert tone="danger">{error}</Alert>}
 

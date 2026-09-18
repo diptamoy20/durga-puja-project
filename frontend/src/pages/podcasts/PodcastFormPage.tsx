@@ -1,8 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import type { PodcastFormValues } from '@/types/podcast';
-import { adminPodcastService } from '@/services/podcastService';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+
+import { Alert } from '@/components/ui/Alert';
+import { PageLoader } from '@/components/ui/Spinner';
 import { ROUTES } from '@/constants/routes';
+import { adminPodcastService } from '@/services/podcastService';
+import type { PodcastFormValues } from '@/types/podcast';
+
+import '@/styles/podcasts-admin.css';
+
+const DEFAULT_FORM: PodcastFormValues = {
+  title: '',
+  slug: '',
+  summary: '',
+  description: '',
+  audioUrl: '',
+  audioDurationSeconds: 1200,
+  coverImageUrl: '',
+  seasonNumber: 1,
+  episodeNumber: 1,
+  episodeType: 'full',
+  language: 'bn',
+  hostName: 'Department of Tourism',
+  guestName: '',
+  guestBio: '',
+  transcript: '',
+  tags: '',
+  isPublished: true,
+  isFeatured: false,
+  spotifyUrl: '',
+  applePodcastsUrl: '',
+  youtubeUrl: '',
+};
 
 export function PodcastFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -12,34 +41,11 @@ export function PodcastFormPage() {
   const [loading, setLoading] = useState(isEditMode);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState<PodcastFormValues>({
-    title: '',
-    slug: '',
-    summary: '',
-    description: '',
-    audioUrl: '',
-    audioDurationSeconds: 1200,
-    coverImageUrl: '',
-    seasonNumber: 1,
-    episodeNumber: 1,
-    episodeType: 'full',
-    language: 'bn',
-    hostName: 'Department of Tourism',
-    guestName: '',
-    guestBio: '',
-    transcript: '',
-    tags: '',
-    isPublished: true,
-    isFeatured: false,
-    spotifyUrl: '',
-    applePodcastsUrl: '',
-    youtubeUrl: '',
-  });
+  const [formData, setFormData] = useState<PodcastFormValues>(DEFAULT_FORM);
 
   useEffect(() => {
     if (isEditMode && id) {
-      loadEpisode(Number(id));
+      void loadEpisode(Number(id));
     }
   }, [id, isEditMode]);
 
@@ -94,9 +100,10 @@ export function PodcastFormPage() {
     setErrorMessage(null);
 
     try {
-      const tagsArray = typeof formData.tags === 'string'
-        ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean)
-        : formData.tags || [];
+      const tagsArray =
+        typeof formData.tags === 'string'
+          ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean)
+          : formData.tags || [];
 
       const payload: PodcastFormValues = {
         ...formData,
@@ -122,409 +129,402 @@ export function PodcastFormPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-text-muted)' }}>
-        Loading episode form...
-      </div>
-    );
-  }
+  if (loading) return <PageLoader label="Loading episode form" />;
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '24px 0 60px' }}>
-      {/* Top Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <nav style={{ display: 'flex', gap: '8px', fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
-          <Link to={ROUTES.PODCASTS} style={{ color: 'var(--color-brand, #9b1c1c)', textDecoration: 'none' }}>
-            ← Back to Podcasts
-          </Link>
-          <span>/</span>
-          <span>{isEditMode ? 'Edit Episode' : 'Create Episode'}</span>
+    <div className="page">
+      <header className="podcast-form-header">
+        <nav className="breadcrumbs podcast-breadcrumb" aria-label="Breadcrumb">
+          <ol>
+            <li>
+              <Link to={ROUTES.DASHBOARD}>Dashboard</Link>
+            </li>
+            <li>
+              <Link to={ROUTES.PODCASTS}>Podcasts</Link>
+            </li>
+            <li>
+              <span aria-current="page">{isEditMode ? 'Edit Episode' : 'Create Episode'}</span>
+            </li>
+          </ol>
         </nav>
-        <h1 style={{ margin: '0 0 6px 0', fontSize: '26px', fontWeight: 800 }}>
-          {isEditMode ? `Edit: ${formData.title}` : '🎙️ Create New Podcast Episode'}
+
+        <h1 className="podcast-form-header__title">
+          {isEditMode ? `Edit: ${formData.title || 'Episode'}` : 'Create New Podcast Episode'}
         </h1>
-        <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '14px' }}>
+        <p className="podcast-form-header__subtitle">
           Publish cultural audio stories for &ldquo;Bishwo Jure Bangalir Aabeg&rdquo;.
         </p>
-      </div>
+      </header>
 
-      {errorMessage && (
-        <div
-          style={{
-            background: '#fee2e2',
-            border: '1px solid #ef4444',
-            color: '#991b1b',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '14px',
-          }}
-        >
-          {errorMessage}
-        </div>
-      )}
+      {errorMessage && <Alert tone="danger">{errorMessage}</Alert>}
 
-      {/* Form Container */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          background: 'var(--color-surface)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '14px',
-          padding: '28px',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        {/* Basic Metadata Section */}
-        <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 16px 0', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-          General Episode Information
-        </h2>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-            Episode Title *
-          </label>
-          <input
-            type="text"
-            required
-            name="title"
-            value={formData.title}
-            onChange={handleTextChange}
-            placeholder="e.g. Echoes of Kumartuli: The Clay Sculptors of Durga"
-            style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Season Number *
-            </label>
-            <input
-              type="number"
-              required
-              min="1"
-              name="seasonNumber"
-              value={formData.seasonNumber}
-              onChange={handleTextChange}
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+      <form onSubmit={handleSubmit} className="podcast-form-grid">
+        <section className="podcast-widget-card">
+          <div className="podcast-widget-card__header">
+            <h2 className="podcast-widget-card__title">
+              <i className="fas fa-circle-info" aria-hidden="true" /> General Episode Information
+            </h2>
           </div>
+          <div className="podcast-widget-card__body">
+            <div className="field">
+              <label className="field__label" htmlFor="podcastTitle">
+                Episode Title <span className="field__required">*</span>
+              </label>
+              <input
+                id="podcastTitle"
+                type="text"
+                required
+                name="title"
+                className="field__control"
+                value={formData.title}
+                onChange={handleTextChange}
+                placeholder="e.g. Echoes of Kumartuli: The Clay Sculptors of Durga"
+              />
+            </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Episode Number *
-            </label>
-            <input
-              type="number"
-              required
-              min="1"
-              name="episodeNumber"
-              value={formData.episodeNumber}
-              onChange={handleTextChange}
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+            <div className="podcast-form__grid-4">
+              <div className="field">
+                <label className="field__label" htmlFor="seasonNumber">
+                  Season Number <span className="field__required">*</span>
+                </label>
+                <input
+                  id="seasonNumber"
+                  type="number"
+                  required
+                  min={1}
+                  name="seasonNumber"
+                  className="field__control"
+                  value={formData.seasonNumber}
+                  onChange={handleTextChange}
+                />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="episodeNumber">
+                  Episode Number <span className="field__required">*</span>
+                </label>
+                <input
+                  id="episodeNumber"
+                  type="number"
+                  required
+                  min={1}
+                  name="episodeNumber"
+                  className="field__control"
+                  value={formData.episodeNumber}
+                  onChange={handleTextChange}
+                />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="episodeType">
+                  Episode Type
+                </label>
+                <select
+                  id="episodeType"
+                  name="episodeType"
+                  className="field__control"
+                  value={formData.episodeType}
+                  onChange={handleTextChange}
+                >
+                  <option value="full">Full Episode</option>
+                  <option value="trailer">Trailer / Teaser</option>
+                  <option value="bonus">Bonus Episode</option>
+                </select>
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="language">
+                  Primary Language
+                </label>
+                <select
+                  id="language"
+                  name="language"
+                  className="field__control"
+                  value={formData.language}
+                  onChange={handleTextChange}
+                >
+                  <option value="bn">বাংলা (Bengali)</option>
+                  <option value="en">English</option>
+                  <option value="hi">हिन्दी (Hindi)</option>
+                </select>
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Episode Type
-            </label>
-            <select
-              name="episodeType"
-              value={formData.episodeType}
-              onChange={handleTextChange}
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            >
-              <option value="full">Full Episode</option>
-              <option value="trailer">Trailer / Teaser</option>
-              <option value="bonus">Bonus Episode</option>
-            </select>
+        <section className="podcast-widget-card">
+          <div className="podcast-widget-card__header">
+            <h2 className="podcast-widget-card__title">
+              <i className="fas fa-headphones" aria-hidden="true" /> Audio &amp; Media Assets
+            </h2>
           </div>
+          <div className="podcast-widget-card__body">
+            <div className="field">
+              <label className="field__label" htmlFor="audioUrl">
+                Audio Stream / MP3 URL <span className="field__required">*</span>
+              </label>
+              <input
+                id="audioUrl"
+                type="url"
+                required
+                name="audioUrl"
+                className="field__control"
+                value={formData.audioUrl}
+                onChange={handleTextChange}
+                placeholder="https://storage.googleapis.com/durga-puja-podcasts/ep1.mp3"
+              />
+            </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Primary Language
-            </label>
-            <select
-              name="language"
-              value={formData.language}
-              onChange={handleTextChange}
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            >
-              <option value="bn">বাংলা (Bengali)</option>
-              <option value="en">English</option>
-              <option value="hi">हिन्दी (Hindi)</option>
-            </select>
+            <div className="podcast-form__grid-2">
+              <div className="field">
+                <label className="field__label" htmlFor="audioDurationSeconds">
+                  Duration (Seconds) <span className="field__required">*</span>
+                </label>
+                <input
+                  id="audioDurationSeconds"
+                  type="number"
+                  required
+                  min={1}
+                  name="audioDurationSeconds"
+                  className="field__control"
+                  value={formData.audioDurationSeconds}
+                  onChange={handleTextChange}
+                  placeholder="e.g. 1800 for 30 mins"
+                />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="coverImageUrl">
+                  Cover Artwork URL
+                </label>
+                <input
+                  id="coverImageUrl"
+                  type="url"
+                  name="coverImageUrl"
+                  className="field__control"
+                  value={formData.coverImageUrl}
+                  onChange={handleTextChange}
+                  placeholder="https://images.unsplash.com/photo-..."
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Audio Asset Details */}
-        <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '24px 0 16px 0', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-          Audio & Media Assets
-        </h2>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-            Audio Stream / MP3 URL *
-          </label>
-          <input
-            type="url"
-            required
-            name="audioUrl"
-            value={formData.audioUrl}
-            onChange={handleTextChange}
-            placeholder="https://storage.googleapis.com/durga-puja-podcasts/ep1.mp3"
-            style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Duration (Seconds) *
-            </label>
-            <input
-              type="number"
-              required
-              min="1"
-              name="audioDurationSeconds"
-              value={formData.audioDurationSeconds}
-              onChange={handleTextChange}
-              placeholder="e.g. 1800 for 30 mins"
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+        <section className="podcast-widget-card">
+          <div className="podcast-widget-card__header">
+            <h2 className="podcast-widget-card__title">
+              <i className="fas fa-user-group" aria-hidden="true" /> Guest &amp; Host Details
+            </h2>
           </div>
+          <div className="podcast-widget-card__body">
+            <div className="podcast-form__grid-2">
+              <div className="field">
+                <label className="field__label" htmlFor="hostName">
+                  Host Name
+                </label>
+                <input
+                  id="hostName"
+                  type="text"
+                  name="hostName"
+                  className="field__control"
+                  value={formData.hostName}
+                  onChange={handleTextChange}
+                  placeholder="e.g. Shreya Sen"
+                />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="guestName">
+                  Guest Speaker Name
+                </label>
+                <input
+                  id="guestName"
+                  type="text"
+                  name="guestName"
+                  className="field__control"
+                  value={formData.guestName}
+                  onChange={handleTextChange}
+                  placeholder="e.g. Mintu Pal (Master Sculptor)"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Cover Artwork URL
-            </label>
-            <input
-              type="url"
-              name="coverImageUrl"
-              value={formData.coverImageUrl}
-              onChange={handleTextChange}
-              placeholder="https://images.unsplash.com/photo-..."
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+            <div className="field">
+              <label className="field__label" htmlFor="guestBio">
+                Guest Biography / Background
+              </label>
+              <textarea
+                id="guestBio"
+                name="guestBio"
+                rows={2}
+                className="field__control"
+                value={formData.guestBio}
+                onChange={handleTextChange}
+                placeholder="Brief profile of the guest..."
+              />
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Guest & Host Info */}
-        <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '24px 0 16px 0', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-          Guest & Host Details
-        </h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Host Name
-            </label>
-            <input
-              type="text"
-              name="hostName"
-              value={formData.hostName}
-              onChange={handleTextChange}
-              placeholder="e.g. Shreya Sen"
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+        <section className="podcast-widget-card">
+          <div className="podcast-widget-card__header">
+            <h2 className="podcast-widget-card__title">
+              <i className="fas fa-file-lines" aria-hidden="true" /> Show Notes &amp; Transcripts
+            </h2>
           </div>
+          <div className="podcast-widget-card__body">
+            <div className="field">
+              <label className="field__label" htmlFor="summary">
+                Short Summary (Teaser for Cards &amp; RSS Feed) <span className="field__required">*</span>
+              </label>
+              <textarea
+                id="summary"
+                name="summary"
+                required
+                rows={2}
+                className="field__control"
+                value={formData.summary}
+                onChange={handleTextChange}
+                placeholder="A compelling 1-2 sentence description of the episode..."
+              />
+            </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-              Guest Speaker Name
-            </label>
-            <input
-              type="text"
-              name="guestName"
-              value={formData.guestName}
-              onChange={handleTextChange}
-              placeholder="e.g. Mintu Pal (Master Sculptor)"
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-            />
+            <div className="field">
+              <label className="field__label" htmlFor="description">
+                Full Show Notes &amp; Description <span className="field__required">*</span>
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                required
+                rows={4}
+                className="field__control"
+                value={formData.description}
+                onChange={handleTextChange}
+                placeholder="Comprehensive description of the topics discussed, timestamps, references..."
+              />
+            </div>
+
+            <div className="field">
+              <label className="field__label" htmlFor="transcript">
+                Full Textual Transcript
+              </label>
+              <textarea
+                id="transcript"
+                name="transcript"
+                rows={5}
+                className="field__control"
+                value={formData.transcript}
+                onChange={handleTextChange}
+                placeholder="Complete episode verbatim audio transcript..."
+              />
+            </div>
+
+            <div className="field">
+              <label className="field__label" htmlFor="tags">
+                Topic Tags (comma-separated)
+              </label>
+              <input
+                id="tags"
+                type="text"
+                name="tags"
+                className="field__control"
+                value={formData.tags as string}
+                onChange={handleTextChange}
+                placeholder="Kumartuli, Artisans, Dhak, Heritage, Diaspora"
+              />
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-            Guest Biography / Background
-          </label>
-          <textarea
-            name="guestBio"
-            rows={2}
-            value={formData.guestBio}
-            onChange={handleTextChange}
-            placeholder="Brief profile of the guest..."
-            style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-
-        {/* Content & Notes */}
-        <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '24px 0 16px 0', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-          Show Notes & Transcripts
-        </h2>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-            Short Summary (Teaser for Cards & RSS Feed) *
-          </label>
-          <textarea
-            name="summary"
-            required
-            rows={2}
-            value={formData.summary}
-            onChange={handleTextChange}
-            placeholder="A compelling 1-2 sentence description of the episode..."
-            style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-            Full Show Notes & Description *
-          </label>
-          <textarea
-            name="description"
-            required
-            rows={4}
-            value={formData.description}
-            onChange={handleTextChange}
-            placeholder="Comprehensive description of the topics discussed, timestamps, references..."
-            style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-            Full Textual Transcript (For Accessibility & Search)
-          </label>
-          <textarea
-            name="transcript"
-            rows={5}
-            value={formData.transcript}
-            onChange={handleTextChange}
-            placeholder="Complete episode verbatim audio transcript..."
-            style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-            Topic Tags (comma-separated)
-          </label>
-          <input
-            type="text"
-            name="tags"
-            value={formData.tags as string}
-            onChange={handleTextChange}
-            placeholder="Kumartuli, Artisans, Dhak, Heritage, Diaspora"
-            style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-
-        {/* Syndication Links */}
-        <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '24px 0 16px 0', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
-          External Syndication Links
-        </h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
-              Spotify Episode URL
-            </label>
-            <input
-              type="url"
-              name="spotifyUrl"
-              value={formData.spotifyUrl}
-              onChange={handleTextChange}
-              placeholder="https://open.spotify.com/episode/..."
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '13px', boxSizing: 'border-box' }}
-            />
+        <section className="podcast-widget-card">
+          <div className="podcast-widget-card__header">
+            <h2 className="podcast-widget-card__title">
+              <i className="fas fa-share-nodes" aria-hidden="true" /> External Syndication Links
+            </h2>
           </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
-              Apple Podcasts URL
-            </label>
-            <input
-              type="url"
-              name="applePodcastsUrl"
-              value={formData.applePodcastsUrl}
-              onChange={handleTextChange}
-              placeholder="https://podcasts.apple.com/..."
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '13px', boxSizing: 'border-box' }}
-            />
+          <div className="podcast-widget-card__body">
+            <div className="podcast-form__grid-3">
+              <div className="field">
+                <label className="field__label" htmlFor="spotifyUrl">
+                  Spotify Episode URL
+                </label>
+                <input
+                  id="spotifyUrl"
+                  type="url"
+                  name="spotifyUrl"
+                  className="field__control"
+                  value={formData.spotifyUrl}
+                  onChange={handleTextChange}
+                  placeholder="https://open.spotify.com/episode/..."
+                />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="applePodcastsUrl">
+                  Apple Podcasts URL
+                </label>
+                <input
+                  id="applePodcastsUrl"
+                  type="url"
+                  name="applePodcastsUrl"
+                  className="field__control"
+                  value={formData.applePodcastsUrl}
+                  onChange={handleTextChange}
+                  placeholder="https://podcasts.apple.com/..."
+                />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="youtubeUrl">
+                  YouTube Audio/Video URL
+                </label>
+                <input
+                  id="youtubeUrl"
+                  type="url"
+                  name="youtubeUrl"
+                  className="field__control"
+                  value={formData.youtubeUrl}
+                  onChange={handleTextChange}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
-              YouTube Audio/Video URL
-            </label>
-            <input
-              type="url"
-              name="youtubeUrl"
-              value={formData.youtubeUrl}
-              onChange={handleTextChange}
-              placeholder="https://youtube.com/watch?v=..."
-              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '13px', boxSizing: 'border-box' }}
-            />
+        <section className="podcast-widget-card">
+          <div className="podcast-widget-card__header">
+            <h2 className="podcast-widget-card__title">
+              <i className="fas fa-sliders" aria-hidden="true" /> Publishing Options
+            </h2>
           </div>
-        </div>
+          <div className="podcast-widget-card__body">
+            <div className="podcast-form__options">
+              <label className="podcast-form__option">
+                <input
+                  type="checkbox"
+                  name="isPublished"
+                  checked={formData.isPublished}
+                  onChange={handleCheckboxChange}
+                />
+                Publish Episode Immediately
+              </label>
+              <label className="podcast-form__option">
+                <input
+                  type="checkbox"
+                  name="isFeatured"
+                  checked={formData.isFeatured}
+                  onChange={handleCheckboxChange}
+                />
+                Mark as Featured Episode (Hero Banner)
+              </label>
+            </div>
 
-        {/* Publishing Options */}
-        <div
-          style={{
-            background: 'var(--color-bg)',
-            padding: '16px',
-            borderRadius: '10px',
-            display: 'flex',
-            gap: '24px',
-            flexWrap: 'wrap',
-            marginBottom: '28px',
-          }}
-        >
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>
-            <input
-              type="checkbox"
-              name="isPublished"
-              checked={formData.isPublished}
-              onChange={handleCheckboxChange}
-            />
-            Publish Episode Immediately
-          </label>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>
-            <input
-              type="checkbox"
-              name="isFeatured"
-              checked={formData.isFeatured}
-              onChange={handleCheckboxChange}
-            />
-            Mark as Featured Episode (Hero Banner)
-          </label>
-        </div>
-
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.PODCASTS)}
-            className="btn btn--secondary"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="btn btn--primary"
-            style={{ background: 'var(--color-brand, #9b1c1c)' }}
-          >
-            {submitting ? 'Saving...' : isEditMode ? 'Update Episode' : 'Publish Episode'}
-          </button>
-        </div>
+            <div className="podcast-form-footer">
+              <button type="button" onClick={() => navigate(ROUTES.PODCASTS)} className="btn btn--secondary btn--md">
+                Cancel
+              </button>
+              <button type="submit" disabled={submitting} className="btn btn--primary btn--md">
+                {submitting ? 'Saving...' : isEditMode ? 'Update Episode' : 'Publish Episode'}
+              </button>
+            </div>
+          </div>
+        </section>
       </form>
     </div>
   );
