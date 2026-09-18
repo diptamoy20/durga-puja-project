@@ -81,6 +81,12 @@ export const PERMISSIONS = {
   APPROVE_ARTICLES: 'approve_articles',
   PUBLISH_ARTICLES: 'publish_articles',
 
+  // Podcasts
+  VIEW_PODCASTS: 'view_podcasts',
+  CREATE_PODCASTS: 'create_podcasts',
+  EDIT_PODCASTS: 'edit_podcasts',
+  DELETE_PODCASTS: 'delete_podcasts',
+
   // Webinars / events
   VIEW_WEBINARS: 'view_webinars',
   CREATE_WEBINARS: 'create_webinars',

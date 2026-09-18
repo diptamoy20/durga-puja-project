@@ -50,6 +50,8 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.VIEW_ALBUMS, permissions_1.PERMISSIONS.MANAGE_ALBUMS,
             permissions_1.PERMISSIONS.VIEW_ARTICLES, permissions_1.PERMISSIONS.REVIEW_ARTICLES, permissions_1.PERMISSIONS.APPROVE_ARTICLES,
             permissions_1.PERMISSIONS.PUBLISH_ARTICLES,
+            permissions_1.PERMISSIONS.VIEW_PODCASTS, permissions_1.PERMISSIONS.CREATE_PODCASTS, permissions_1.PERMISSIONS.EDIT_PODCASTS,
+            permissions_1.PERMISSIONS.DELETE_PODCASTS,
             permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.CREATE_WEBINARS, permissions_1.PERMISSIONS.EDIT_WEBINARS,
             permissions_1.PERMISSIONS.MANAGE_WEBINAR_RSVPS,
             permissions_1.PERMISSIONS.MANAGE_SETTINGS,
@@ -64,6 +66,8 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.VIEW_ARTICLES, permissions_1.PERMISSIONS.CREATE_ARTICLES, permissions_1.PERMISSIONS.EDIT_ARTICLES,
             permissions_1.PERMISSIONS.DELETE_ARTICLES, permissions_1.PERMISSIONS.REVIEW_ARTICLES, permissions_1.PERMISSIONS.APPROVE_ARTICLES,
             permissions_1.PERMISSIONS.PUBLISH_ARTICLES,
+            permissions_1.PERMISSIONS.VIEW_PODCASTS, permissions_1.PERMISSIONS.CREATE_PODCASTS, permissions_1.PERMISSIONS.EDIT_PODCASTS,
+            permissions_1.PERMISSIONS.DELETE_PODCASTS,
             permissions_1.PERMISSIONS.MANAGE_MEDIA, permissions_1.PERMISSIONS.UPLOAD_MEDIA, permissions_1.PERMISSIONS.VIEW_GALLERY,
         ],
     },
@@ -108,6 +112,8 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.VIEW_DASHBOARD,
             permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.CREATE_WEBINARS, permissions_1.PERMISSIONS.EDIT_WEBINARS,
             permissions_1.PERMISSIONS.DELETE_WEBINARS, permissions_1.PERMISSIONS.MANAGE_WEBINAR_RSVPS,
+            permissions_1.PERMISSIONS.VIEW_PODCASTS, permissions_1.PERMISSIONS.CREATE_PODCASTS, permissions_1.PERMISSIONS.EDIT_PODCASTS,
+            permissions_1.PERMISSIONS.DELETE_PODCASTS,
         ],
     },
     {
@@ -141,7 +147,7 @@ exports.ROLE_DEFINITIONS = [
         permissions: [
             permissions_1.PERMISSIONS.VIEW_DASHBOARD,
             permissions_1.PERMISSIONS.VIEW_GALLERY, permissions_1.PERMISSIONS.VIEW_ARTICLES,
-            permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.VIEW_PANDAL_ATLAS,
+            permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.VIEW_PODCASTS, permissions_1.PERMISSIONS.VIEW_PANDAL_ATLAS,
         ],
     },
     {
@@ -151,7 +157,7 @@ exports.ROLE_DEFINITIONS = [
         permissions: [
             permissions_1.PERMISSIONS.VIEW_DASHBOARD, permissions_1.PERMISSIONS.VIEW_REPORTS, permissions_1.PERMISSIONS.EXPORT_REPORTS,
             permissions_1.PERMISSIONS.VIEW_COMMITTEES, permissions_1.PERMISSIONS.VIEW_PANDAL_ATLAS, permissions_1.PERMISSIONS.VIEW_GALLERY,
-            permissions_1.PERMISSIONS.VIEW_ARTICLES, permissions_1.PERMISSIONS.VIEW_WEBINARS,
+            permissions_1.PERMISSIONS.VIEW_ARTICLES, permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.VIEW_PODCASTS,
         ],
     },
     {

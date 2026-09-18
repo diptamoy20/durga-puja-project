@@ -507,7 +507,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.PODCASTS}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES]}>
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_PODCASTS, PERMISSIONS.VIEW_ARTICLES]}>
               <PodcastListPage />
             </ProtectedRoute>
           }
@@ -515,7 +515,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.PODCAST_NEW}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.CREATE_ARTICLES]}>
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_PODCASTS, PERMISSIONS.CREATE_ARTICLES]}>
               <PodcastFormPage />
             </ProtectedRoute>
           }
@@ -523,7 +523,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.PODCAST_EDIT()}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ARTICLES]}>
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_PODCASTS, PERMISSIONS.EDIT_ARTICLES]}>
               <PodcastFormPage />
             </ProtectedRoute>
           }

@@ -195,6 +195,32 @@ export const NAVIGATION: NavSection[] = [
   },
 
   {
+    label: 'Podcast Management',
+    permissions: [PERMISSIONS.VIEW_PODCASTS, PERMISSIONS.VIEW_ARTICLES],
+    items: [
+      { label: 'All Episodes', icon: 'fa-podcast', to: ROUTES.PODCASTS },
+      {
+        label: 'Add Episode',
+        icon: 'fa-circle-plus',
+        permissions: [PERMISSIONS.CREATE_PODCASTS, PERMISSIONS.CREATE_ARTICLES],
+        to: ROUTES.PODCAST_NEW,
+      },
+      {
+        label: 'Published',
+        icon: 'fa-circle-check',
+        tone: 'success',
+        to: `${ROUTES.PODCASTS}?status=published`,
+      },
+      {
+        label: 'Drafts',
+        icon: 'fa-file',
+        to: `${ROUTES.PODCASTS}?status=draft`,
+      },
+      { label: 'Public Podcast Hub', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_PODCASTS },
+    ],
+  },
+
+  {
     label: 'Content Management',
     permissions: [PERMISSIONS.VIEW_ARTICLES],
     items: [
@@ -202,9 +228,6 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Drafts', icon: 'fa-file', to: `${ROUTES.ARTICLES}?status=DRAFT` },
       { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.ARTICLES}?status=IN_REVIEW` },
       { label: 'Published', icon: 'fa-tower-broadcast', tone: 'success', to: `${ROUTES.ARTICLES}?status=PUBLISHED` },
-      { label: 'Podcasts Library', icon: 'fa-podcast', to: ROUTES.PODCASTS },
-      { label: 'Add Podcast', icon: 'fa-circle-plus', to: ROUTES.PODCAST_NEW },
-      { label: 'Public Podcast Hub', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_PODCASTS },
     ],
   },
 
