@@ -46,6 +46,23 @@ const CommitteeEditPage = lazy(() =>
   import('@/pages/committees/CommitteeEditPage').then((m) => ({ default: m.CommitteeEditPage })),
 );
 
+// Association Management (separate module)
+const AssociationListPage = lazy(() =>
+  import('@/pages/associations/AssociationListPage').then((m) => ({ default: m.AssociationListPage })),
+);
+const AssociationPendingPage = lazy(() =>
+  import('@/pages/associations/AssociationPendingPage').then((m) => ({ default: m.AssociationPendingPage })),
+);
+const AssociationImportPage = lazy(() =>
+  import('@/pages/associations/AssociationImportPage').then((m) => ({ default: m.AssociationImportPage })),
+);
+const AssociationDetailPage = lazy(() =>
+  import('@/pages/associations/AssociationDetailPage').then((m) => ({ default: m.AssociationDetailPage })),
+);
+const AssociationEditPage = lazy(() =>
+  import('@/pages/associations/AssociationEditPage').then((m) => ({ default: m.AssociationEditPage })),
+);
+
 // Categories & Subcategories
 const CategoriesPage = lazy(() =>
   import('@/pages/categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })),
@@ -173,6 +190,12 @@ const PublicPodcastsPage = lazy(() =>
 const PodcastDetailPage = lazy(() =>
   import('@/pages/public/PodcastDetailPage').then((m) => ({ default: m.PodcastDetailPage })),
 );
+const PublicAssociationsPage = lazy(() =>
+  import('@/pages/public/PublicAssociationsPage').then((m) => ({ default: m.PublicAssociationsPage })),
+);
+const PublicAssociationDetailPage = lazy(() =>
+  import('@/pages/public/PublicAssociationDetailPage').then((m) => ({ default: m.PublicAssociationDetailPage })),
+);
 
 // Podcast Admin Pages
 const PodcastListPage = lazy(() =>
@@ -198,6 +221,8 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_THANK_YOU()} element={<RegistrationThankYouPage />} />
         <Route path={ROUTES.PUBLIC_GALLERY} element={<PublicGalleryPage />} />
         <Route path={ROUTES.PUBLIC_GALLERY_DETAIL()} element={<PublicGalleryDetailPage />} />
+        <Route path={ROUTES.PUBLIC_ASSOCIATIONS} element={<PublicAssociationsPage />} />
+        <Route path={ROUTES.PUBLIC_ASSOCIATION_DETAIL()} element={<PublicAssociationDetailPage />} />
         <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
         <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
         <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
@@ -333,6 +358,46 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.EDIT_COMMITTEES]}>
               <CommitteeEditPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ASSOCIATIONS]}>
+              <AssociationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATIONS_PENDING}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ASSOCIATIONS]}>
+              <AssociationPendingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_IMPORT}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ASSOCIATIONS, PERMISSIONS.APPROVE_ASSOCIATIONS]}>
+              <AssociationImportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ASSOCIATIONS]}>
+              <AssociationDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ASSOCIATIONS]}>
+              <AssociationEditPage />
             </ProtectedRoute>
           }
         />

@@ -58,6 +58,8 @@ async function bootstrap() {
             .addTag('Authentication', 'Sign in, registration, tokens and passwords')
             .addTag('Users', 'Administrative user management')
             .addTag('Roles & Permissions', 'RBAC administration')
+            .addTag('Associations', 'Public association directory')
+            .addTag('Associations (Admin)', 'Association directory administration')
             .addTag('Health', 'Liveness and readiness probes')
             .build());
         swagger_1.SwaggerModule.setup(swagger.path, app, document, {

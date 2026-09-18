@@ -173,3 +173,120 @@ export interface CommitteeUpdatePayload {
   landmark?: string;
   address?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Association Directory (Public)
+// ---------------------------------------------------------------------------
+
+export type AssociationStatus = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'INACTIVE';
+
+export interface PublicAssociationVerification {
+  verified: boolean;
+  verifiedAt: string | null;
+  verifiedBy: { id: number; name: string } | null;
+}
+
+export interface PublicAssociation {
+  id: number;
+  registrationNo: string;
+  associationId: string | null;
+  name: string;
+  description: string;
+  establishedYear: number | null;
+  country: string;
+  state: string;
+  city: string;
+  postalCode: string;
+  logoImage: string | null;
+  coverImage: string | null;
+  status: AssociationStatus;
+  verification: PublicAssociationVerification;
+  // Profile-only fields
+  contactPersonName?: string;
+  designation?: string;
+  email?: string;
+  mobile?: string;
+  website?: string | null;
+  socialLinks?: Record<string, string> | null;
+  address?: string;
+}
+
+export interface AssociationListQuery {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  sortBy?: 'createdAt' | 'name';
+  sortDir?: 'asc' | 'desc';
+  status?: AssociationStatus;
+  country?: string;
+  state?: string;
+  city?: string;
+}
+
+export interface AssociationFilterOptions {
+  countries: string[];
+  states: string[];
+  cities: string[];
+}
+
+export interface AssociationStats {
+  total: number;
+  pending: number;
+  under_review: number;
+  approved: number;
+  rejected: number;
+  inactive: number;
+}
+
+export interface CreateAssociationDto {
+  name: string;
+  description: string;
+  establishedYear?: number;
+  contactPersonName: string;
+  designation: string;
+  email: string;
+  mobile: string;
+  website?: string;
+  socialLinks?: Record<string, string>;
+  country: string;
+  state: string;
+  city: string;
+  postalCode: string;
+  address: string;
+  logoImage?: string;
+  coverImage?: string;
+}
+
+export interface AssociationStatusHistory {
+  id: number;
+  associationId: number;
+  previousStatus: string | null;
+  newStatus: string;
+  reason: string | null;
+  changedById: number | null;
+  createdAt: string;
+  changedBy?: { id: number; name: string } | null;
+}
+
+export interface AssociationDetail extends PublicAssociation {
+  contactPersonName: string;
+  designation: string;
+  email: string;
+  mobile: string;
+  website: string | null;
+  socialLinks: Record<string, string> | null;
+  address: string;
+  approvedById: number | null;
+  approvedAt: string | null;
+  rejectedById: number | null;
+  rejectedAt: string | null;
+  rejectionReason: string | null;
+  reviewedById: number | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  approvedBy?: { id: number; name: string } | null;
+  rejectedBy?: { id: number; name: string } | null;
+  reviewedBy?: { id: number; name: string } | null;
+  histories?: AssociationStatusHistory[];
+}

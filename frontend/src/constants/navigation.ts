@@ -123,6 +123,21 @@ export const NAVIGATION: NavSection[] = [
   },
 
   {
+    label: 'Association Management',
+    permissions: [PERMISSIONS.VIEW_ASSOCIATIONS],
+    items: [
+      { label: 'Association Directory', icon: 'fa-arrow-up-right-from-square', to: ROUTES.ASSOCIATIONS },
+      { label: 'Pending Associations', icon: 'fa-hourglass-half', tone: 'warning', to: ROUTES.ASSOCIATIONS_PENDING },
+      {
+        label: 'Import Associations',
+        icon: 'fa-file-import',
+        permissions: [PERMISSIONS.EDIT_ASSOCIATIONS, PERMISSIONS.APPROVE_ASSOCIATIONS],
+        to: ROUTES.ASSOCIATION_IMPORT,
+      },
+    ],
+  },
+
+  {
     label: 'Pandal Atlas',
     permissions: [PERMISSIONS.VIEW_PANDAL_ATLAS],
     items: [

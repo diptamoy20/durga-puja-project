@@ -54,6 +54,12 @@ export function PublicLayout() {
               Gallery
             </Link>
             <Link
+              to={ROUTES.PUBLIC_ASSOCIATIONS}
+              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
+            >
+              Associations
+            </Link>
+            <Link
               to={ROUTES.PUBLIC_WEBINARS}
               style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
             >

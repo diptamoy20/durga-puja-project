@@ -29,6 +29,13 @@ export const ROUTES = {
   COMMITTEE_DETAIL: (id: number | string = ':id') => `/committees/${id}`,
   COMMITTEE_EDIT: (id: number | string = ':id') => `/committees/${id}/edit`,
 
+  // Association Management (separate module)
+  ASSOCIATIONS: '/associations',
+  ASSOCIATIONS_PENDING: '/associations/pending',
+  ASSOCIATION_IMPORT: '/associations/import',
+  ASSOCIATION_DETAIL: (id: number | string = ':id') => `/associations/${id}`,
+  ASSOCIATION_EDIT: (id: number | string = ':id') => `/associations/${id}/edit`,
+
   // Committee member media & albums
   MY_COMMITTEE_MEDIA: '/committee/media',
   MY_COMMITTEE_MEDIA_CREATE: '/committee/media/create',
@@ -97,6 +104,8 @@ export const ROUTES = {
   PUBLIC_WEBINARS: '/public/webinars',
   PUBLIC_PODCASTS: '/public/podcasts',
   PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
+  PUBLIC_ASSOCIATIONS: '/public/associations',
+  PUBLIC_ASSOCIATION_DETAIL: (id: number | string = ':id') => `/public/associations/${id}`,
 
   FORBIDDEN: '/forbidden',
 } as const;
