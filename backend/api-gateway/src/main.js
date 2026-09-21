@@ -54,7 +54,8 @@ async function bootstrap() {
             'permission keys; refresh them with `POST /auth/refresh`.',
         ].join('\n'))
             .setVersion('1.0.0')
-            .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
+            // Default scheme name is `bearer`, matching @ApiBearerAuth() on controllers.
+            .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
             .addTag('Authentication', 'Sign in, registration, tokens and passwords')
             .addTag('Users', 'Administrative user management')
             .addTag('Roles & Permissions', 'RBAC administration')
