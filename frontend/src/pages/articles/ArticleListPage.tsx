@@ -1,273 +1,386 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
-import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ConfirmDialog } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
+import { StatusBadge } from '@/components/ui/Badge';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
-import { StatusBadge } from '@/components/ui/Badge';
-import { articleService } from '@/services/contentService';
+import { articleService, categoryService } from '@/services/contentService';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/useToast';
-import type { Article, ArticleListQuery, ArticleStatus } from '@/types/content';
+import type { Article, ArticleListQuery, ArticleStatus, Category } from '@/types/content';
 import type { PaginationMeta } from '@/types';
+import {
+  ARTICLE_LIST_LABEL,
+  ARTICLE_STAT_CARDS,
+  articleFileUrl,
+  articleListRoute,
+  articleListSubtitle,
+  articleListTitle,
+  articleStatusTone,
+  formatArticleStatus,
+  formatDateTime,
+  type ArticleStats,
+} from '@/utils/articleHelpers';
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-});
+import '@/styles/articles-admin.css';
 
 const STATUS_OPTIONS: Array<{ value: ArticleStatus | ''; label: string }> = [
   { value: '', label: 'All Statuses' },
   { value: 'DRAFT', label: 'Draft' },
   { value: 'PENDING_REVIEW', label: 'Pending Review' },
   { value: 'IN_REVIEW', label: 'In Review' },
-  { value: 'APPROVED', label: 'Approved' },
+  { value: 'APPROVED', label: 'Pending Approval' },
+  { value: 'SCHEDULED', label: 'Scheduled' },
   { value: 'PUBLISHED', label: 'Published' },
   { value: 'REJECTED', label: 'Rejected' },
   { value: 'ARCHIVED', label: 'Archived' },
 ];
 
-function statusTone(status: ArticleStatus): 'default' | 'success' | 'warning' | 'danger' | 'info' | 'muted' {
-  switch (status) {
-    case 'PUBLISHED':
-      return 'success';
-    case 'APPROVED':
-      return 'info';
-    case 'PENDING_REVIEW':
-    case 'IN_REVIEW':
-      return 'warning';
-    case 'REJECTED':
-      return 'danger';
-    case 'ARCHIVED':
-    case 'DRAFT':
-    default:
-      return 'muted';
-  }
-}
-
 export function ArticleListPage() {
-  const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { can } = useAuth();
+
+  const statusParam = searchParams.get('status') as ArticleStatus | null;
+  const statusFilter = statusParam ?? undefined;
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
-  const [stats, setStats] = useState<Record<string, number> | null>(null);
+  const [stats, setStats] = useState<ArticleStats | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState<ArticleListQuery>({ page: 1, perPage: 15, sortDir: 'desc' });
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
-  const [deleting, setDeleting] = useState(false);
-
   const canCreate = can(PERMISSIONS.CREATE_ARTICLES);
   const canEdit = can(PERMISSIONS.EDIT_ARTICLES);
-  const canDelete = can(PERMISSIONS.DELETE_ARTICLES);
+
+  const listQuery = useMemo(
+    () => ({ ...query, status: statusFilter }),
+    [query, statusFilter],
+  );
+
+  useEffect(() => {
+    setQuery((q) => ({ ...q, page: 1, search: undefined }));
+    setSearch('');
+  }, [statusFilter]);
+
+  useEffect(() => {
+    categoryService.listActive().then(setCategories).catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [res, statsRes] = await Promise.all([
-        articleService.list(query),
-        articleService.stats().catch(() => ({})),
+        articleService.list(listQuery),
+        articleService.stats().catch(() => null),
       ]);
       setArticles(res.items);
       setPagination(res.pagination);
-      setStats(statsRes);
+      if (statsRes) {
+        setStats(statsRes as unknown as ArticleStats);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load articles.');
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [listQuery]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setQuery((q) => ({ ...q, search: search.trim() || undefined, page: 1 }));
   };
 
-  const handleDelete = async () => {
-    if (!deletingArticle) return;
-    setDeleting(true);
-    try {
-      await articleService.remove(deletingArticle.id);
-      toast.success('Article deleted.');
-      setDeletingArticle(null);
-      load();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete article.');
-    } finally {
-      setDeleting(false);
-    }
+  const resetFilters = () => {
+    setSearch('');
+    setQuery({ page: 1, perPage: 15, sortDir: 'desc' });
+    setSearchParams(statusFilter ? { status: statusFilter } : {});
   };
+
+  const filteredArticles = useMemo(() => {
+    if (!query.categoryId) return articles;
+    return articles.filter((a) => a.subcategory?.category?.id === query.categoryId);
+  }, [articles, query.categoryId]);
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page__title">Articles & News</h1>
-          <p className="page__subtitle">Create, review, and publish festival content.</p>
-        </div>
-        {canCreate && (
-          <Link to={ROUTES.ARTICLE_NEW} className="btn btn--primary btn--md">
-            + New Article
-          </Link>
-        )}
-      </header>
+      <GalleryModuleHeader
+        breadcrumbs={
+          statusFilter
+            ? [
+                { label: 'Dashboard', to: ROUTES.DASHBOARD },
+                { label: ARTICLE_LIST_LABEL, to: ROUTES.ARTICLES },
+                { label: articleListTitle(statusFilter) },
+              ]
+            : [
+                { label: 'Dashboard', to: ROUTES.DASHBOARD },
+                { label: ARTICLE_LIST_LABEL },
+              ]
+        }
+        title={articleListTitle(statusFilter)}
+        subtitle={articleListSubtitle(statusFilter)}
+        actions={
+          canCreate ? (
+            <Link to={ROUTES.ARTICLE_NEW} className="btn btn--primary btn--md">
+              <i className="fas fa-circle-plus" aria-hidden="true" /> New Article
+            </Link>
+          ) : undefined
+        }
+      />
 
-      {stats && Object.keys(stats).length > 0 && (
-        <div className="stat-grid">
-          <div className="stat-card">
-            <p className="stat-card__label">Total Articles</p>
-            <p className="stat-card__value">{Object.values(stats).reduce((a, b) => a + b, 0)}</p>
-          </div>
-          <div className="stat-card stat-card--success">
-            <p className="stat-card__label">Published</p>
-            <p className="stat-card__value">{stats.PUBLISHED ?? 0}</p>
-          </div>
-          <div className="stat-card stat-card--warning">
-            <p className="stat-card__label">In Review / Pending</p>
-            <p className="stat-card__value">{(stats.IN_REVIEW ?? 0) + (stats.PENDING_REVIEW ?? 0)}</p>
-          </div>
-          <div className="stat-card stat-card--info">
-            <p className="stat-card__label">Drafts</p>
-            <p className="stat-card__value">{stats.DRAFT ?? 0}</p>
-          </div>
+      {stats && (
+        <div className="articles-admin__stats">
+          {ARTICLE_STAT_CARDS.map((card) => {
+            const value = stats[card.key] ?? 0;
+            const active = card.status ? statusFilter === card.status : !statusFilter;
+            const href = card.status ? articleListRoute(card.status) : ROUTES.ARTICLES;
+            return (
+              <Link
+                key={card.key}
+                to={href}
+                className={`articles-stat-card${active ? ' is-active' : ''}`}
+              >
+                <div className={`articles-stat-card__icon${card.tone ? ` articles-stat-card__icon--${card.tone}` : ''}`}>
+                  <i className={`fas ${card.icon}`} aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="articles-stat-card__label">{card.label}</p>
+                  <p className="articles-stat-card__value">{value}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
 
       {error && <Alert tone="danger">{error}</Alert>}
 
-      <Card>
-        <div className="filter-bar">
-          <form className="filter-bar__search" onSubmit={handleSearch}>
-            <input
-              type="search"
-              className="field__control"
-              placeholder="Search articles by title..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Button type="submit" variant="secondary" size="md">
-              Search
-            </Button>
-          </form>
+      <div className="articles-filter-card">
+        <form className="articles-filters" onSubmit={handleFilterSubmit}>
+          <div className="field">
+            <label className="field__label" htmlFor="artSearch">Search</label>
+            <div className="articles-filters__search-wrap">
+              <span className="articles-filters__search-icon" aria-hidden="true">
+                <i className="fas fa-search" />
+              </span>
+              <input
+                id="artSearch"
+                type="search"
+                className="field__control articles-filters__search-input"
+                placeholder="Title, slug, or author…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
 
-          <div className="filter-bar__filters">
+          <div className="field">
+            <label className="field__label" htmlFor="artCategory">Category</label>
             <select
+              id="artCategory"
               className="field__control"
-              value={query.status ?? ''}
+              value={query.categoryId ?? ''}
               onChange={(e) =>
                 setQuery((q) => ({
                   ...q,
-                  status: (e.target.value as ArticleStatus) || undefined,
+                  categoryId: e.target.value ? Number(e.target.value) : undefined,
                   page: 1,
                 }))
               }
             >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
+              <option value="">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
           </div>
-        </div>
 
-        <div className="table-wrapper">
-          <table className="table">
+          <div className="field">
+            <label className="field__label" htmlFor="artStatus">Status</label>
+            <select
+              id="artStatus"
+              className="field__control"
+              value={statusFilter ?? ''}
+              onChange={(e) => {
+                const s = (e.target.value as ArticleStatus) || undefined;
+                setQuery((q) => ({ ...q, page: 1 }));
+                setSearchParams(s ? { status: s } : {});
+              }}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <label className="field__label" htmlFor="artCreated">Created Date</label>
+            <input
+              id="artCreated"
+              type="date"
+              className="field__control"
+              value={query.createdDate ?? ''}
+              onChange={(e) =>
+                setQuery((q) => ({ ...q, createdDate: e.target.value || undefined, page: 1 }))
+              }
+            />
+          </div>
+
+          <div className="field">
+            <label className="field__label" htmlFor="artPublished">Published Date</label>
+            <input
+              id="artPublished"
+              type="date"
+              className="field__control"
+              value={query.publishedDate ?? ''}
+              onChange={(e) =>
+                setQuery((q) => ({ ...q, publishedDate: e.target.value || undefined, page: 1 }))
+              }
+            />
+          </div>
+
+          <div className="field articles-filters__actions-wrap">
+            <span className="field__label articles-filters__actions-label" aria-hidden="true">
+              &nbsp;
+            </span>
+            <div className="articles-filters__actions">
+              <button type="submit" className="btn btn--primary btn--md" title="Apply filters">
+                <i className="fas fa-filter" aria-hidden="true" />
+              </button>
+              <button type="button" className="btn btn--outline-secondary btn--md" title="Reset filters" onClick={resetFilters}>
+                <i className="fas fa-rotate-left" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <Card className="articles-list-card">
+        <div className="articles-table-wrapper">
+          <table className="articles-table">
             <thead>
               <tr>
-                <th>Title</th>
+                <th style={{ width: 70 }}>Thumbnail</th>
+                <th>Article Title</th>
                 <th>Category</th>
                 <th>Author</th>
                 <th>Status</th>
                 <th>Published</th>
-                <th>Actions</th>
+                <th>Scheduled</th>
+                <th>Last Updated</th>
+                <th className="text-end" style={{ width: 140 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
-                    Loading articles…
-                  </td>
+                  <td colSpan={9} className="articles-table__empty">Loading articles…</td>
                 </tr>
-              ) : articles.length === 0 ? (
+              ) : filteredArticles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>
-                    No articles found.
+                  <td colSpan={9}>
+                    <div className="articles-table__empty">
+                      <div className="articles-table__empty-icon" aria-hidden="true">
+                        <i className="fas fa-newspaper" />
+                      </div>
+                      <strong>No articles found</strong>
+                      <p>Try adjusting your search criteria or create a new article.</p>
+                      {canCreate && (
+                        <Link to={ROUTES.ARTICLE_NEW} className="btn btn--primary btn--sm">
+                          <i className="fas fa-circle-plus" aria-hidden="true" /> New Article
+                        </Link>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
-                articles.map((art) => (
-                  <tr key={art.id}>
-                    <td>
-                      <div>
-                        <strong>{art.title}</strong>
-                        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
-                          /{art.slug}
-                        </div>
-                      </div>
-                    </td>
-                    <td>{art.subcategory?.name ?? '—'}</td>
-                    <td>{art.author?.name ?? '—'}</td>
-                    <td>
-                      <StatusBadge tone={statusTone(art.status)}>{art.status}</StatusBadge>
-                    </td>
-                    <td>{art.publishedAt ? dateTimeFormat.format(new Date(art.publishedAt)) : '—'}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 'var(--space-150)' }}>
-                        <Link to={ROUTES.ARTICLE_DETAIL(art.id)} className="btn btn--secondary btn--sm">
-                          View
-                        </Link>
-                        {canEdit && (
-                          <Link to={ROUTES.ARTICLE_EDIT(art.id)} className="btn btn--secondary btn--sm">
-                            Edit
+                filteredArticles.map((art) => {
+                  const thumb = art.featuredImage ? articleFileUrl(art.featuredImage) : '';
+                  return (
+                    <tr key={art.id}>
+                      <td>
+                        {thumb ? (
+                          <img src={thumb} alt="" className="articles-table__thumb" />
+                        ) : (
+                          <div className="articles-table__thumb-placeholder" aria-hidden="true">
+                            <i className="fas fa-image" />
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div className="articles-table__title">{art.title}</div>
+                        <div className="articles-table__slug">{art.slug}</div>
+                      </td>
+                      <td>
+                        <span className="articles-table__category">
+                          <i className="fas fa-tag" aria-hidden="true" />
+                          {art.subcategory?.category?.name ?? art.subcategory?.name ?? 'Uncategorized'}
+                        </span>
+                      </td>
+                      <td>{art.author?.name ?? 'Unknown'}</td>
+                      <td>
+                        <StatusBadge tone={articleStatusTone(art.status)}>
+                          {formatArticleStatus(art.status)}
+                        </StatusBadge>
+                      </td>
+                      <td className="articles-table__date">{formatDateTime(art.publishedAt)}</td>
+                      <td className="articles-table__date">{formatDateTime(art.scheduledAt)}</td>
+                      <td className="articles-table__date">{formatDateTime(art.updatedAt ?? art.createdAt)}</td>
+                      <td>
+                        <div className="articles-table__actions">
+                          <Link
+                            to={ROUTES.ARTICLE_DETAIL(art.id)}
+                            className="articles-action-btn"
+                            title="View details"
+                            aria-label={`View ${art.title}`}
+                          >
+                            <i className="fas fa-eye" aria-hidden="true" />
                           </Link>
-                        )}
-                        {canDelete && (
-                          <Button variant="danger" size="sm" onClick={() => setDeletingArticle(art)}>
-                            Delete
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          <Link
+                            to={ROUTES.ARTICLE_PREVIEW(art.id)}
+                            target="_blank"
+                            className="articles-action-btn"
+                            title="Preview article"
+                            aria-label={`Preview ${art.title}`}
+                          >
+                            <i className="fas fa-arrow-up-right-from-square" aria-hidden="true" />
+                          </Link>
+                          {canEdit && (
+                            <Link
+                              to={ROUTES.ARTICLE_EDIT(art.id)}
+                              className="articles-action-btn articles-action-btn--primary"
+                              title="Edit article"
+                              aria-label={`Edit ${art.title}`}
+                            >
+                              <i className="fas fa-pencil" aria-hidden="true" />
+                            </Link>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
         {pagination && pagination.lastPage > 1 && (
-          <Pagination
-            meta={pagination}
-            onPageChange={(page) => setQuery((q) => ({ ...q, page }))}
-          />
+          <div className="articles-list-card__pagination">
+            <Pagination meta={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
+          </div>
         )}
       </Card>
-
-      <ConfirmDialog
-        open={deletingArticle !== null}
-        title="Delete Article"
-        message={`Are you sure you want to delete "${deletingArticle?.title}"?`}
-        confirmLabel="Delete"
-        destructive
-        busy={deleting}
-        onConfirm={handleDelete}
-        onCancel={() => setDeletingArticle(null)}
-      />
     </div>
   );
 }

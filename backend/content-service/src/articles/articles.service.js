@@ -79,9 +79,21 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    slugExists = async (slug) => {
-        const found = await this.prisma.article.findUnique({ where: { slug }, select: { id: true } });
+    slugExists = async (slug, excludeId) => {
+        const found = await this.prisma.article.findFirst({
+            where: {
+                slug,
+                ...(excludeId ? { id: { not: excludeId } } : {}),
+            },
+            select: { id: true },
+        });
         return found !== null;
+    };
+    dateRange = (dateStr) => {
+        const start = new Date(`${dateStr}T00:00:00.000Z`);
+        const end = new Date(start);
+        end.setUTCDate(end.getUTCDate() + 1);
+        return { gte: start, lt: end };
     };
     async findAll(query) {
         const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
@@ -89,8 +101,11 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             deletedAt: null,
             ...(query.status ? { status: query.status } : {}),
             ...(query.subcategoryId ? { subcategoryId: query.subcategoryId } : {}),
+            ...(query.categoryId ? { subcategory: { categoryId: query.categoryId } } : {}),
             ...(query.authorId ? { authorId: query.authorId } : {}),
             ...(query.isFeatured !== undefined ? { isFeatured: query.isFeatured } : {}),
+            ...(query.createdDate ? { createdAt: this.dateRange(query.createdDate) } : {}),
+            ...(query.publishedDate ? { publishedAt: this.dateRange(query.publishedDate) } : {}),
             ...(query.search
                 ? {
                     OR: [
@@ -118,6 +133,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
                     scheduledAt: true,
                     publishedAt: true,
                     createdAt: true,
+                    updatedAt: true,
                     subcategory: {
                         select: { id: true, name: true, category: { select: { id: true, name: true } } },
                     },
@@ -175,11 +191,12 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
             throw shared_1.ServiceException.badRequest('The selected subcategory does not exist.');
         }
         try {
+            const slugBase = data.slug?.trim() || data.title;
             const article = await this.prisma.article.create({
                 data: {
                     subcategoryId: data.subcategoryId,
                     title: data.title,
-                    slug: await (0, shared_1.uniqueSlug)(data.title, this.slugExists),
+                    slug: await (0, shared_1.uniqueSlug)(slugBase, (slug) => this.slugExists(slug)),
                     excerpt: data.excerpt ?? null,
                     content: (0, sanitize_html_1.default)(data.content, SANITIZE_OPTIONS),
                     featuredImage: data.featuredImage ?? null,
@@ -215,7 +232,7 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         const { id, data, actorId } = payload;
         const existing = await this.prisma.article.findFirst({
             where: { id, deletedAt: null },
-            select: { id: true, status: true, title: true },
+            select: { id: true, status: true, title: true, slug: true },
         });
         if (!existing)
             throw shared_1.ServiceException.notFound(`No article exists with id ${id}.`);
@@ -224,18 +241,24 @@ let ArticlesService = ArticlesService_1 = class ArticlesService {
         if (existing.status === database_1.ArticleStatus.PUBLISHED) {
             throw shared_1.ServiceException.badRequest('A published article cannot be edited directly. Return it to draft first.');
         }
+        let nextSlug;
+        if (data.slug !== undefined && data.slug.trim() && data.slug.trim() !== existing.slug) {
+            nextSlug = await (0, shared_1.uniqueSlug)(data.slug.trim(), (slug) => this.slugExists(slug, id));
+        }
+        else if (data.slug === undefined && data.title && data.title !== existing.title) {
+            nextSlug = await (0, shared_1.uniqueSlug)(data.title, (slug) => this.slugExists(slug, id));
+        }
         try {
             const article = await this.prisma.article.update({
                 where: { id },
                 data: {
                     subcategoryId: data.subcategoryId,
                     title: data.title,
-                    slug: data.title && data.title !== existing.title
-                        ? await (0, shared_1.uniqueSlug)(data.title, this.slugExists)
-                        : undefined,
+                    slug: nextSlug,
                     excerpt: data.excerpt,
                     content: data.content ? (0, sanitize_html_1.default)(data.content, SANITIZE_OPTIONS) : undefined,
                     featuredImage: data.featuredImage,
+                    authorId: data.authorId,
                     seoTitle: data.seoTitle,
                     seoDescription: data.seoDescription,
                     seoKeywords: data.seoKeywords,

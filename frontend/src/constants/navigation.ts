@@ -228,9 +228,37 @@ export const NAVIGATION: NavSection[] = [
     permissions: [PERMISSIONS.VIEW_ARTICLES],
     items: [
       { label: 'Articles', icon: 'fa-newspaper', to: ROUTES.ARTICLES },
+      { label: 'Media Library', icon: 'fa-images', to: ROUTES.CONTENT_MEDIA_LIBRARY, permissions: [PERMISSIONS.MANAGE_MEDIA] },
       { label: 'Drafts', icon: 'fa-file', to: `${ROUTES.ARTICLES}?status=DRAFT` },
-      { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.ARTICLES}?status=IN_REVIEW` },
-      { label: 'Published', icon: 'fa-tower-broadcast', tone: 'success', to: `${ROUTES.ARTICLES}?status=PUBLISHED` },
+      {
+        label: 'Pending Review',
+        icon: 'fa-hourglass-half',
+        tone: 'warning',
+        to: `${ROUTES.ARTICLES}?status=IN_REVIEW`,
+      },
+      {
+        label: 'Pending Approval',
+        icon: 'fa-circle-check',
+        tone: 'info',
+        to: `${ROUTES.ARTICLES}?status=APPROVED`,
+      },
+      {
+        label: 'Scheduled',
+        icon: 'fa-calendar',
+        to: `${ROUTES.ARTICLES}?status=SCHEDULED`,
+      },
+      {
+        label: 'Published',
+        icon: 'fa-tower-broadcast',
+        tone: 'success',
+        to: `${ROUTES.ARTICLES}?status=PUBLISHED`,
+      },
+      {
+        label: 'Rejected',
+        icon: 'fa-circle-xmark',
+        tone: 'danger',
+        to: `${ROUTES.ARTICLES}?status=REJECTED`,
+      },
     ],
   },
 

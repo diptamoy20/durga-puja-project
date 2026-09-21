@@ -1,44 +1,75 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
+import { StatusBadge } from '@/components/ui/Badge';
 import { PERMISSIONS } from '@/constants/permissions';
 import { PageLoader } from '@/components/ui/Spinner';
 import { ROUTES } from '@/constants/routes';
-import { StatusBadge } from '@/components/ui/Badge';
 import { articleService } from '@/services/contentService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import type { Article, ArticleStatus, ArticleWorkflowAction } from '@/types/content';
+import type { Article, ArticleWorkflowAction } from '@/types/content';
+import {
+  articleFileUrl,
+  articleListRoute,
+  ARTICLE_LIST_LABEL,
+  articleStatusTone,
+  formatArticleStatus,
+  formatDateTime,
+} from '@/utils/articleHelpers';
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: true,
-});
+import '@/styles/articles-admin.css';
 
-function statusTone(status: ArticleStatus): 'default' | 'success' | 'warning' | 'danger' | 'info' | 'muted' {
-  switch (status) {
-    case 'PUBLISHED':
-      return 'success';
-    case 'APPROVED':
-      return 'info';
-    case 'PENDING_REVIEW':
-    case 'IN_REVIEW':
-      return 'warning';
-    case 'REJECTED':
-      return 'danger';
-    case 'ARCHIVED':
-    case 'DRAFT':
-    default:
-      return 'muted';
+interface WorkflowConfig {
+  action: ArticleWorkflowAction;
+  label: string;
+  variant?: 'primary' | 'secondary' | 'danger';
+  requiresComment?: boolean;
+  requiresSchedule?: boolean;
+  hideComment?: boolean;
+}
+
+function getWorkflowActions(article: Article, canReview: boolean, canPublish: boolean): WorkflowConfig[] {
+  const actions: WorkflowConfig[] = [];
+  const { status } = article;
+
+  if (status === 'DRAFT' || status === 'REJECTED') {
+    actions.push({ action: 'submit_for_review', label: 'Submit for Review', variant: 'primary', hideComment: true });
   }
+
+  if (status === 'PENDING_REVIEW' && canReview) {
+    actions.push({ action: 'start_review', label: 'Start Review', variant: 'secondary', hideComment: true });
+  }
+
+  if ((status === 'PENDING_REVIEW' || status === 'IN_REVIEW') && canReview) {
+    actions.push(
+      { action: 'return_to_draft', label: 'Send Back to Draft', variant: 'secondary', requiresComment: true },
+      { action: 'approve', label: 'Approve', variant: 'primary', hideComment: true },
+      { action: 'reject', label: 'Reject', variant: 'danger', requiresComment: true },
+    );
+  }
+
+  if (status === 'APPROVED' && canPublish) {
+    actions.push(
+      { action: 'publish', label: 'Publish Now', variant: 'primary', hideComment: true },
+      { action: 'schedule', label: 'Schedule', variant: 'secondary', requiresSchedule: true },
+    );
+  }
+
+  if (status === 'SCHEDULED' && canPublish) {
+    actions.push({ action: 'publish', label: 'Publish Now', variant: 'primary', hideComment: true });
+  }
+
+  if (status === 'PUBLISHED' && canPublish) {
+    actions.push({ action: 'archive', label: 'Archive', variant: 'secondary', hideComment: true });
+  }
+
+  return actions;
 }
 
 export function ArticleDetailPage() {
@@ -50,11 +81,14 @@ export function ArticleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [workflowAction, setWorkflowAction] = useState<ArticleWorkflowAction | null>(null);
+  const [workflowConfig, setWorkflowConfig] = useState<WorkflowConfig | null>(null);
   const [comment, setComment] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
   const [busy, setBusy] = useState(false);
 
   const canEdit = can(PERMISSIONS.EDIT_ARTICLES);
+  const canReview = can(PERMISSIONS.REVIEW_ARTICLES);
   const canPublish = can(PERMISSIONS.PUBLISH_ARTICLES);
 
   useEffect(() => {
@@ -67,15 +101,40 @@ export function ArticleDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const workflowActions = useMemo(
+    () => (article ? getWorkflowActions(article, canReview, canPublish) : []),
+    [article, canReview, canPublish],
+  );
+
   const handleWorkflow = async () => {
-    if (!workflowAction || !article) return;
+    if (!workflowConfig || !article) return;
+
+    if (workflowConfig.requiresComment && !comment.trim()) {
+      toast.warning('A reason or comment is required for this action.');
+      return;
+    }
+
+    let scheduledAt: string | undefined;
+    if (workflowConfig.requiresSchedule) {
+      if (!scheduleDate || !scheduleTime) {
+        toast.warning('Please set a publish date and time.');
+        return;
+      }
+      scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+    }
+
     setBusy(true);
     try {
-      const updated = await articleService.workflow(article.id, workflowAction, { comment: comment || undefined });
+      const updated = await articleService.workflow(article.id, workflowConfig.action, {
+        comment: comment.trim() || undefined,
+        scheduledAt,
+      });
       setArticle(updated);
-      toast.success(`Article state changed to ${updated.status}.`);
-      setWorkflowAction(null);
+      toast.success(`Article ${formatArticleStatus(updated.status).toLowerCase()}.`);
+      setWorkflowConfig(null);
       setComment('');
+      setScheduleDate('');
+      setScheduleTime('');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Workflow action failed.');
     } finally {
@@ -88,107 +147,127 @@ export function ArticleDetailPage() {
     return (
       <div className="page">
         <Alert tone="danger">{error ?? 'Article not found.'}</Alert>
-        <Link to={ROUTES.ARTICLES} className="btn btn--secondary btn--md">
-          Back to Articles
-        </Link>
+        <Link to={ROUTES.ARTICLES} className="btn btn--secondary btn--md">Back to Articles</Link>
       </div>
     );
   }
 
+  const featuredUrl = article.featuredImage ? articleFileUrl(article.featuredImage) : '';
+  const categoryLabel = article.subcategory?.category?.name ?? article.subcategory?.name ?? 'Uncategorized';
+
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-200)', marginBottom: 'var(--space-100)' }}>
-            <Link to={ROUTES.ARTICLES} className="btn btn--secondary btn--sm">
-              ← Back
-            </Link>
-            <StatusBadge tone={statusTone(article.status)}>{article.status}</StatusBadge>
-            {article.isFeatured && <span className="badge badge--warning">★ Featured</span>}
-          </div>
-          <h1 className="page__title">{article.title}</h1>
-          <p className="page__subtitle">
-            Slug: <code>{article.slug}</code> · Subcategory: <strong>{article.subcategory?.name}</strong>
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 'var(--space-200)', flexWrap: 'wrap' }}>
-          {canEdit && (
-            <Link to={ROUTES.ARTICLE_EDIT(article.id)} className="btn btn--secondary btn--md">
-              Edit Article
-            </Link>
-          )}
-
-          {article.status === 'DRAFT' && (
-            <Button variant="primary" size="md" onClick={() => setWorkflowAction('submit_for_review')}>
-              Submit for Review
-            </Button>
-          )}
-
-          {canPublish && article.status === 'PENDING_REVIEW' && (
-            <Button variant="primary" size="md" onClick={() => setWorkflowAction('start_review')}>
-              Start Review
-            </Button>
-          )}
-
-          {canPublish && article.status === 'IN_REVIEW' && (
-            <>
-              <Button variant="primary" size="md" onClick={() => setWorkflowAction('approve')}>
-                Approve
-              </Button>
-              <Button variant="danger" size="md" onClick={() => setWorkflowAction('reject')}>
-                Reject
-              </Button>
-            </>
-          )}
-
-          {canPublish && article.status === 'APPROVED' && (
-            <Button variant="primary" size="md" onClick={() => setWorkflowAction('publish')}>
-              Publish Now
-            </Button>
-          )}
-
-          {canPublish && article.status === 'PUBLISHED' && (
-            <Button variant="secondary" size="md" onClick={() => setWorkflowAction('archive')}>
-              Archive
-            </Button>
-          )}
-        </div>
-      </header>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 'var(--space-400)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-400)' }}>
-          <Card title="Article Content">
-            {article.featuredImage && (
-              <div style={{ marginBottom: 'var(--space-400)' }}>
-                <img
-                  src={article.featuredImage}
-                  alt={article.title}
-                  style={{ width: '100%', maxHeight: '360px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
-                />
-              </div>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: ARTICLE_LIST_LABEL, to: articleListRoute(article.status) },
+          { label: article.title.length > 48 ? `${article.title.slice(0, 48)}…` : article.title },
+        ]}
+        title={article.title}
+        subtitle={`${categoryLabel} · ${article.author?.name ?? 'Unknown author'}`}
+        meta={
+          <div style={{ marginBottom: 'var(--space-2)' }}>
+            <StatusBadge tone={articleStatusTone(article.status)}>
+              {formatArticleStatus(article.status)}
+            </StatusBadge>
+            {article.isFeatured && (
+              <span className="badge badge--warning" style={{ marginLeft: 'var(--space-2)' }}>★ Featured</span>
             )}
+          </div>
+        }
+        actions={
+          <>
+            <Link
+              to={ROUTES.ARTICLE_PREVIEW(article.id)}
+              target="_blank"
+              className="btn btn--outline-secondary btn--md"
+            >
+              <i className="fas fa-arrow-up-right-from-square" aria-hidden="true" /> Preview
+            </Link>
+            {canEdit && (
+              <Link to={ROUTES.ARTICLE_EDIT(article.id)} className="btn btn--primary btn--md">
+                <i className="fas fa-pencil" aria-hidden="true" /> Edit
+              </Link>
+            )}
+          </>
+        }
+      />
 
-            {article.excerpt && (
-              <p style={{ fontSize: 'var(--font-md)', fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 'var(--space-300)' }}>
-                {article.excerpt}
+      {article.status === 'REJECTED' && article.rejectionReason && (
+        <Alert tone="danger">
+          <strong>Rejection reason:</strong> {article.rejectionReason}
+        </Alert>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(300px, 1fr)', gap: 'var(--space-4)' }}>
+        <Card title="Article Content">
+          {featuredUrl && (
+            <img
+              src={featuredUrl}
+              alt={article.title}
+              style={{ width: '100%', maxHeight: 360, objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}
+            />
+          )}
+
+          {article.excerpt && (
+            <p style={{ color: 'var(--colour-ink-soft)', fontWeight: 500, marginBottom: 'var(--space-3)' }}>
+              {article.excerpt}
+            </p>
+          )}
+
+          <div
+            className="article-content-preview"
+            dangerouslySetInnerHTML={{ __html: article.content }}
+          />
+        </Card>
+
+        <div>
+          <div className="article-workflow-card">
+            <h3 className="article-workflow-card__title">Workflow</h3>
+            <p style={{ marginBottom: 'var(--space-3)' }}>
+              <StatusBadge tone={articleStatusTone(article.status)}>
+                {formatArticleStatus(article.status)}
+              </StatusBadge>
+            </p>
+            {workflowActions.length > 0 ? (
+              <div className="article-workflow-card__actions">
+                {workflowActions.map((cfg) => (
+                  <Button
+                    key={cfg.action}
+                    variant={cfg.variant ?? 'secondary'}
+                    size="sm"
+                    onClick={() => {
+                      setWorkflowConfig(cfg);
+                      setComment('');
+                      setScheduleDate('');
+                      setScheduleTime('');
+                    }}
+                  >
+                    {cfg.label}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p style={{ margin: 0, color: 'var(--colour-ink-soft)', fontSize: '0.875rem' }}>
+                No workflow actions available for this status.
               </p>
             )}
+          </div>
 
-            <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-              {article.content}
-            </div>
-          </Card>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-400)' }}>
-          <Card title="Metadata & Publishing">
+          <Card title="Metadata">
             <dl className="detail-list">
               <div><dt>Author</dt><dd>{article.author?.name ?? '—'}</dd></div>
-              <div><dt>Status</dt><dd><StatusBadge tone={statusTone(article.status)}>{article.status}</StatusBadge></dd></div>
-              <div><dt>Created</dt><dd>{dateTimeFormat.format(new Date(article.createdAt))}</dd></div>
-              <div><dt>Published At</dt><dd>{article.publishedAt ? dateTimeFormat.format(new Date(article.publishedAt)) : 'Not Published'}</dd></div>
+              <div><dt>Slug</dt><dd><code>{article.slug}</code></dd></div>
+              <div><dt>Category</dt><dd>{categoryLabel}</dd></div>
+              <div><dt>Subcategory</dt><dd>{article.subcategory?.name ?? '—'}</dd></div>
+              <div><dt>Created</dt><dd>{formatDateTime(article.createdAt)}</dd></div>
+              <div><dt>Last Updated</dt><dd>{formatDateTime(article.updatedAt)}</dd></div>
+              <div><dt>Published</dt><dd>{formatDateTime(article.publishedAt)}</dd></div>
+              <div><dt>Scheduled</dt><dd>{formatDateTime(article.scheduledAt)}</dd></div>
               <div><dt>Allow Comments</dt><dd>{article.allowComments ? 'Yes' : 'No'}</dd></div>
+              {article.reviewComment && (
+                <div><dt>Review Comment</dt><dd>{article.reviewComment}</dd></div>
+              )}
             </dl>
           </Card>
 
@@ -202,62 +281,94 @@ export function ArticleDetailPage() {
             </Card>
           )}
 
-          {article.histories && article.histories.length > 0 && (
-            <Card title="Workflow History">
-              <div className="table-wrapper">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Action</th>
-                      <th>Status</th>
-                      <th>Comment</th>
-                      <th>By</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {article.histories.map((h) => (
-                      <tr key={h.id}>
-                        <td><strong>{h.action}</strong></td>
-                        <td>{h.newStatus ?? '—'}</td>
-                        <td>{h.comment ?? '—'}</td>
-                        <td>{h.user?.name ?? 'System'}</td>
-                        <td>{dateTimeFormat.format(new Date(h.createdAt))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          )}
+          <Card title="History">
+            {article.histories && article.histories.length > 0 ? (
+              <ul className="article-history-list">
+                {article.histories.map((h) => (
+                  <li key={h.id}>
+                    <strong>{h.action.replace(/_/g, ' ')}</strong>
+                    {h.newStatus && (
+                      <span style={{ color: 'var(--colour-ink-soft)', marginLeft: 'var(--space-2)' }}>
+                        → {formatArticleStatus(h.newStatus as Article['status'])}
+                      </span>
+                    )}
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--colour-ink-soft)', marginTop: 'var(--space-1)' }}>
+                      {h.user?.name ?? 'System'} · {formatDateTime(h.createdAt)}
+                    </div>
+                    {h.comment && <div style={{ marginTop: 'var(--space-1)' }}>{h.comment}</div>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ margin: 0, color: 'var(--colour-ink-soft)' }}>No history available.</p>
+            )}
+          </Card>
         </div>
       </div>
 
       <ConfirmDialog
-        open={workflowAction !== null}
-        title={`Confirm Workflow: ${workflowAction}`}
+        open={workflowConfig !== null}
+        title={workflowConfig?.label ?? 'Confirm Workflow'}
         message={
           <div>
-            <p>Perform <strong>{workflowAction}</strong> on article "{article.title}"?</p>
-            <div style={{ marginTop: 'var(--space-200)' }}>
-              <label className="field__label" htmlFor="wfComment">Comment / Reason (optional)</label>
-              <textarea
-                id="wfComment"
-                className="field__control"
-                rows={2}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
-            </div>
+            <p>
+              Perform <strong>{workflowConfig?.label}</strong> on &ldquo;{article.title}&rdquo;?
+            </p>
+
+            {!workflowConfig?.hideComment && (
+              <div className="field" style={{ marginTop: 'var(--space-3)' }}>
+                <label className="field__label" htmlFor="wfComment">
+                  Reason / Comment
+                  {workflowConfig?.requiresComment && <span className="field__required"> *</span>}
+                </label>
+                <textarea
+                  id="wfComment"
+                  className="field__control"
+                  rows={3}
+                  required={workflowConfig?.requiresComment}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+              </div>
+            )}
+
+            {workflowConfig?.requiresSchedule && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
+                <div className="field">
+                  <label className="field__label" htmlFor="wfDate">Publish Date</label>
+                  <input
+                    id="wfDate"
+                    type="date"
+                    className="field__control"
+                    value={scheduleDate}
+                    onChange={(e) => setScheduleDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label className="field__label" htmlFor="wfTime">Publish Time</label>
+                  <input
+                    id="wfTime"
+                    type="time"
+                    className="field__control"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            )}
           </div>
         }
         confirmLabel="Confirm"
-        destructive={workflowAction === 'reject'}
+        destructive={workflowConfig?.action === 'reject'}
         busy={busy}
         onConfirm={handleWorkflow}
         onCancel={() => {
-          setWorkflowAction(null);
+          setWorkflowConfig(null);
           setComment('');
+          setScheduleDate('');
+          setScheduleTime('');
         }}
       />
     </div>

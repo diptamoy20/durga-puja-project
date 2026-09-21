@@ -27,6 +27,9 @@ export function PublicLayout() {
             <Link to={ROUTES.PUBLIC_PODCASTS} className="public-layout__nav-link">
               Podcasts
             </Link>
+            <Link to={ROUTES.PUBLIC_NEWS} className="public-layout__nav-link">
+              News
+            </Link>
             <Link to={ROUTES.PUBLIC_CHOOSE_TYPE} className="btn btn--primary btn--sm">
               Register Account
             </Link>
