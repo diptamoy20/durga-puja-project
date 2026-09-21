@@ -56,6 +56,10 @@ const AssociationPendingPage = lazy(() =>
 const AssociationImportPage = lazy(() =>
   import('@/pages/associations/AssociationImportPage').then((m) => ({ default: m.AssociationImportPage })),
 );
+
+const AssociationCreatePage = lazy(() =>
+  import('@/pages/associations/AssociationCreatePage').then((m) => ({ default: m.AssociationCreatePage })),
+);
 const AssociationDetailPage = lazy(() =>
   import('@/pages/associations/AssociationDetailPage').then((m) => ({ default: m.AssociationDetailPage })),
 );
@@ -374,6 +378,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.VIEW_ASSOCIATIONS]}>
               <AssociationPendingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_CREATE}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ASSOCIATIONS]}>
+              <AssociationCreatePage />
             </ProtectedRoute>
           }
         />

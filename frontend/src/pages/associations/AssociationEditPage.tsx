@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/Spinner';
+import { AssociationImageField } from '@/components/associations/AssociationImageField';
 import { ROUTES } from '@/constants/routes';
 import { associationService, type AssociationDetail, type CreateAssociationDto } from '@/services/associationService';
 import { useToast } from '@/hooks/useToast';
@@ -71,8 +72,11 @@ export function AssociationEditPage() {
 
   if (loadError) {
     return (
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div className="page">
         <Alert tone="danger">{loadError}</Alert>
+        <Link to={ROUTES.ASSOCIATIONS} className="btn btn--secondary btn--md" style={{ marginTop: 'var(--space-300)' }}>
+          Back to directory
+        </Link>
       </div>
     );
   }
@@ -87,74 +91,96 @@ export function AssociationEditPage() {
     },
   });
 
+  const idLabel = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  const LabeledField = ({
+    label,
+    required,
+    fullWidth,
+    children,
+  }: {
+    label: string;
+    required?: boolean;
+    fullWidth?: boolean;
+    children: React.ReactNode;
+  }) => (
+    <div className="field" style={fullWidth ? { gridColumn: '1 / -1' } : undefined}>
+      <label className="field__label" htmlFor={idLabel(label)}>
+        {label}
+        {required && <span className="field__required"> *</span>}
+      </label>
+      {children}
+    </div>
+  );
+
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <h1 style={{ margin: '0 0 var(--space-300)', fontSize: 'var(--font-xl)' }}>Edit Association</h1>
-      <Card>
+    <div className="page">
+      <header className="page__header">
+        <Link to={ROUTES.ASSOCIATION_DETAIL(Number(id))} className="btn btn--secondary btn--sm">
+          Back to details
+        </Link>
+        <div>
+          <h1 className="page__title">Edit Association</h1>
+          <p className="page__subtitle">Update the association profile and contact details.</p>
+        </div>
+      </header>
+
+      <Card title="Association Details">
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 'var(--space-300)' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Association Name *</label>
-              <input {...field('name')} className="field__control" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Established Year</label>
-              <input {...field('establishedYear')} type="number" className="field__control" min="1900" max={new Date().getFullYear() + 1} />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Description *</label>
-              <textarea {...field('description')} className="field__control" rows={3} required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Contact Person *</label>
-              <input {...field('contactPersonName')} className="field__control" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Designation</label>
-              <input {...field('designation')} className="field__control" />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Email *</label>
-              <input {...field('email')} type="email" className="field__control" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Mobile *</label>
-              <input {...field('mobile')} className="field__control" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Website</label>
-              <input {...field('website')} className="field__control" />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Country *</label>
-              <input {...field('country')} className="field__control" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>State / Region *</label>
-              <input {...field('state')} className="field__control" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>City *</label>
-              <input {...field('city')} className="field__control" required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Postal Code *</label>
-              <input {...field('postalCode')} className="field__control" required />
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Full Address *</label>
-              <textarea {...field('address')} className="field__control" rows={2} required />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Logo Image (relative path)</label>
-              <input {...field('logoImage')} className="field__control" placeholder="association-documents/logo.png" />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>Cover Image (relative path)</label>
-              <input {...field('coverImage')} className="field__control" placeholder="association-documents/cover.png" />
-            </div>
+          <div className="form-grid form-grid--2">
+            <LabeledField label="Association Name" required>
+              <input id={idLabel('Association Name')} {...field('name')} className="field__control" placeholder="Bengali Cultural Association, Kolkata" required />
+            </LabeledField>
+            <LabeledField label="Established Year">
+              <input id={idLabel('Established Year')} {...field('establishedYear')} type="number" className="field__control" min="1900" max={new Date().getFullYear() + 1} />
+            </LabeledField>
+            <LabeledField label="Description" required fullWidth>
+              <textarea id={idLabel('Description')} {...field('description')} className="field__control" rows={3} placeholder="Mission, history, and community impact…" required />
+            </LabeledField>
+            <LabeledField label="Contact Person" required>
+              <input id={idLabel('Contact Person')} {...field('contactPersonName')} className="field__control" placeholder="Dr. Amit Chatterjee" required />
+            </LabeledField>
+            <LabeledField label="Designation">
+              <input id={idLabel('Designation')} {...field('designation')} className="field__control" placeholder="President / Secretary" />
+            </LabeledField>
+            <LabeledField label="Email" required>
+              <input id={idLabel('Email')} {...field('email')} type="email" className="field__control" placeholder="info@bengalassociation.example" required />
+            </LabeledField>
+            <LabeledField label="Mobile" required>
+              <input id={idLabel('Mobile')} {...field('mobile')} className="field__control" placeholder="+91 xxxxx xxxxx" required />
+            </LabeledField>
+            <LabeledField label="Website">
+              <input id={idLabel('Website')} {...field('website')} className="field__control" placeholder="https://bengalassociation.example" />
+            </LabeledField>
+            <LabeledField label="Country" required>
+              <input id={idLabel('Country')} {...field('country')} className="field__control" placeholder="India" required />
+            </LabeledField>
+            <LabeledField label="State / Region" required>
+              <input id={idLabel('State / Region')} {...field('state')} className="field__control" placeholder="West Bengal" required />
+            </LabeledField>
+            <LabeledField label="City" required>
+              <input id={idLabel('City')} {...field('city')} className="field__control" placeholder="Kolkata" required />
+            </LabeledField>
+            <LabeledField label="Postal Code" required>
+              <input id={idLabel('Postal Code')} {...field('postalCode')} className="field__control" placeholder="700001" required />
+            </LabeledField>
+            <LabeledField label="Full Address" required fullWidth>
+              <textarea id={idLabel('Full Address')} {...field('address')} className="field__control" rows={2} placeholder="Complete mailing address…" required />
+            </LabeledField>
+            <AssociationImageField
+              id={idLabel('Logo Image')}
+              label="Logo Image"
+              value={form.logoImage}
+              onChange={(path) => set('logoImage', path ?? undefined)}
+            />
+            <AssociationImageField
+              id={idLabel('Cover Image')}
+              label="Cover Image"
+              value={form.coverImage}
+              onChange={(path) => set('coverImage', path ?? undefined)}
+            />
           </div>
-          <div style={{ marginTop: 'var(--space-400)', display: 'flex', gap: 'var(--space-200)' }}>
+          <div className="form-actions">
             <Button type="submit" loading={submitting}>Save Changes</Button>
             <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.ASSOCIATION_DETAIL(Number(id)))}>Cancel</Button>
           </div>

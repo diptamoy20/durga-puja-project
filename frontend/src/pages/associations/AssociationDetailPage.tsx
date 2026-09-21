@@ -39,26 +39,6 @@ const dateFormat = new Intl.DateTimeFormat('en-GB', {
   minute: '2-digit',
 });
 
-function MetaList({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 style={{ margin: '0 0 var(--space-200)', fontSize: 'var(--font-sm)', fontWeight: 700 }}>{title}</h2>
-      <dl style={{ margin: 0, fontSize: 'var(--font-sm)' }}>
-        {children}
-      </dl>
-    </section>
-  );
-}
-
-function Row({ dt, dd }: { dt: string; dd: React.ReactNode }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '10rem 1fr', gap: 'var(--space-200)', padding: 'var(--space-100) 0', borderBottom: '1px solid var(--color-border)' }}>
-      <dt style={{ color: 'var(--color-text-muted)' }}>{dt}</dt>
-      <dd style={{ margin: 0 }}>{dd}</dd>
-    </div>
-  );
-}
-
 export function AssociationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { success: toastSuccess, error: toastError } = useToast();
@@ -123,9 +103,9 @@ export function AssociationDetailPage() {
   if (loading) return <PageLoader />;
   if (error || !association) {
     return (
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div className="page">
         <Alert tone="danger">{error ?? 'Association not found.'}</Alert>
-        <Link to={ROUTES.ASSOCIATIONS} style={{ display: 'inline-block', marginTop: 'var(--space-300)' }}>
+        <Link to={ROUTES.ASSOCIATIONS} className="btn btn--secondary btn--md" style={{ marginTop: 'var(--space-300)' }}>
           Back to directory
         </Link>
       </div>
@@ -136,130 +116,159 @@ export function AssociationDetailPage() {
   const coverUrl = association.coverImage ? associationService.fileUrl(association.coverImage) : null;
 
   return (
-    <>
-    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)', marginBottom: 'var(--space-400)' }}>
-        <div>
-          <Link to={ROUTES.ASSOCIATIONS} style={{ display: 'inline-block', marginBottom: 'var(--space-200)' }}>
-            ← Back to directory
-          </Link>
-          <h1 style={{ margin: '0 0 var(--space-100)', fontSize: 'var(--font-xl)' }}>{association.name}</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-200)' }}>
-            <StatusBadge status={association.status} />
-            <span style={{ fontSize: 'var(--font-xs)', fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>{association.registrationNo}</span>
+    <div className="page">
+      <header className="page__header">
+        <nav className="breadcrumbs" aria-label="Breadcrumb">
+          <ol>
+            <li><Link to={ROUTES.ASSOCIATIONS}>Association Directory</Link></li>
+            <li><span>{association.name}</span></li>
+          </ol>
+        </nav>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
+          <div>
+            <h1 className="page__title">{association.name}</h1>
+            <p className="page__subtitle" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-200)' }}>
+              <StatusBadge status={association.status} />
+              <span style={{ fontSize: 'var(--font-xs)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', color: 'var(--color-text-muted)' }}>
+                {association.registrationNo}
+              </span>
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-200)', flexWrap: 'wrap' }}>
+            <Link to={ROUTES.ASSOCIATION_EDIT(association.id)} className="btn btn--secondary btn--md">Edit</Link>
+            {TRANSITIONS[association.status].map((action) => (
+              <Button key={action.status} variant={action.variant} disabled={submitting} onClick={() => handleStatusChange(action.status)}>
+                {action.label}
+              </Button>
+            ))}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-200)' }}>
-          <Link to={ROUTES.ASSOCIATION_EDIT(association.id)} className="btn btn--secondary btn--md">Edit</Link>
-          {TRANSITIONS[association.status].map((action) => (
-            <Button key={action.status} variant={action.variant} disabled={submitting} onClick={() => handleStatusChange(action.status)}>
-              {action.label}
-            </Button>
-          ))}
-        </div>
-      </div>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 'var(--space-400)' }}>
-        <Card style={{ alignSelf: 'start' }}>
-          <MetaList title="Profile">
-            <Row dt="Description" dd={association.description} />
-            {association.establishedYear && <Row dt="Established" dd={association.establishedYear} />}
-            <Row dt="Country" dd={association.country} />
-            <Row dt="State / Region" dd={association.state} />
-            <Row dt="City" dd={association.city} />
-            <Row dt="Postal Code" dd={association.postalCode} />
-            <Row dt="Address" dd={association.address} />
-          </MetaList>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: 'var(--space-400)', alignItems: 'start' }}>
+        <Card title="Profile" style={{ alignSelf: 'start' }}>
+          <dl className="detail-list">
+            <div><dt>Description</dt><dd>{association.description}</dd></div>
+            {association.establishedYear && <div><dt>Established</dt><dd>{association.establishedYear}</dd></div>}
+            <div><dt>Country</dt><dd>{association.country}</dd></div>
+            <div><dt>State / Region</dt><dd>{association.state}</dd></div>
+            <div><dt>City</dt><dd>{association.city}</dd></div>
+            <div><dt>Postal Code</dt><dd>{association.postalCode}</dd></div>
+            <div><dt>Address</dt><dd>{association.address}</dd></div>
+          </dl>
         </Card>
 
         <div style={{ display: 'grid', gap: 'var(--space-400)', alignSelf: 'start' }}>
-          <Card>
-            <MetaList title="Contact">
-              <Row dt="Contact Person" dd={association.contactPersonName} />
-              {association.designation && <Row dt="Designation" dd={association.designation} />}
-              <Row dt="Email" dd={<a href={`mailto:${association.email}`}>{association.email}</a>} />
-              <Row dt="Mobile" dd={<a href={`tel:${association.mobile}`}>{association.mobile}</a>} />
-              {association.website && <Row dt="Website" dd={<a href={association.website} target="_blank" rel="noopener noreferrer">{association.website}</a>} />}
-              {association.socialLinks && Object.keys(association.socialLinks).length > 0 && (
-                <Row
-                  dt="Social"
-                  dd={Object.entries(association.socialLinks).map(([platform, url]) => (
-                    <a key={platform} href={url} target="_blank" rel="noopener noreferrer" style={{ marginRight: 'var(--space-200)' }}>
-                      {platform}
-                    </a>
-                  ))}
-                />
+          <Card title="Contact">
+            <dl className="detail-list">
+              <div><dt>Contact Person</dt><dd>{association.contactPersonName}</dd></div>
+              {association.designation && <div><dt>Designation</dt><dd>{association.designation}</dd></div>}
+              <div><dt>Email</dt><dd><a href={`mailto:${association.email}`}>{association.email}</a></dd></div>
+              <div><dt>Mobile</dt><dd><a href={`tel:${association.mobile}`}>{association.mobile}</a></dd></div>
+              {association.website && (
+                <div><dt>Website</dt><dd><a href={association.website} target="_blank" rel="noopener noreferrer">{association.website}</a></dd></div>
               )}
-            </MetaList>
+              {association.socialLinks && Object.keys(association.socialLinks).length > 0 && (
+                <div>
+                  <dt>Social</dt>
+                  <dd>
+                    {Object.entries(association.socialLinks).map(([platform, url]) => (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ marginRight: 'var(--space-200)' }}
+                      >
+                        {platform}
+                      </a>
+                    ))}
+                  </dd>
+                </div>
+              )}
+            </dl>
           </Card>
 
           {(logoUrl || coverUrl) && (
-            <Card>
-              <MetaList title="Images">
-                {logoUrl && (
-                  <div style={{ marginBottom: 'var(--space-200)' }}>
-                    <strong style={{ display: 'block', fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-100)' }}>Logo</strong>
-                    <img src={logoUrl} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
-                  </div>
-                )}
-                {coverUrl && (
-                  <div>
-                    <strong style={{ display: 'block', fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-100)' }}>Cover</strong>
-                    <img src={coverUrl} alt="Cover" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
-                  </div>
-                )}
-              </MetaList>
+            <Card title="Images">
+              {logoUrl && (
+                <div style={{ marginBottom: 'var(--space-200)' }}>
+                  <strong style={{ display: 'block', fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-100)' }}>Logo</strong>
+                  <img src={logoUrl} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+                </div>
+              )}
+              {coverUrl && (
+                <div>
+                  <strong style={{ display: 'block', fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-100)' }}>Cover</strong>
+                  <img src={coverUrl} alt="Cover" style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+                </div>
+              )}
             </Card>
           )}
         </div>
       </div>
 
-      <Card style={{ marginTop: 'var(--space-400)' }}>
-        <MetaList title="Review / Approval">
+      <Card title="Review / Approval" style={{ marginTop: 'var(--space-400)' }}>
+        <dl className="detail-list">
           {association.approvedAt && (
-            <Row dt="Approved" dd={`${dateFormat.format(new Date(association.approvedAt))}${association.approvedBy?.name ? ` by ${association.approvedBy.name}` : ''}`} />
+            <div>
+              <dt>Approved</dt>
+              <dd>{`${dateFormat.format(new Date(association.approvedAt))}${association.approvedBy?.name ? ` by ${association.approvedBy.name}` : ''}`}</dd>
+            </div>
           )}
           {association.rejectedAt && (
-            <Row dt="Rejected" dd={`${dateFormat.format(new Date(association.rejectedAt))}${association.rejectedBy?.name ? ` by ${association.rejectedBy.name}` : ''}`} />
+            <div>
+              <dt>Rejected</dt>
+              <dd>{`${dateFormat.format(new Date(association.rejectedAt))}${association.rejectedBy?.name ? ` by ${association.rejectedBy.name}` : ''}`}</dd>
+            </div>
           )}
           {association.reviewedAt && (
-            <Row dt="Reviewed" dd={`${dateFormat.format(new Date(association.reviewedAt))}${association.reviewedBy?.name ? ` by ${association.reviewedBy.name}` : ''}`} />
+            <div>
+              <dt>Reviewed</dt>
+              <dd>{`${dateFormat.format(new Date(association.reviewedAt))}${association.reviewedBy?.name ? ` by ${association.reviewedBy.name}` : ''}`}</dd>
+            </div>
           )}
-          {association.rejectionReason && <Row dt="Rejection Reason" dd={association.rejectionReason} />}
-          <Row dt="Created" dd={dateFormat.format(new Date(association.createdAt))} />
-        </MetaList>
+          {association.rejectionReason && <div><dt>Rejection Reason</dt><dd>{association.rejectionReason}</dd></div>}
+          <div><dt>Created</dt><dd>{dateFormat.format(new Date(association.createdAt))}</dd></div>
+        </dl>
       </Card>
 
       {association.histories && association.histories.length > 0 && (
-        <Card style={{ marginTop: 'var(--space-400)' }}>
-          <MetaList title={`Status History (${association.histories.length})`}>
-            {association.histories.map((h) => (
-              <Row
-                key={h.id}
-                dt={dateFormat.format(new Date(h.createdAt))}
-                dd={
-<>
-                  <StatusBadge status={h.previousStatus || ''}>{h.previousStatus || '—'}</StatusBadge>
-                  {' → '}
-                  <StatusBadge status={h.newStatus}>{h.newStatus}</StatusBadge>
-                  {h.reason && <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-xs)' }}>{h.reason}</div>}
-                  {h.changedBy?.name && <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-xs)' }}>by {h.changedBy.name}</div>}
-                </>
-                }
-              />
-            ))}
-          </MetaList>
+        <Card title={`Status History (${association.histories.length})`} style={{ marginTop: 'var(--space-400)' }}>
+          <div className="table-wrapper">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Previous Status</th>
+                  <th>New Status</th>
+                  <th>Changed By</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {association.histories.map((h) => (
+                  <tr key={h.id}>
+                    <td>{dateFormat.format(new Date(h.createdAt))}</td>
+                    <td><StatusBadge status={h.previousStatus || ''}>{h.previousStatus || '—'}</StatusBadge></td>
+                    <td><StatusBadge status={h.newStatus}>{h.newStatus}</StatusBadge></td>
+                    <td>{h.changedBy?.name ?? '—'}</td>
+                    <td>{h.reason || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
-    </div>
 
-    <RejectAssociationModal
-      open={rejectOpen}
-      associationName={association.name}
-      busy={submitting}
-      onConfirm={handleReject}
-      onCancel={() => setRejectOpen(false)}
-    />
-    </>
+      <RejectAssociationModal
+        open={rejectOpen}
+        associationName={association.name}
+        busy={submitting}
+        onConfirm={handleReject}
+        onCancel={() => setRejectOpen(false)}
+      />
+    </div>
   );
 }

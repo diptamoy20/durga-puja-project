@@ -300,7 +300,7 @@ let NotificationService = NotificationService_1 = class NotificationService {
     }
 };
 exports.NotificationService = NotificationService;
-exports.NotificationService = NotificationService = NotificationService_1 = __decorate([
+__decorate([
     (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_5_MINUTES),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),

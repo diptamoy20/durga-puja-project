@@ -32,6 +32,7 @@ export const ROUTES = {
   // Association Management (separate module)
   ASSOCIATIONS: '/associations',
   ASSOCIATIONS_PENDING: '/associations/pending',
+  ASSOCIATION_CREATE: '/associations/create',
   ASSOCIATION_IMPORT: '/associations/import',
   ASSOCIATION_DETAIL: (id: number | string = ':id') => `/associations/${id}`,
   ASSOCIATION_EDIT: (id: number | string = ':id') => `/associations/${id}/edit`,

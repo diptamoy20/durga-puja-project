@@ -15,6 +15,28 @@ const common_1 = require("@nestjs/common");
 const node_crypto_1 = require("node:crypto");
 const database_1 = require("@dpgc/database");
 const shared_1 = require("@dpgc/shared");
+const xlsx_1 = require("xlsx");
+const class_transformer_1 = require("class-transformer");
+const class_validator_1 = require("class-validator");
+const associations_dto_1 = require("./dto/associations.dto");
+const EXCEL_FIELD_ALIASES = {
+    name: ['name', 'association name', 'associationname'],
+    description: ['description'],
+    establishedYear: ['establishedyear', 'established year', 'year', 'established'],
+    contactPersonName: ['contactpersonname', 'contact person name', 'contact person', 'contactperson'],
+    designation: ['designation'],
+    email: ['email', 'contact email'],
+    mobile: ['mobile', 'phone'],
+    website: ['website'],
+    socialLinks: ['sociallinks', 'social links'],
+    country: ['country'],
+    state: ['state', 'region', 'state / region'],
+    city: ['city'],
+    postalCode: ['postalcode', 'postal code', 'zip'],
+    address: ['address', 'full address'],
+    logoImage: ['logoimage', 'logo image'],
+    coverImage: ['coverimage', 'cover image'],
+};
 const DIRECTORY_STATUS = database_1.AssociationStatus.APPROVED;
 const LIST_SELECT = {
     id: true,
@@ -471,6 +493,85 @@ let AssociationsService = class AssociationsService {
             failed: failed.length,
             failures: failed,
         };
+    }
+    /** Admin: bulk-import directory entries from an uploaded Excel workbook. */
+    async adminImportExcel(buffer) {
+        const workbook = xlsx_1.read(buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) {
+            throw new common_1.BadRequestException('The uploaded workbook contains no sheets.');
+        }
+        const sourceRows = xlsx_1.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+        if (sourceRows.length === 0) {
+            throw new common_1.BadRequestException('The spreadsheet has no association rows.');
+        }
+        if (sourceRows.length > 100) {
+            throw new common_1.BadRequestException('Maximum 100 associations per batch.');
+        }
+        const items = [];
+        const failures = [];
+        for (const source of sourceRows) {
+            const row = this.mapExcelRow(source);
+            const name = String(row.name ?? '').trim();
+            const email = String(row.email ?? '').trim();
+            if (!name || !email) {
+                failures.push({ name: name || '(unnamed)', email, message: 'Row is missing required columns (Association Name / Email).' });
+                continue;
+            }
+            const dto = (0, class_transformer_1.plainToInstance)(associations_dto_1.CreateAssociationDto, row);
+            const errors = await (0, class_validator_1.validate)(dto);
+            if (errors.length > 0) {
+                const messages = errors.flatMap((error) => Object.values(error.constraints ?? {}));
+                failures.push({ name, email, message: messages.join('; ') });
+                continue;
+            }
+            items.push(dto);
+        }
+        const result = await this.adminImport(items);
+        return {
+            total: result.total + failures.length,
+            succeeded: result.succeeded,
+            failed: result.failed + failures.length,
+            failures: [...result.failures, ...failures],
+        };
+    }
+    /** Maps one spreadsheet row (keyed by header label) onto CreateAssociationDto fields. */
+    mapExcelRow(source) {
+        const normalize = (value) => String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+        const fieldByHeader = new Map();
+        for (const [field, headers] of Object.entries(EXCEL_FIELD_ALIASES)) {
+            for (const header of headers) {
+                fieldByHeader.set(normalize(header), field);
+            }
+        }
+        const raw = {};
+        for (const [header, value] of Object.entries(source)) {
+            const field = fieldByHeader.get(normalize(header));
+            if (field) {
+                raw[field] = value;
+            }
+        }
+        const mapped = {};
+        for (const [field, value] of Object.entries(raw)) {
+            if (field === 'establishedYear') {
+                mapped[field] = String(value).trim() === '' ? undefined : Number(value);
+            }
+            else if (field === 'socialLinks') {
+                const text = String(value).trim();
+                if (text) {
+                    try {
+                        mapped[field] = JSON.parse(text);
+                    }
+                    catch {
+                        mapped[field] = {};
+                    }
+                }
+            }
+            else {
+                mapped[field] = String(value).trim();
+            }
+        }
+        return mapped;
     }
 };
 exports.AssociationsService = AssociationsService;

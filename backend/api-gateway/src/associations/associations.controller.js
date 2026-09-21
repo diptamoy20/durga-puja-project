@@ -19,9 +19,12 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
 const response_interceptor_1 = require("../interceptors/response.interceptor");
 const associations_service_1 = require("./associations.service");
 const associations_dto_1 = require("./dto/associations.dto");
+const association_upload_util_1 = require("./association-upload.util");
 const PUBLIC_UPLOAD_DIR = process.env.UPLOAD_DIR ?? './storage/uploads';
 // ============================================================================
 // Public Association Directory
@@ -142,6 +145,18 @@ let AdminAssociationsController = class AdminAssociationsController {
     import(dto) {
         return this.service.adminImport(dto.items);
     }
+    importExcel(file) {
+        if (!file) {
+            throw new common_1.BadRequestException('No file uploaded.');
+        }
+        return this.service.adminImportExcel(file.buffer);
+    }
+    uploadImage(file) {
+        if (!file) {
+            throw new common_1.BadRequestException('No file uploaded.');
+        }
+        return { storedPath: (0, association_upload_util_1.relativeAssociationImagePath)(file) };
+    }
     list(query) {
         return this.service.adminList(query);
     }
@@ -183,6 +198,45 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_d = typeof associations_dto_1.AdminAssociationImportDto !== "undefined" && associations_dto_1.AdminAssociationImportDto) === "function" ? _d : Object]),
     __metadata("design:returntype", void 0)
 ], AdminAssociationsController.prototype, "import", null);
+__decorate([
+    (0, common_1.Post)('import/excel'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.memoryStorage)(),
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            if (!/\.(xlsx|xls)$/i.test(file.originalname || '')) {
+                return cb(new common_1.BadRequestException('Only .xlsx or .xls files are supported.'), false);
+            }
+            cb(null, true);
+        },
+    })),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_ASSOCIATIONS, shared_1.PERMISSIONS.APPROVE_ASSOCIATIONS),
+    (0, response_interceptor_1.ResponseMessage)('Association import completed'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Bulk-import associations from an Excel file',
+        description: 'Accepts a .xlsx/.xls workbook with the standard association columns; ' +
+            'each row is created as PENDING and enters the review workflow.',
+    }),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiBody)({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } }),
+    __param(0, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AdminAssociationsController.prototype, "importExcel", null);
+__decorate([
+    (0, common_1.Post)('files'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, association_upload_util_1.associationImageUploadOptions)(PUBLIC_UPLOAD_DIR))),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_ASSOCIATIONS, shared_1.PERMISSIONS.APPROVE_ASSOCIATIONS),
+    (0, response_interceptor_1.ResponseMessage)('Association image uploaded successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload an association logo or cover image' }),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiBody)({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } }),
+    __param(0, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AdminAssociationsController.prototype, "uploadImage", null);
 __decorate([
     (0, common_1.Get)(),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_ASSOCIATIONS),

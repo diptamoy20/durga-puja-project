@@ -293,6 +293,64 @@ a.btn:hover {
 }
 
 /* ===========================================================================
+   Upload buttons (Choose File)
+   =========================================================================== */
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 38px;
+  padding: 7px 16px;
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.upload-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.upload-button:focus-visible {
+  outline: none;
+  border-color: var(--colour-brand);
+  box-shadow: 0 0 0 3px rgb(155 28 28 / 12%);
+}
+
+.upload-button--primary {
+  color: #fff;
+  background: var(--colour-brand);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
+.upload-button--primary:hover:not(:disabled) {
+  background: var(--colour-brand-dark);
+}
+
+.upload-button--secondary {
+  color: var(--colour-ink);
+  background: var(--colour-surface);
+  border-color: var(--colour-border-strong);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.upload-button--secondary:hover:not(:disabled) {
+  background: var(--colour-canvas);
+}
+
+.upload-button i {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ===========================================================================
    Spinner
    =========================================================================== */
 
@@ -882,6 +940,12 @@ a.btn:hover {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-5);
+}
+
+.users-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .users-page__title {

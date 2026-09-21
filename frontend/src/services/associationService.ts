@@ -88,6 +88,31 @@ export const associationService = {
     failures: Array<{ name: string; email: string; message: string }>;
   }> => unwrap(api.post('/admin/associations/import', { items: items.map(normalizeCreatePayload) })),
 
+  importExcel: (file: File): Promise<{
+    total: number;
+    succeeded: number;
+    failed: number;
+    failures: Array<{ name: string; email: string; message: string }>;
+  }> => {
+    const data = new FormData();
+    data.append('file', file);
+    return unwrap(
+      api.post('/admin/associations/import/excel', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    );
+  },
+
+  uploadImage: (file: File): Promise<{ storedPath: string }> => {
+    const data = new FormData();
+    data.append('file', file);
+    return unwrap(
+      api.post('/admin/associations/files', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    );
+  },
+
   update: (id: number, data: Partial<CreateAssociationDto>): Promise<AssociationDetail> =>
     unwrap(api.put(`/admin/associations/${id}`, data)),
 
