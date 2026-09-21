@@ -217,7 +217,7 @@ export interface AssociationListQuery {
   search?: string;
   sortBy?: 'createdAt' | 'name';
   sortDir?: 'asc' | 'desc';
-  status?: AssociationStatus;
+  status?: AssociationStatus | string;
   country?: string;
   state?: string;
   city?: string;

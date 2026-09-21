@@ -51,6 +51,12 @@ let PublicAssociationsController = class PublicAssociationsController {
     show(id) {
         return this.service.publicProfile(id);
     }
+    subscribe(id, body) {
+        return this.service.subscribe(id, body);
+    }
+    unsubscribe(id, body) {
+        return this.service.unsubscribe(id, body.email);
+    }
 };
 exports.PublicAssociationsController = PublicAssociationsController;
 __decorate([
@@ -93,6 +99,30 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], PublicAssociationsController.prototype, "show", null);
+__decorate([
+    (0, shared_1.Public)(),
+    (0, common_1.Post)(':id/subscribe'),
+    (0, response_interceptor_1.ResponseMessage)('Subscribed to association updates successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Subscribe to updates for a public association' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Not in the public directory.' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, typeof (_b = typeof associations_dto_1.AssociationSubscribeDto !== "undefined" && associations_dto_1.AssociationSubscribeDto) === "function" ? _b : Object]),
+    __metadata("design:returntype", void 0)
+], PublicAssociationsController.prototype, "subscribe", null);
+__decorate([
+    (0, shared_1.Public)(),
+    (0, common_1.Delete)(':id/subscribe'),
+    (0, response_interceptor_1.ResponseMessage)('Unsubscribed from association updates successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Unsubscribe from updates for an association' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Not in the public directory.' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, typeof (_c = typeof associations_dto_1.AssociationUnsubscribeDto !== "undefined" && associations_dto_1.AssociationUnsubscribeDto) === "function" ? _c : Object]),
+    __metadata("design:returntype", void 0)
+], PublicAssociationsController.prototype, "unsubscribe", null);
 exports.PublicAssociationsController = PublicAssociationsController = __decorate([
     (0, swagger_1.ApiTags)('Associations'),
     (0, common_1.Controller)('associations'),

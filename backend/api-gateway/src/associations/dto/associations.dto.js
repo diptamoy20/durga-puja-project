@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AdminAssociationImportDto = exports.CreateAssociationDto = exports.PublicAssociationListQueryDto = void 0;
+exports.AdminAssociationImportDto = exports.AssociationUnsubscribeDto = exports.AssociationSubscribeDto = exports.CreateAssociationDto = exports.PublicAssociationListQueryDto = void 0;
 const shared_1 = require("@dpgc/shared");
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
@@ -49,6 +49,37 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], PublicAssociationListQueryDto.prototype, "city", void 0);
+class AssociationSubscribeDto {
+    email;
+    name;
+}
+exports.AssociationSubscribeDto = AssociationSubscribeDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    (0, class_validator_1.IsEmail)({}, { message: 'Enter a valid email address.' }),
+    (0, class_validator_1.MaxLength)(180),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value)),
+    __metadata("design:type", String)
+], AssociationSubscribeDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Subscriber name' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(150),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], AssociationSubscribeDto.prototype, "name", void 0);
+class AssociationUnsubscribeDto {
+    email;
+}
+exports.AssociationUnsubscribeDto = AssociationUnsubscribeDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    (0, class_validator_1.IsEmail)({}, { message: 'Enter a valid email address.' }),
+    (0, class_validator_1.MaxLength)(180),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value)),
+    __metadata("design:type", String)
+], AssociationUnsubscribeDto.prototype, "email", void 0);
 class CreateAssociationDto {
     name;
     description;

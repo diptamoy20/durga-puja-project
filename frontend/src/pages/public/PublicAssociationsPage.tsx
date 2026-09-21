@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { Pagination } from '@/components/ui/Pagination';
+import { Spinner } from '@/components/ui/Spinner';
 import { ROUTES } from '@/constants/routes';
 import { associationService, type PublicAssociation, type AssociationFilterOptions } from '@/services/associationService';
 import type { PaginationMeta } from '@/types';
@@ -14,6 +15,7 @@ export function PublicAssociationsPage() {
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
   const [filterOptions, setFilterOptions] = useState<AssociationFilterOptions | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const search = searchParams.get('search') ?? '';
   const country = searchParams.get('country') ?? '';
@@ -51,11 +53,13 @@ export function PublicAssociationsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await associationService.list(listQuery);
       setAssociations(res.items);
       setPagination(res.pagination);
-    } catch {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load the association directory.');
       setAssociations([]);
       setPagination(undefined);
     } finally {
@@ -77,6 +81,10 @@ export function PublicAssociationsPage() {
     setSearchParams(params);
   };
 
+  const resetFilters = () => setSearchParams({});
+
+  const hasActiveFilters = Boolean(search || country || state || city);
+
   return (
     <div className="public-associations">
       <div className="public-associations__header">
@@ -86,6 +94,11 @@ export function PublicAssociationsPage() {
             Approved Bengali associations and community organizations worldwide.
           </p>
         </div>
+        {!loading && !error && associations.length > 0 && (
+          <span className="public-associations__count">
+            {associations.length} {associations.length === 1 ? 'association' : 'associations'}
+          </span>
+        )}
       </div>
 
       <div className="public-associations__filter-card">
@@ -153,58 +166,106 @@ export function PublicAssociationsPage() {
             <button type="submit" className="btn btn--primary btn--md">
               Filter
             </button>
+            {hasActiveFilters && (
+              <button type="button" className="btn btn--secondary btn--md" onClick={resetFilters}>
+                Reset
+              </button>
+            )}
           </div>
         </form>
       </div>
 
       {loading ? (
-        <div className="public-associations__empty">Loading associations…</div>
+        <div className="public-associations__state">
+          <Spinner size="lg" label="Loading associations" />
+          <p className="public-associations__state-text">Loading associations…</p>
+        </div>
+      ) : error ? (
+        <div className="public-associations__state">
+          <div className="public-associations__state-icon" aria-hidden="true">⚠️</div>
+          <h2 className="public-associations__state-title">Could not load the directory</h2>
+          <p className="public-associations__state-text">{error}</p>
+          <div className="public-associations__state-actions">
+            <button type="button" className="btn btn--primary btn--md" onClick={() => void load()}>
+              Try again
+            </button>
+          </div>
+        </div>
       ) : associations.length === 0 ? (
-        <div className="public-associations__empty">
-          No approved associations found for the selected filters.
+        <div className="public-associations__state">
+          <div className="public-associations__state-icon" aria-hidden="true">🏢</div>
+          <h2 className="public-associations__state-title">No associations found</h2>
+          <p className="public-associations__state-text">
+            {hasActiveFilters
+              ? 'No approved associations match the selected filters. Try adjusting your search.'
+              : 'No approved associations have been published yet. Please check back soon.'}
+          </p>
+          {hasActiveFilters && (
+            <div className="public-associations__state-actions">
+              <button type="button" className="btn btn--secondary btn--md" onClick={resetFilters}>
+                Clear all filters
+              </button>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="public-associations__grid">
-          {associations.map((assoc) => (
-            <Link key={assoc.id} to={ROUTES.PUBLIC_ASSOCIATION_DETAIL(assoc.id)} className="public-association-card">
-              <div className="public-association-card__media">
-                {assoc.logoImage ? (
-                  <img
-                    src={associationService.fileUrl(assoc.logoImage)}
-                    alt={`${assoc.name} logo`}
-                    className="public-association-card__thumb"
-                  />
-                ) : (
-                  <div className="public-association-card__placeholder" aria-hidden="true">🏢</div>
-                )}
-              </div>
-              <div className="public-association-card__body">
-                <div className="public-association-card__title-row">
-                  <h2 className="public-association-card__title">
-                    {assoc.name}
-                  </h2>
-                  <span className="public-association-card__badge">{assoc.verification.verified ? 'Verified' : 'Pending'}</span>
-                </div>
-                <p className="public-association-card__meta">{assoc.description?.substring(0, 100)}...</p>
-                <p className="public-association-card__meta">
-                  {assoc.city}, {assoc.state}, {assoc.country}
-                </p>
-                {assoc.establishedYear && <p className="public-association-card__meta">Est. {assoc.establishedYear}</p>}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+        <>
+          <div className="public-associations__grid">
+            {associations.map((assoc) => (
+              <Link key={assoc.id} to={ROUTES.PUBLIC_ASSOCIATION_DETAIL(assoc.id)} className="public-association-card">
+                  <div className="public-association-card__media">
+                    {assoc.logoImage ? (
+                      <img
+                        src={associationService.fileUrl(assoc.logoImage)}
+                        alt={`${assoc.name} logo`}
+                        className="public-association-card__thumb"
+                      />
+                    ) : (
+                      <div className="public-association-card__placeholder" aria-hidden="true">🏢</div>
+                    )}
+                  </div>
+                  <div className="public-association-card__body">
+                    <div className="public-association-card__title-row">
+                      <h2 className="public-association-card__title">{assoc.name}</h2>
+                      {assoc.verification.verified ? (
+                        <span className="public-association-card__badge">
+                          <span aria-hidden="true">✓</span> Verified
+                        </span>
+                      ) : (
+                        <span className="public-association-card__badge public-association-card__badge--pending">Pending</span>
+                      )}
+                    </div>
+                    <p className="public-association-card__location">
+                      <span aria-hidden="true">📍</span>
+                      {[assoc.city, assoc.state, assoc.country].filter(Boolean).join(', ')}
+                    </p>
+                    {assoc.description && (
+                      <p className="public-association-card__desc">
+                        {assoc.description.length > 200 ? `${assoc.description.substring(0, 200)}…` : assoc.description}
+                      </p>
+                    )}
+                    <div className="public-association-card__footer">
+                      <span>
+                        {assoc.establishedYear ? <strong>Est. {assoc.establishedYear}</strong> : 'Community association'}
+                      </span>
+                      <span className="public-association-card__cta">View details →</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+          </div>
 
-      {pagination && pagination.lastPage > 1 && (
-        <Pagination
-          meta={pagination}
-          onPageChange={(nextPage) => {
-            const params = Object.fromEntries(searchParams.entries());
-            params.page = String(nextPage);
-            setSearchParams(params);
-          }}
-        />
+          {pagination && pagination.lastPage > 1 && (
+            <Pagination
+              meta={pagination}
+              onPageChange={(nextPage) => {
+                const params = Object.fromEntries(searchParams.entries());
+                params.page = String(nextPage);
+                setSearchParams(params);
+              }}
+            />
+          )}
+        </>
       )}
     </div>
   );

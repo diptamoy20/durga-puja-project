@@ -5,10 +5,14 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
+import { Spinner } from '@/components/ui/Spinner';
+import { RejectAssociationModal } from '@/components/associations/RejectAssociationModal';
 import { ROUTES } from '@/constants/routes';
 import { associationService, type AssociationDetail, type AssociationStatus } from '@/services/associationService';
 import { useToast } from '@/hooks/useToast';
 import type { PaginationMeta } from '@/types';
+
+import '@/styles/associations-admin.css';
 
 const STATUS_OPTIONS: Array<{ value: AssociationStatus | ''; label: string }> = [
   { value: '', label: 'All Statuses' },
@@ -51,6 +55,8 @@ export function AssociationListPage() {
   const [associations, setAssociations] = useState<AssociationDetail[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
   const [loading, setLoading] = useState(true);
+  const [submittingId, setSubmittingId] = useState<number | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{ id: number; name: string } | null>(null);
 
   const search = searchParams.get('search') ?? '';
   const status = searchParams.get('status') ?? '';
@@ -112,14 +118,13 @@ export function AssociationListPage() {
     setSearchParams(params);
   };
 
-  const handleStatusChange = async (id: number, newStatus: AssociationStatus) => {
-    let reason: string | undefined;
+  const handleStatusChange = async (id: number, newStatus: AssociationStatus, name: string) => {
     if (newStatus === 'REJECTED') {
-      reason = window.prompt('Reason for rejection:') ?? undefined;
-      if (!reason) return;
+      setRejectTarget({ id, name });
+      return;
     }
     try {
-      await associationService.changeStatus(id, newStatus, reason);
+      await associationService.changeStatus(id, newStatus);
       toastSuccess(`Association ${newStatus.toLowerCase().replace('_', ' ')}.`);
       void load();
     } catch (err) {
@@ -128,12 +133,28 @@ export function AssociationListPage() {
     }
   };
 
+  const handleReject = async (reason: string) => {
+    if (!rejectTarget) return;
+    setSubmittingId(rejectTarget.id);
+    try {
+      await associationService.changeStatus(rejectTarget.id, 'REJECTED', reason);
+      toastSuccess('Association rejected.');
+      setRejectTarget(null);
+      void load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update status.';
+      toastError(msg);
+    } finally {
+      setSubmittingId(null);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-400)' }}>
+      <div className="associations-admin__header">
         <div>
-          <h1 style={{ margin: '0 0 var(--space-100)', fontSize: 'var(--font-xl)' }}>Association Directory</h1>
-          <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
+          <h1>Association Directory</h1>
+          <p>
             Review, approve, and manage all association directory entries.
           </p>
         </div>
@@ -143,29 +164,29 @@ export function AssociationListPage() {
       </div>
 
       <Card>
-        <form onSubmit={applyFilters} style={{ marginBottom: 'var(--space-400)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr)) auto', gap: 'var(--space-300)', alignItems: 'end' }}>
+        <form onSubmit={applyFilters}>
+          <div className="associations-admin__filter">
             <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontSize: 'var(--font-sm)', fontWeight: 600 }}>Search</label>
-              <input value={draftSearch} onChange={(e) => setDraftSearch(e.target.value)} className="field__control" placeholder="Name, email, city…" />
+              <label htmlFor="alSearch">Search</label>
+              <input id="alSearch" value={draftSearch} onChange={(e) => setDraftSearch(e.target.value)} className="field__control" placeholder="Name, email, city…" />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontSize: 'var(--font-sm)', fontWeight: 600 }}>Status</label>
-              <select value={draftStatus} onChange={(e) => setDraftStatus(e.target.value)} className="field__control">
+              <label htmlFor="alStatus">Status</label>
+              <select id="alStatus" value={draftStatus} onChange={(e) => setDraftStatus(e.target.value)} className="field__control">
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontSize: 'var(--font-sm)', fontWeight: 600 }}>Country</label>
-              <input value={draftCountry} onChange={(e) => setDraftCountry(e.target.value)} className="field__control" placeholder="Country" />
+              <label htmlFor="alCountry">Country</label>
+              <input id="alCountry" value={draftCountry} onChange={(e) => setDraftCountry(e.target.value)} className="field__control" placeholder="Country" />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-100)', fontSize: 'var(--font-sm)', fontWeight: 600 }}>State / City</label>
-              <input value={draftState} onChange={(e) => setDraftState(e.target.value)} className="field__control" placeholder="State" />
+              <label htmlFor="alState">State / Region</label>
+              <input id="alState" value={draftState} onChange={(e) => setDraftState(e.target.value)} className="field__control" placeholder="State" />
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-100)' }}>
+            <div className="associations-admin__filter-actions">
               <Button type="submit">Filter</Button>
               <Button type="button" variant="secondary" onClick={() => setSearchParams({})}>Reset</Button>
             </div>
@@ -173,47 +194,56 @@ export function AssociationListPage() {
         </form>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-600)' }}>Loading associations…</div>
+          <div className="associations-admin__state">
+            <Spinner size="lg" label="Loading associations" />
+            <p className="associations-admin__state-text">Loading associations…</p>
+          </div>
         ) : associations.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-600)', color: 'var(--color-text-muted)' }}>No associations found.</div>
+          <div className="associations-admin__state">
+            <div className="associations-admin__state-icon" aria-hidden="true">🏢</div>
+            <h2 className="associations-admin__state-title">No associations found</h2>
+            <p className="associations-admin__state-text">
+              No associations match the current filters. New entries created or imported will appear here.
+            </p>
+          </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="associations-admin__table-wrap">
+              <table className="associations-admin__table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Association</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Contact</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Location</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Status</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Registration No.</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Created</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Actions</th>
+                  <tr>
+                    <th>Association</th>
+                    <th>Contact</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Registration No.</th>
+                    <th>Created</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {associations.map((assoc) => (
-                    <tr key={assoc.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)' }}>
-                        <Link to={ROUTES.ASSOCIATION_DETAIL(assoc.id)} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <div style={{ fontWeight: 600 }}>{assoc.name}</div>
-                          <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{assoc.description?.substring(0, 60)}…</div>
+                    <tr key={assoc.id}>
+                      <td>
+                        <Link to={ROUTES.ASSOCIATION_DETAIL(assoc.id)} className="associations-admin__name">
+                          {assoc.name}
                         </Link>
+                        <div className="associations-admin__muted">{assoc.description?.substring(0, 60)}…</div>
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-sm)' }}>
+                      <td style={{ fontSize: 'var(--font-sm)' }}>
                         {assoc.contactPersonName}<br />
                         {assoc.email}
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-sm)' }}>
+                      <td style={{ fontSize: 'var(--font-sm)' }}>
                         {assoc.city}, {assoc.state}, {assoc.country}
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)' }}>
+                      <td>
                         <StatusBadge status={assoc.status} />
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontFamily: 'monospace' }}>{assoc.registrationNo}</td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{dateFormat.format(new Date(assoc.createdAt))}</td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)' }}>
-                        <div style={{ display: 'flex', gap: 'var(--space-100)', flexWrap: 'wrap' }}>
+                      <td className="associations-admin__mono">{assoc.registrationNo}</td>
+                      <td className="associations-admin__muted">{dateFormat.format(new Date(assoc.createdAt))}</td>
+                      <td>
+                        <div className="associations-admin__actions">
                           <Link to={ROUTES.ASSOCIATION_DETAIL(assoc.id)} className="btn btn--secondary btn--sm">View</Link>
                           <Link to={ROUTES.ASSOCIATION_EDIT(assoc.id)} className="btn btn--secondary btn--sm">Edit</Link>
                           {STATUS_ACTIONS_STATUS[assoc.status].map((action) => (
@@ -221,7 +251,7 @@ export function AssociationListPage() {
                               key={action.status}
                               variant={action.variant}
                               size="sm"
-                              onClick={() => handleStatusChange(assoc.id, action.status)}
+                              onClick={() => handleStatusChange(assoc.id, action.status, assoc.name)}
                             >
                               {action.label}
                             </Button>
@@ -235,18 +265,28 @@ export function AssociationListPage() {
             </div>
 
             {pagination && pagination.lastPage > 1 && (
-              <Pagination
-                meta={pagination}
-                onPageChange={(nextPage) => {
-                  const params = Object.fromEntries(searchParams.entries());
-                  params.page = String(nextPage);
-                  setSearchParams(params);
-                }}
-              />
+              <div className="associations-admin__pagination">
+                <Pagination
+                  meta={pagination}
+                  onPageChange={(nextPage) => {
+                    const params = Object.fromEntries(searchParams.entries());
+                    params.page = String(nextPage);
+                    setSearchParams(params);
+                  }}
+                />
+              </div>
             )}
           </>
         )}
       </Card>
+
+      <RejectAssociationModal
+        open={rejectTarget !== null}
+        associationName={rejectTarget?.name ?? ''}
+        busy={submittingId === rejectTarget?.id}
+        onConfirm={handleReject}
+        onCancel={() => setRejectTarget(null)}
+      />
     </div>
   );
 }

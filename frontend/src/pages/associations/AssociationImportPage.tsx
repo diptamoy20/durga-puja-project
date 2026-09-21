@@ -292,8 +292,8 @@ const inputProps = (name: keyof CreateAssociationDto) => ({
             </div>
           </div>
           <div style={{ marginTop: 'var(--space-400)', display: 'flex', gap: 'var(--space-200)' }}>
-            <Button type="submit" disabled={creating}>
-              {creating ? 'Creating…' : 'Create Association'}
+            <Button type="submit" loading={creating}>
+              Create Association
             </Button>
             <Button type="button" variant="secondary" onClick={() => { setForm({ ...emptyForm }); setFormErrors({}); setSingleResult(null); }}>
               Clear
@@ -323,8 +323,8 @@ const inputProps = (name: keyof CreateAssociationDto) => ({
             placeholder={sampleJson}
           />
           <div style={{ marginTop: 'var(--space-300)', display: 'flex', gap: 'var(--space-200)' }}>
-            <Button type="submit" disabled={importing}>
-              {importing ? 'Importing…' : 'Import Associations'}
+            <Button type="submit" loading={importing}>
+              Import Associations
             </Button>
             <Button type="button" variant="secondary" onClick={() => { setImportJson(''); setImportResult(null); }}>
               Clear

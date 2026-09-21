@@ -155,7 +155,7 @@ export function AssociationEditPage() {
             </div>
           </div>
           <div style={{ marginTop: 'var(--space-400)', display: 'flex', gap: 'var(--space-200)' }}>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Save Changes'}</Button>
+            <Button type="submit" loading={submitting}>Save Changes</Button>
             <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.ASSOCIATION_DETAIL(Number(id)))}>Cancel</Button>
           </div>
         </form>

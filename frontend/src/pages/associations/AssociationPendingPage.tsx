@@ -5,10 +5,14 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
+import { Spinner } from '@/components/ui/Spinner';
+import { RejectAssociationModal } from '@/components/associations/RejectAssociationModal';
 import { ROUTES } from '@/constants/routes';
 import { associationService, type AssociationDetail, type AssociationStatus } from '@/services/associationService';
 import { useToast } from '@/hooks/useToast';
 import type { PaginationMeta } from '@/types';
+
+import '@/styles/associations-admin.css';
 
 const dateFormat = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit',
@@ -37,6 +41,7 @@ export function AssociationPendingPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [submittingId, setSubmittingId] = useState<number | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{ id: number; name: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,7 +49,7 @@ export function AssociationPendingPage() {
       const res = await associationService.adminList({
         page,
         perPage: 20,
-        status: 'PENDING',
+        status: 'PENDING,UNDER_REVIEW',
         sortBy: 'createdAt',
         sortDir: 'asc',
       });
@@ -64,16 +69,31 @@ export function AssociationPendingPage() {
     void load();
   }, [load]);
 
-  const handleStatusChange = async (id: number, newStatus: AssociationStatus) => {
-    let reason: string | undefined;
+  const handleStatusChange = async (id: number, newStatus: AssociationStatus, name: string) => {
     if (newStatus === 'REJECTED') {
-      reason = window.prompt('Reason for rejection:') ?? undefined;
-      if (!reason) return;
+      setRejectTarget({ id, name });
+      return;
     }
     setSubmittingId(id);
     try {
-      await associationService.changeStatus(id, newStatus, reason);
+      await associationService.changeStatus(id, newStatus);
       toastSuccess(`Association moved to ${newStatus.toLowerCase().replace('_', ' ')}.`);
+      void load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update status.';
+      toastError(msg);
+    } finally {
+      setSubmittingId(null);
+    }
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!rejectTarget) return;
+    setSubmittingId(rejectTarget.id);
+    try {
+      await associationService.changeStatus(rejectTarget.id, 'REJECTED', reason);
+      toastSuccess('Association rejected.');
+      setRejectTarget(null);
       void load();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update status.';
@@ -85,55 +105,64 @@ export function AssociationPendingPage() {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ marginBottom: 'var(--space-400)' }}>
-        <h1 style={{ margin: '0 0 var(--space-100)', fontSize: 'var(--font-xl)' }}>Pending Associations</h1>
-        <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
-          Newly created and imported associations awaiting admin review. Move them to{' '}
-          <strong>Under Review</strong>, then <strong>Approve</strong> to publish to the public directory.
-        </p>
+      <div className="associations-admin__header">
+        <div>
+          <h1>Pending Associations</h1>
+          <p>
+            Newly created and imported associations awaiting admin review. Move them to{' '}
+            <strong>Under Review</strong>, then <strong>Approve</strong> to publish to the public directory.
+          </p>
+        </div>
       </div>
 
       <Card>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-600)' }}>Loading…</div>
+          <div className="associations-admin__state">
+            <Spinner size="lg" label="Loading pending associations" />
+            <p className="associations-admin__state-text">Loading pending associations…</p>
+          </div>
         ) : items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-600)', color: 'var(--color-text-muted)' }}>
-            No pending associations. New entries created or imported will appear here.
+          <div className="associations-admin__state">
+            <div className="associations-admin__state-icon" aria-hidden="true">✅</div>
+            <h2 className="associations-admin__state-title">Nothing awaiting review</h2>
+            <p className="associations-admin__state-text">
+              No pending or under-review associations right now. New entries created or imported will appear here.
+            </p>
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="associations-admin__table-wrap">
+              <table className="associations-admin__table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Association</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Contact</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Location</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Created</th>
-                    <th style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--color-text-muted)' }}>Actions</th>
+                  <tr>
+                    <th>Association</th>
+                    <th>Contact</th>
+                    <th>Location</th>
+                    <th>Created</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((assoc) => (
-                    <tr key={assoc.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)' }}>
-                        <Link to={ROUTES.ASSOCIATION_DETAIL(assoc.id)} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <div style={{ fontWeight: 600 }}>{assoc.name}</div>
-                          <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{assoc.registrationNo}</div>
+                    <tr key={assoc.id}>
+                      <td>
+                        <Link to={ROUTES.ASSOCIATION_DETAIL(assoc.id)} className="associations-admin__name">
+                          {assoc.name}
                         </Link>
+                        <div className="associations-admin__mono">{assoc.registrationNo}</div>
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-sm)' }}>
+                      <td style={{ fontSize: 'var(--font-sm)' }}>
                         {assoc.contactPersonName}<br />
                         {assoc.email}
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-sm)' }}>
+                      <td style={{ fontSize: 'var(--font-sm)' }}>
                         {assoc.city}, {assoc.state}, {assoc.country}
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)', fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
+                      <td className="associations-admin__muted">
                         {dateFormat.format(new Date(assoc.createdAt))}
                       </td>
-                      <td style={{ padding: 'var(--space-200) var(--space-300)' }}>
-                        <div style={{ display: 'flex', gap: 'var(--space-100)', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <td>
+                        <div className="associations-admin__actions">
                           <StatusBadge status={assoc.status} />
                           <Link to={ROUTES.ASSOCIATION_DETAIL(assoc.id)} className="btn btn--secondary btn--sm">Review</Link>
                           {TRANSITIONS[assoc.status].map((action) => (
@@ -142,7 +171,7 @@ export function AssociationPendingPage() {
                               variant={action.variant}
                               size="sm"
                               disabled={submittingId === assoc.id}
-                              onClick={() => handleStatusChange(assoc.id, action.status)}
+                              onClick={() => handleStatusChange(assoc.id, action.status, assoc.name)}
                             >
                               {action.label}
                             </Button>
@@ -155,11 +184,21 @@ export function AssociationPendingPage() {
               </table>
             </div>
             {pagination && pagination.lastPage > 1 && (
-              <Pagination meta={pagination} onPageChange={setPage} />
+              <div className="associations-admin__pagination">
+                <Pagination meta={pagination} onPageChange={setPage} />
+              </div>
             )}
           </>
         )}
       </Card>
+
+      <RejectAssociationModal
+        open={rejectTarget !== null}
+        associationName={rejectTarget?.name ?? ''}
+        busy={submittingId === rejectTarget?.id}
+        onConfirm={handleReject}
+        onCancel={() => setRejectTarget(null)}
+      />
     </div>
   );
 }

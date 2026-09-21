@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/Spinner';
+import { RejectAssociationModal } from '@/components/associations/RejectAssociationModal';
 import { ROUTES } from '@/constants/routes';
 import { associationService, type AssociationDetail, type AssociationStatus } from '@/services/associationService';
 import { useToast } from '@/hooks/useToast';
@@ -65,6 +66,7 @@ export function AssociationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -85,15 +87,30 @@ export function AssociationDetailPage() {
 
   const handleStatusChange = async (newStatus: AssociationStatus) => {
     if (!association) return;
-    let reason: string | undefined;
     if (newStatus === 'REJECTED') {
-      reason = window.prompt('Reason for rejection:') ?? undefined;
-      if (!reason) return;
+      setRejectOpen(true);
+      return;
     }
     setSubmitting(true);
     try {
-      await associationService.changeStatus(association.id, newStatus, reason);
+      await associationService.changeStatus(association.id, newStatus);
       toastSuccess(`Association moved to ${newStatus.toLowerCase().replace('_', ' ')}.`);
+      void load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update status.';
+      toastError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!association) return;
+    setSubmitting(true);
+    try {
+      await associationService.changeStatus(association.id, 'REJECTED', reason);
+      toastSuccess('Association rejected.');
+      setRejectOpen(false);
       void load();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update status.';
@@ -119,6 +136,7 @@ export function AssociationDetailPage() {
   const coverUrl = association.coverImage ? associationService.fileUrl(association.coverImage) : null;
 
   return (
+    <>
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)', marginBottom: 'var(--space-400)' }}>
         <div>
@@ -234,5 +252,14 @@ export function AssociationDetailPage() {
         </Card>
       )}
     </div>
+
+    <RejectAssociationModal
+      open={rejectOpen}
+      associationName={association.name}
+      busy={submitting}
+      onConfirm={handleReject}
+      onCancel={() => setRejectOpen(false)}
+    />
+    </>
   );
 }

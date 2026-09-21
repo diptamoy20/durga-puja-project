@@ -155,6 +155,31 @@ let AssociationsService = class AssociationsService {
         }
         return this.toPublicAssociation(row, { withContact: true });
     }
+    /** Public: subscribe to updates for an APPROVED association. */
+    async subscribe(id, body) {
+        const row = await this.prisma.association.findFirst({
+            where: { id, deletedAt: null, status: DIRECTORY_STATUS },
+            select: { id: true },
+        });
+        if (!row) {
+            throw new common_1.NotFoundException('No association found in the public directory.');
+        }
+        const email = String(body.email).trim().toLowerCase();
+        await this.prisma.associationSubscriber.upsert({
+            where: { associationId_email: { associationId: id, email } },
+            update: { name: body.name?.trim() || null },
+            create: { associationId: id, email, name: body.name?.trim() || null },
+        });
+        return { success: true, email };
+    }
+    /** Public: unsubscribe from updates for an association. */
+    async unsubscribe(id, email) {
+        const emailNormalized = String(email).trim().toLowerCase();
+        await this.prisma.associationSubscriber.deleteMany({
+            where: { associationId: id, email: emailNormalized },
+        });
+        return { success: true, email: emailNormalized };
+    }
     /** Admin convenience: create a directory entry entry that enters the review workflow as PENDING. */
     async adminCreate(payload) {
         const data = {
@@ -202,11 +227,35 @@ let AssociationsService = class AssociationsService {
             data.establishedYear = Number(payload.establishedYear);
         }
         try {
-            const updated = await this.prisma.association.update({
-                where: { id },
-                data,
+            return await this.prisma.$transaction(async (tx) => {
+                const updated = await tx.association.update({
+                    where: { id },
+                    data,
+                });
+                if (Object.keys(data).length > 0 && updated.status === database_1.AssociationStatus.APPROVED) {
+                    const subscribers = await tx.associationSubscriber.findMany({
+                        where: { associationId: id },
+                        select: { email: true, name: true },
+                    });
+                    if (subscribers.length > 0) {
+                        await tx.notificationLog.createMany({
+                            data: subscribers.map((subscriber) => ({
+                                channel: 'EMAIL',
+                                recipient: subscriber.email,
+                                template: 'association_updated',
+                                subject: `${updated.name} has been updated in the association directory`,
+                                payload: {
+                                    associationId: id,
+                                    associationName: updated.name,
+                                    registrationNo: updated.associationId,
+                                    name: subscriber.name ?? null,
+                                },
+                            })),
+                        });
+                    }
+                }
+                return updated;
             });
-            return updated;
         }
         catch (error) {
             (0, shared_1.translatePrismaError)(error, 'association');
@@ -258,15 +307,40 @@ let AssociationsService = class AssociationsService {
                     changedById: actorId,
                 },
             });
+            if (status === database_1.AssociationStatus.APPROVED) {
+                const subscribers = await tx.associationSubscriber.findMany({
+                    where: { associationId: id },
+                    select: { email: true, name: true },
+                });
+                if (subscribers.length > 0) {
+                    await tx.notificationLog.createMany({
+                        data: subscribers.map((subscriber) => ({
+                            channel: 'EMAIL',
+                            recipient: subscriber.email,
+                            template: 'association_approved',
+                            subject: `${association.name} is now verified in the association directory`,
+                            payload: {
+                                associationId: id,
+                                associationName: association.name,
+                                registrationNo: association.associationId,
+                                name: subscriber.name ?? null,
+                            },
+                        })),
+                    });
+                }
+            }
         });
         return { id, status };
     }
     /** Admin: list all associations with filters */
     async adminList(query) {
         const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
+        const statuses = query.status
+            ? String(query.status).split(',').map((s) => s.trim()).filter(Boolean)
+            : [];
         const where = {
             deletedAt: null,
-            ...(query.status ? { status: query.status } : {}),
+            ...(statuses.length ? { status: { in: statuses } } : {}),
             ...(query.country ? { country: { equals: query.country, mode: 'insensitive' } } : {}),
             ...(query.state ? { state: { equals: query.state, mode: 'insensitive' } } : {}),
             ...(query.city ? { city: { equals: query.city, mode: 'insensitive' } } : {}),

@@ -646,6 +646,7 @@ model Association {
   reviewedBy User? @relation("AssociationReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   histories AssociationStatusHistory[]
+  subscribers AssociationSubscriber[]
 
   @@index([status, createdAt])
   @@index([city])
@@ -666,6 +667,21 @@ model AssociationStatusHistory {
 
   @@index([associationId, createdAt])
   @@map("association_status_histories")
+}
+
+model AssociationSubscriber {
+  id            Int      @id @default(autoincrement())
+  associationId Int      @map("association_id")
+  email         String   @db.VarChar(180)
+  name          String?  @db.VarChar(150)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@unique([associationId, email])
+  @@index([associationId])
+  @@map("association_subscribers")
 }
 
 // ===========================================================================
