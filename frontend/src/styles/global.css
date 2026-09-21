@@ -44,6 +44,47 @@
   --topbar-height: 64px;
 
   --font-sans: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+
+  /* -----------------------------------------------------------------------
+     `--color-*` / `--space-*` / `--font-*` tokens referenced throughout the
+     app (admin + public pages). Aliased to the brand palette above so all
+     pages render with the intended design system.
+     ----------------------------------------------------------------------- */
+  --color-primary: #9b1c1c;
+  --color-brand: #9b1c1c;
+  --color-bg: #f4f5f8;
+  --color-bg-muted: #eef0f4;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8f9fb;
+  --color-surface-sunken: #eef0f4;
+  --color-border: #e2e5eb;
+  --color-text: #1f2430;
+  --color-text-muted: #5b6472;
+  --color-text-secondary: #8d95a3;
+  --color-success: #157347;
+  --color-warning: #9a6700;
+  --color-danger: #b42318;
+  --color-info: #175cd3;
+
+  --radius-full: 999px;
+
+  --font-xs: 12px;
+  --font-sm: 13px;
+  --font-md: 15px;
+  --font-lg: 18px;
+  --font-xl: 22px;
+  --font-2xl: 28px;
+
+  --space-50: 2px;
+  --space-100: 4px;
+  --space-150: 6px;
+  --space-200: 8px;
+  --space-300: 12px;
+  --space-400: 16px;
+  --space-500: 24px;
+  --space-600: 32px;
+  --space-700: 40px;
+  --space-800: 48px;
 }
 
 /* ===========================================================================
@@ -276,6 +317,64 @@ a.btn:hover {
 }
 
 /* ===========================================================================
+   Upload buttons (Choose File)
+   =========================================================================== */
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 38px;
+  padding: 7px 16px;
+  font: inherit;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.upload-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.upload-button:focus-visible {
+  outline: none;
+  border-color: var(--colour-brand);
+  box-shadow: 0 0 0 3px rgb(155 28 28 / 12%);
+}
+
+.upload-button--primary {
+  color: #fff;
+  background: var(--colour-brand);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
+.upload-button--primary:hover:not(:disabled) {
+  background: var(--colour-brand-dark);
+}
+
+.upload-button--secondary {
+  color: var(--colour-ink);
+  background: var(--colour-surface);
+  border-color: var(--colour-border-strong);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.upload-button--secondary:hover:not(:disabled) {
+  background: var(--colour-canvas);
+}
+
+.upload-button i {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ===========================================================================
    Spinner
    =========================================================================== */
 
@@ -349,6 +448,12 @@ a.btn:hover {
 .field__required {
   margin-left: 2px;
   color: var(--colour-danger);
+}
+
+.field__optional {
+  margin-left: 2px;
+  color: var(--color-text-muted);
+  font-weight: 400;
 }
 
 .field__control {
@@ -859,6 +964,12 @@ a.btn:hover {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-5);
+}
+
+.users-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .users-page__title {

@@ -59,6 +59,14 @@ enum CommitteeStatus {
   INACTIVE
 }
 
+enum AssociationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  INACTIVE
+}
+
 enum ArticleStatus {
   DRAFT
   PENDING_REVIEW
@@ -250,6 +258,13 @@ model User {
   // Podcast domain
   createdPodcasts     PodcastEpisode[]       @relation("PodcastCreatedBy")
   updatedPodcasts     PodcastEpisode[]       @relation("PodcastUpdatedBy")
+
+  // Association domain
+  association         Association? @relation("AssociationAccount")
+  approvedAssociations Association[] @relation("AssociationApprovedBy")
+  rejectedAssociations Association[] @relation("AssociationRejectedBy")
+  reviewedAssociations Association[] @relation("AssociationReviewedBy")
+  associationHistories AssociationStatusHistory[] @relation("AssociationHistoryChangedBy")
 
   @@index([status])
   @@index([createdAt])
@@ -584,6 +599,89 @@ model PujaCommitteeStatusHistory {
 
   @@index([pujaCommitteeId, createdAt])
   @@map("puja_committee_status_histories")
+}
+
+model Association {
+  id          Int    @id @default(autoincrement())
+  userId      Int?   @unique @map("user_id")
+  registrationNo String @unique @map("registration_no") @db.VarChar(50)
+  associationId String? @unique @map("association_id") @db.VarChar(30)
+
+  name        String @db.VarChar(200)
+  description String @db.Text
+  establishedYear Int? @map("established_year") @db.SmallInt
+
+  contactPersonName String @map("contact_person_name") @db.VarChar(200)
+  designation       String @db.VarChar(100)
+  email             String @db.VarChar(180)
+  mobile            String @db.VarChar(25)
+  website           String? @db.VarChar(500)
+  socialLinks       Json?
+
+  country    String @db.VarChar(100)
+  state      String @db.VarChar(100)
+  city       String @db.VarChar(100)
+  postalCode String @map("postal_code") @db.VarChar(20)
+  address    String @db.Text
+
+  logoImage  String? @map("logo_image") @db.VarChar(500)
+  coverImage String? @map("cover_image") @db.VarChar(500)
+
+  status          AssociationStatus @default(PENDING)
+  approvedById    Int?            @map("approved_by")
+  approvedAt      DateTime?       @map("approved_at")
+  rejectedById    Int?            @map("rejected_by")
+  rejectedAt      DateTime?       @map("rejected_at")
+  rejectionReason String?         @map("rejection_reason") @db.Text
+  reviewedById    Int?            @map("reviewed_by")
+  reviewedAt      DateTime?       @map("reviewed_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user       User? @relation("AssociationAccount", fields: [userId], references: [id], onDelete: SetNull)
+  approvedBy User? @relation("AssociationApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectedBy User? @relation("AssociationRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
+  reviewedBy User? @relation("AssociationReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  histories AssociationStatusHistory[]
+  subscribers AssociationSubscriber[]
+
+  @@index([status, createdAt])
+  @@index([city])
+  @@map("associations")
+}
+
+model AssociationStatusHistory {
+  id             Int      @id @default(autoincrement())
+  associationId  Int      @map("association_id")
+  previousStatus String?  @map("previous_status") @db.VarChar(30)
+  newStatus      String   @map("new_status") @db.VarChar(30)
+  reason         String?  @db.Text
+  changedById    Int?     @map("changed_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  changedBy   User?         @relation("AssociationHistoryChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([associationId, createdAt])
+  @@map("association_status_histories")
+}
+
+model AssociationSubscriber {
+  id            Int      @id @default(autoincrement())
+  associationId Int      @map("association_id")
+  email         String   @db.VarChar(180)
+  name          String?  @db.VarChar(150)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@unique([associationId, email])
+  @@index([associationId])
+  @@map("association_subscribers")
 }
 
 // ===========================================================================

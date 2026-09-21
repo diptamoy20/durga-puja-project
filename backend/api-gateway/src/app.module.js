@@ -16,6 +16,7 @@ const config_1 = require("@nestjs/config");
 const core_1 = require("@nestjs/core");
 const jwt_1 = require("@nestjs/jwt");
 const throttler_1 = require("@nestjs/throttler");
+const associations_module_1 = require("./associations/associations.module");
 const atlas_module_1 = require("./atlas/atlas.module");
 const auth_module_1 = require("./auth/auth.module");
 const clients_module_1 = require("./clients/clients.module");
@@ -26,6 +27,7 @@ const gallery_module_1 = require("./gallery/gallery.module");
 const configuration_1 = __importDefault(require("./config/configuration"));
 const services_config_1 = __importDefault(require("./config/services.config"));
 const env_validation_1 = require("./config/env.validation");
+const database_1 = require("@dpgc/database");
 const all_exceptions_filter_1 = require("./filters/all-exceptions.filter");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const permissions_guard_1 = require("./guards/permissions.guard");
@@ -67,6 +69,8 @@ exports.AppModule = AppModule = __decorate([
             gallery_module_1.GalleryModule,
             atlas_module_1.AtlasModule,
             events_module_1.EventsModule,
+            database_1.PrismaModule,
+            associations_module_1.AssociationsModule,
         ],
         controllers: [health_controller_1.HealthController],
         providers: [

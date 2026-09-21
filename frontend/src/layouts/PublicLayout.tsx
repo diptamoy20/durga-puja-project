@@ -21,7 +21,16 @@ export function PublicLayout() {
             <Link to={ROUTES.PUBLIC_GALLERY} className="public-layout__nav-link">
               Gallery
             </Link>
-            <Link to={ROUTES.PUBLIC_WEBINARS} className="public-layout__nav-link">
+            <Link
+              to={ROUTES.PUBLIC_ASSOCIATIONS}
+              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
+            >
+              Associations
+            </Link>
+            <Link
+              to={ROUTES.PUBLIC_WEBINARS}
+              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
+            >
               Webinars
             </Link>
             <Link to={ROUTES.PUBLIC_PODCASTS} className="public-layout__nav-link">
