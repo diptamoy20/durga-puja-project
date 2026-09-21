@@ -253,7 +253,14 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+        <Route
+          path={ROUTES.DASHBOARD}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_DASHBOARD]}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User Management */}
         <Route

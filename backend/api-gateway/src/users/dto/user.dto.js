@@ -99,12 +99,14 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'Omit to have a secure password generated and stored for the administrator to pass on.',
     }),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (value === undefined || value === null || value === '')
+            return undefined;
+        return typeof value === 'string' ? value : value;
+    }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(8, { message: 'Password must be at least 8 characters.' }),
     (0, class_validator_1.MaxLength)(72),
-    (0, class_validator_1.Matches)(/[a-z]/, { message: 'Password must contain a lowercase letter.' }),
-    (0, class_validator_1.Matches)(/[A-Z]/, { message: 'Password must contain an uppercase letter.' }),
-    (0, class_validator_1.Matches)(/[0-9]/, { message: 'Password must contain a number.' }),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "password", void 0);
@@ -171,8 +173,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "status", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ type: [Number], description: 'Role ids to assign.' }),
+    (0, swagger_1.ApiPropertyOptional)({ type: [Number], description: 'Exactly one role id to assign.' }),
     (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMaxSize)(1, { message: 'A user can have only one role.' }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)({ each: true }),
     (0, class_validator_1.IsOptional)(),
@@ -285,8 +288,9 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "status", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ type: [Number] }),
+    (0, swagger_1.ApiPropertyOptional)({ type: [Number], description: 'Exactly one role id to assign.' }),
     (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMaxSize)(1, { message: 'A user can have only one role.' }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)({ each: true }),
     (0, class_validator_1.IsOptional)(),
@@ -297,8 +301,9 @@ class AssignRolesDto {
 }
 exports.AssignRolesDto = AssignRolesDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ type: [Number], description: 'The complete set of role ids for this user.' }),
+    (0, swagger_1.ApiProperty)({ type: [Number], description: 'Exactly one role id for this user.' }),
     (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMaxSize)(1, { message: 'A user can have only one role.' }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)({ each: true }),
     __metadata("design:type", Array)
@@ -332,12 +337,14 @@ __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'Omit to generate a secure password automatically.',
     }),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (value === undefined || value === null || value === '')
+            return undefined;
+        return typeof value === 'string' ? value : value;
+    }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(8, { message: 'Password must be at least 8 characters.' }),
     (0, class_validator_1.MaxLength)(72),
-    (0, class_validator_1.Matches)(/[a-z]/, { message: 'Password must contain a lowercase letter.' }),
-    (0, class_validator_1.Matches)(/[A-Z]/, { message: 'Password must contain an uppercase letter.' }),
-    (0, class_validator_1.Matches)(/[0-9]/, { message: 'Password must contain a number.' }),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], ResetUserPasswordDto.prototype, "password", void 0);

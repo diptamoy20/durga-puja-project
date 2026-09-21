@@ -100,6 +100,32 @@ function parseArticleUpdateBody(body, file) {
 function isAllowedContentFilePath(safePath) {
     return (safePath.startsWith('articles/') || safePath.startsWith('media/')) && !safePath.includes('..');
 }
+/** Maps article workflow actions to the least-privilege permission keys. */
+function assertArticleWorkflowPermission(actor, action) {
+    if (actor.isSuperAdmin)
+        return;
+    const permissionMap = {
+        submit_for_review: [shared_1.PERMISSIONS.EDIT_ARTICLES, shared_1.PERMISSIONS.CREATE_ARTICLES],
+        start_review: [shared_1.PERMISSIONS.REVIEW_ARTICLES],
+        return_to_draft: [shared_1.PERMISSIONS.REVIEW_ARTICLES],
+        reject: [shared_1.PERMISSIONS.REVIEW_ARTICLES],
+        approve: [shared_1.PERMISSIONS.APPROVE_ARTICLES],
+        schedule: [shared_1.PERMISSIONS.PUBLISH_ARTICLES],
+        publish: [shared_1.PERMISSIONS.PUBLISH_ARTICLES],
+        archive: [shared_1.PERMISSIONS.PUBLISH_ARTICLES],
+    };
+    const required = permissionMap[action];
+    if (!required) {
+        throw new common_1.BadRequestException(`Unknown workflow action: ${action}`);
+    }
+    if (!required.some((key) => actor.permissions.includes(key))) {
+        throw new common_1.ForbiddenException({
+            message: 'You do not have permission to perform this action.',
+            code: 'FORBIDDEN',
+            details: { action, requiredAnyOf: required },
+        });
+    }
+}
 // ============================================================================
 // Articles
 // ============================================================================
@@ -139,6 +165,7 @@ let ArticlesController = class ArticlesController {
         });
     }
     workflow(id, dto, actor) {
+        assertArticleWorkflowPermission(actor, dto.action);
         return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.CONTENT_PATTERNS.ARTICLE_WORKFLOW, {
             id,
             action: dto.action,
@@ -210,7 +237,7 @@ __decorate([
 ], ArticlesController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_ARTICLES),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.DELETE_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Article deleted successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Soft-delete an article' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -222,7 +249,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/workflow'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.REVIEW_ARTICLES),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.REVIEW_ARTICLES, shared_1.PERMISSIONS.APPROVE_ARTICLES, shared_1.PERMISSIONS.PUBLISH_ARTICLES, shared_1.PERMISSIONS.EDIT_ARTICLES, shared_1.PERMISSIONS.CREATE_ARTICLES),
     (0, response_interceptor_1.ResponseMessage)('Article workflow action completed'),
     (0, swagger_1.ApiOperation)({
         summary: 'Perform a workflow action on an article',

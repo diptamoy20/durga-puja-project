@@ -42,7 +42,7 @@ export function MediaDetailPage({ mode }: MediaDetailPageProps) {
   const [busy, setBusy] = useState(false);
 
   const canModerate = can(PERMISSIONS.MODERATE_MEDIA);
-  const canEdit = can(PERMISSIONS.UPLOAD_MEDIA) || canModerate;
+  const canEdit = can(PERMISSIONS.EDIT_MEDIA) || can(PERMISSIONS.UPLOAD_MEDIA) || canModerate;
 
   useEffect(() => {
     if (!id) return;

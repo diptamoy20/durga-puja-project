@@ -44,7 +44,15 @@ export const NAVIGATION: NavSection[] = [
   {
     label: 'Main',
     defaultOpen: true,
-    items: [{ label: 'Dashboard', icon: 'fa-gauge-high', to: ROUTES.DASHBOARD, end: true }],
+    items: [
+      {
+        label: 'Dashboard',
+        icon: 'fa-gauge-high',
+        to: ROUTES.DASHBOARD,
+        end: true,
+        permissions: [PERMISSIONS.VIEW_DASHBOARD],
+      },
+    ],
   },
 
   {

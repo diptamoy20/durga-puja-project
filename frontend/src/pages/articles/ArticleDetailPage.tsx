@@ -34,11 +34,17 @@ interface WorkflowConfig {
   hideComment?: boolean;
 }
 
-function getWorkflowActions(article: Article, canReview: boolean, canPublish: boolean): WorkflowConfig[] {
+function getWorkflowActions(
+  article: Article,
+  canEdit: boolean,
+  canReview: boolean,
+  canApprove: boolean,
+  canPublish: boolean,
+): WorkflowConfig[] {
   const actions: WorkflowConfig[] = [];
   const { status } = article;
 
-  if (status === 'DRAFT' || status === 'REJECTED') {
+  if ((status === 'DRAFT' || status === 'REJECTED') && canEdit) {
     actions.push({ action: 'submit_for_review', label: 'Submit for Review', variant: 'primary', hideComment: true });
   }
 
@@ -46,12 +52,16 @@ function getWorkflowActions(article: Article, canReview: boolean, canPublish: bo
     actions.push({ action: 'start_review', label: 'Start Review', variant: 'secondary', hideComment: true });
   }
 
-  if ((status === 'PENDING_REVIEW' || status === 'IN_REVIEW') && canReview) {
-    actions.push(
-      { action: 'return_to_draft', label: 'Send Back to Draft', variant: 'secondary', requiresComment: true },
-      { action: 'approve', label: 'Approve', variant: 'primary', hideComment: true },
-      { action: 'reject', label: 'Reject', variant: 'danger', requiresComment: true },
-    );
+  if (status === 'PENDING_REVIEW' || status === 'IN_REVIEW') {
+    if (canReview) {
+      actions.push(
+        { action: 'return_to_draft', label: 'Send Back to Draft', variant: 'secondary', requiresComment: true },
+        { action: 'reject', label: 'Reject', variant: 'danger', requiresComment: true },
+      );
+    }
+    if (canApprove) {
+      actions.push({ action: 'approve', label: 'Approve', variant: 'primary', hideComment: true });
+    }
   }
 
   if (status === 'APPROVED' && canPublish) {
@@ -89,6 +99,7 @@ export function ArticleDetailPage() {
 
   const canEdit = can(PERMISSIONS.EDIT_ARTICLES);
   const canReview = can(PERMISSIONS.REVIEW_ARTICLES);
+  const canApprove = can(PERMISSIONS.APPROVE_ARTICLES);
   const canPublish = can(PERMISSIONS.PUBLISH_ARTICLES);
 
   useEffect(() => {
@@ -102,8 +113,9 @@ export function ArticleDetailPage() {
   }, [id]);
 
   const workflowActions = useMemo(
-    () => (article ? getWorkflowActions(article, canReview, canPublish) : []),
-    [article, canReview, canPublish],
+    () =>
+      article ? getWorkflowActions(article, canEdit, canReview, canApprove, canPublish) : [],
+    [article, canEdit, canReview, canApprove, canPublish],
   );
 
   const handleWorkflow = async () => {

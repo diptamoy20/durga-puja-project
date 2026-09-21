@@ -5,7 +5,9 @@ import { Alert } from '@/components/ui/Alert';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { ROUTES } from '@/constants/routes';
+import { PERMISSIONS } from '@/constants/permissions';
 import { useToast } from '@/hooks/useToast';
+import { useAuth } from '@/hooks/useAuth';
 import { adminPodcastService } from '@/services/podcastService';
 import type { PodcastEpisode, PodcastStats } from '@/types/podcast';
 
@@ -22,6 +24,11 @@ function formatDuration(secs: number): string {
 export function PodcastListPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { can } = useAuth();
+
+  const canCreate = can(PERMISSIONS.CREATE_PODCASTS, PERMISSIONS.CREATE_ARTICLES);
+  const canEdit = can(PERMISSIONS.EDIT_PODCASTS, PERMISSIONS.EDIT_ARTICLES);
+  const canDelete = can(PERMISSIONS.DELETE_PODCASTS, PERMISSIONS.DELETE_ARTICLES);
 
   const [episodes, setEpisodes] = useState<PodcastEpisode[]>([]);
   const [stats, setStats] = useState<PodcastStats | null>(null);
@@ -123,9 +130,11 @@ export function PodcastListPage() {
             <Link to={ROUTES.PUBLIC_PODCASTS} target="_blank" className="btn btn--outline-secondary btn--md">
               <i className="fas fa-arrow-up-right-from-square" aria-hidden="true" /> View Public Hub
             </Link>
-            <Link to={ROUTES.PODCAST_NEW} className="btn btn--primary btn--md">
-              <i className="fas fa-circle-plus" aria-hidden="true" /> Create Episode
-            </Link>
+            {canCreate && (
+              <Link to={ROUTES.PODCAST_NEW} className="btn btn--primary btn--md">
+                <i className="fas fa-circle-plus" aria-hidden="true" /> Create Episode
+              </Link>
+            )}
           </div>
         </div>
 
@@ -254,9 +263,11 @@ export function PodcastListPage() {
                       </div>
                       <strong>No episodes found</strong>
                       <p>No episodes match your current filters.</p>
-                      <Link to={ROUTES.PODCAST_NEW} className="btn btn--primary btn--sm">
-                        <i className="fas fa-circle-plus" aria-hidden="true" /> Create Episode
-                      </Link>
+                      {canCreate && (
+                        <Link to={ROUTES.PODCAST_NEW} className="btn btn--primary btn--sm">
+                          <i className="fas fa-circle-plus" aria-hidden="true" /> Create Episode
+                        </Link>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -291,16 +302,22 @@ export function PodcastListPage() {
                       </span>
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className={`podcast-status-toggle ${
-                          ep.isPublished ? 'podcast-status-toggle--published' : 'podcast-status-toggle--draft'
-                        }`}
-                        onClick={() => void handleToggleStatus(ep)}
-                        title="Click to toggle publish status"
-                      >
-                        {ep.isPublished ? 'Published' : 'Draft'}
-                      </button>
+                      {canEdit ? (
+                        <button
+                          type="button"
+                          className={`podcast-status-toggle ${
+                            ep.isPublished ? 'podcast-status-toggle--published' : 'podcast-status-toggle--draft'
+                          }`}
+                          onClick={() => void handleToggleStatus(ep)}
+                          title="Click to toggle publish status"
+                        >
+                          {ep.isPublished ? 'Published' : 'Draft'}
+                        </button>
+                      ) : (
+                        <span className={ep.isPublished ? 'badge badge--success' : 'badge badge--default'}>
+                          {ep.isPublished ? 'Published' : 'Draft'}
+                        </span>
+                      )}
                     </td>
                     <td className="table__actions">
                       <div className="podcast-action-group">
@@ -313,24 +330,28 @@ export function PodcastListPage() {
                         >
                           <i className="fas fa-eye" aria-hidden="true" />
                         </Link>
-                        <button
-                          type="button"
-                          className="podcast-action-btn"
-                          onClick={() => navigate(ROUTES.PODCAST_EDIT(ep.id))}
-                          title="Edit episode"
-                          aria-label={`Edit ${ep.title}`}
-                        >
-                          <i className="fas fa-pencil" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          className="podcast-action-btn podcast-action-btn--danger"
-                          onClick={() => setDeleteTarget(ep)}
-                          title="Delete episode"
-                          aria-label={`Delete ${ep.title}`}
-                        >
-                          <i className="fas fa-trash" aria-hidden="true" />
-                        </button>
+                        {canEdit && (
+                          <button
+                            type="button"
+                            className="podcast-action-btn"
+                            onClick={() => navigate(ROUTES.PODCAST_EDIT(ep.id))}
+                            title="Edit episode"
+                            aria-label={`Edit ${ep.title}`}
+                          >
+                            <i className="fas fa-pencil" aria-hidden="true" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            type="button"
+                            className="podcast-action-btn podcast-action-btn--danger"
+                            onClick={() => setDeleteTarget(ep)}
+                            title="Delete episode"
+                            aria-label={`Delete ${ep.title}`}
+                          >
+                            <i className="fas fa-trash" aria-hidden="true" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
