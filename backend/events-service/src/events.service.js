@@ -48,32 +48,67 @@ let EventsService = EventsService_1 = class EventsService {
         const found = await this.prisma.webinar.findUnique({ where: { slug }, select: { id: true } });
         return found !== null;
     };
+    slugTakenByOther = async (slug, excludeId) => {
+        const found = await this.prisma.webinar.findFirst({
+            where: { slug, deletedAt: null, ...(excludeId ? { NOT: { id: excludeId } } : {}) },
+            select: { id: true },
+        });
+        return found !== null;
+    };
+    normalizeSlug = (value) => String(value ?? '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    resolveSlug = async (rawSlug, excludeId) => {
+        const slug = this.normalizeSlug(rawSlug);
+        if (!slug) {
+            throw shared_1.ServiceException.badRequest('Enter a valid URL slug.');
+        }
+        if (await this.slugTakenByOther(slug, excludeId)) {
+            throw shared_1.ServiceException.conflict('That webinar URL slug is already in use.');
+        }
+        return slug;
+    };
     async findAll(query) {
         const { skip, take, page, perPage } = (0, shared_1.toPrismaPagination)(query);
         const where = {
             deletedAt: null,
             ...(query.status ? { status: query.status } : {}),
+            ...(query.livePlatform ? { livePlatform: query.livePlatform } : {}),
             ...(query.isPublished !== undefined ? { isPublished: query.isPublished } : {}),
             ...(query.search
                 ? {
                     OR: [
                         { title: { contains: query.search, mode: 'insensitive' } },
                         { subtitle: { contains: query.search, mode: 'insensitive' } },
+                        { description: { contains: query.search, mode: 'insensitive' } },
                     ],
                 }
                 : {}),
         };
-        const [items, total] = await this.prisma.$transaction([
+        const sortField = query.sortBy === 'scheduledStartTime' || query.sortBy === 'scheduledAt'
+            ? 'scheduledStartTime'
+            : (query.sortBy ?? 'createdAt');
+        const [items, total, scheduled, live, completed, totalRsvps] = await this.prisma.$transaction([
             this.prisma.webinar.findMany({
                 where,
                 skip,
                 take,
-                orderBy: { scheduledStartTime: query.sortDir },
+                orderBy: { [sortField]: query.sortDir ?? 'desc' },
                 include: { _count: { select: { registrations: true } } },
             }),
             this.prisma.webinar.count({ where }),
+            this.prisma.webinar.count({ where: { deletedAt: null, status: database_1.WebinarStatus.SCHEDULED } }),
+            this.prisma.webinar.count({ where: { deletedAt: null, status: database_1.WebinarStatus.LIVE } }),
+            this.prisma.webinar.count({ where: { deletedAt: null, status: database_1.WebinarStatus.COMPLETED } }),
+            this.prisma.webinarRegistration.count(),
         ]);
-        return { items, pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total) };
+        return {
+            items,
+            pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total),
+            stats: { scheduled, live, completed, totalRsvps },
+        };
     }
     /** Published, upcoming and live webinars for the public site. */
     async publicList() {
@@ -126,10 +161,13 @@ let EventsService = EventsService_1 = class EventsService {
             throw shared_1.ServiceException.badRequest('The end time must be after the start time.');
         }
         try {
+            const slug = data.slug
+                ? await this.resolveSlug(data.slug)
+                : await (0, shared_1.uniqueSlug)(data.title, this.slugExists);
             const webinar = await this.prisma.webinar.create({
                 data: {
                     title: data.title,
-                    slug: await (0, shared_1.uniqueSlug)(data.title, this.slugExists),
+                    slug,
                     subtitle: data.subtitle ?? null,
                     description: data.description ?? null,
                     bannerImage: data.bannerImage ?? null,
@@ -150,7 +188,7 @@ let EventsService = EventsService_1 = class EventsService {
                     replayEmbedCode: data.replayEmbedCode ?? null,
                     replayDurationMinutes: data.replayDurationMinutes ?? null,
                     resources: data.resources ?? database_1.Prisma.DbNull,
-                    status: database_1.WebinarStatus.SCHEDULED,
+                    status: data.status ?? database_1.WebinarStatus.SCHEDULED,
                     createdById: actorId,
                     updatedById: actorId,
                 },
@@ -167,18 +205,25 @@ let EventsService = EventsService_1 = class EventsService {
         const start = data.scheduledStartTime
             ? new Date(data.scheduledStartTime)
             : existing.scheduledStartTime;
-        const end = data.scheduledEndTime ? new Date(data.scheduledEndTime) : existing.scheduledEndTime;
+        const end = data.scheduledEndTime !== undefined
+            ? (data.scheduledEndTime ? new Date(data.scheduledEndTime) : null)
+            : existing.scheduledEndTime;
         if (end && end <= start) {
             throw shared_1.ServiceException.badRequest('The end time must be after the start time.');
+        }
+        let nextSlug;
+        if (data.slug !== undefined) {
+            nextSlug = await this.resolveSlug(data.slug, id);
+        }
+        else if (data.title && data.title !== existing.title) {
+            nextSlug = await (0, shared_1.uniqueSlug)(data.title, this.slugExists);
         }
         try {
             return await this.prisma.webinar.update({
                 where: { id },
                 data: {
                     title: data.title,
-                    slug: data.title && data.title !== existing.title
-                        ? await (0, shared_1.uniqueSlug)(data.title, this.slugExists)
-                        : undefined,
+                    slug: nextSlug,
                     subtitle: data.subtitle,
                     description: data.description,
                     bannerImage: data.bannerImage,
@@ -199,6 +244,7 @@ let EventsService = EventsService_1 = class EventsService {
                     replayEmbedCode: data.replayEmbedCode,
                     replayDurationMinutes: data.replayDurationMinutes,
                     resources: data.resources,
+                    status: data.status,
                     updatedById: actorId,
                 },
             });

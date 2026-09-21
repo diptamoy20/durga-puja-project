@@ -1,56 +1,24 @@
 import { Link, Outlet } from 'react-router-dom';
+
 import { ROUTES } from '@/constants/routes';
+
+import '@/styles/public-layout.css';
 
 export function PublicLayout() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
-      <header
-        style={{
-          background: 'var(--color-surface)',
-          borderBottom: '1px solid var(--color-border)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: 'var(--space-300) var(--space-400)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Link
-            to={ROUTES.DASHBOARD}
-            style={{
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-200)',
-              color: 'var(--color-primary)',
-              fontWeight: 700,
-              fontSize: 'var(--font-lg)',
-            }}
-          >
-            <span>🌺</span>
+    <div className="public-layout">
+      <header className="public-layout__header">
+        <div className="public-layout__header-inner">
+          <Link to={ROUTES.DASHBOARD} className="public-layout__brand">
+            <span aria-hidden="true">🌺</span>
             <span>Durga Puja Global Connect</span>
           </Link>
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-400)', flexWrap: 'wrap' }}>
-            <Link
-              to={ROUTES.PUBLIC_ATLAS}
-              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
-            >
+          <nav className="public-layout__nav" aria-label="Public site">
+            <Link to={ROUTES.PUBLIC_ATLAS} className="public-layout__nav-link">
               Pandal Map
             </Link>
-            <Link
-              to={ROUTES.PUBLIC_GALLERY}
-              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
-            >
+            <Link to={ROUTES.PUBLIC_GALLERY} className="public-layout__nav-link">
               Gallery
             </Link>
             <Link
@@ -65,60 +33,35 @@ export function PublicLayout() {
             >
               Webinars
             </Link>
-            <Link
-              to={ROUTES.PUBLIC_PODCASTS}
-              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
-            >
+            <Link to={ROUTES.PUBLIC_PODCASTS} className="public-layout__nav-link">
               Podcasts
             </Link>
-            <Link
-              to={ROUTES.PUBLIC_CHOOSE_TYPE}
-              className="btn btn--primary btn--sm"
-              style={{ textDecoration: 'none' }}
-            >
+            <Link to={ROUTES.PUBLIC_NEWS} className="public-layout__nav-link">
+              News
+            </Link>
+            <Link to={ROUTES.PUBLIC_CHOOSE_TYPE} className="btn btn--primary btn--sm">
               Register Account
             </Link>
-            <Link
-              to={ROUTES.LOGIN}
-              className="btn btn--secondary btn--sm"
-              style={{ textDecoration: 'none' }}
-            >
+            <Link to={ROUTES.LOGIN} className="btn btn--secondary btn--sm">
               Sign In
             </Link>
           </nav>
         </div>
       </header>
 
-      <main style={{ flex: 1, padding: 'var(--space-600) var(--space-400)', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+      <main className="public-layout__main">
         <Outlet />
       </main>
 
-      <footer
-        style={{
-          background: 'var(--color-surface)',
-          borderTop: '1px solid var(--color-border)',
-          padding: 'var(--space-600) var(--space-400)',
-          marginTop: 'auto',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 'var(--space-300)',
-          }}
-        >
+      <footer className="public-layout__footer">
+        <div className="public-layout__footer-inner">
           <div>
-            <p style={{ margin: 0, fontWeight: 600 }}>Durga Puja Global Connect</p>
-            <p style={{ margin: 0, fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
+            <p className="public-layout__footer-title">Durga Puja Global Connect</p>
+            <p className="public-layout__footer-copy">
               Connecting the global Bengali diaspora and celebrating Durga Puja worldwide.
             </p>
           </div>
-          <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>
+          <div className="public-layout__footer-meta">
             © {new Date().getFullYear()} Government of West Bengal · Tourism Department
           </div>
         </div>

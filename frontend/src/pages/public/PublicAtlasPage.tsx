@@ -158,8 +158,8 @@ export function PublicAtlasPage() {
             role="button"
             tabIndex={0}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Pandal Directory</h2>
+            <div className="public-atlas-sidebar__title-row">
+              <h2 className="public-atlas-sidebar__title">Pandal Directory</h2>
               <span className="status-badge status-badge--danger">{filtered.length} Pandals</span>
             </div>
             <input
@@ -170,7 +170,7 @@ export function PublicAtlasPage() {
               onChange={(e) => setSearch(e.target.value)}
               onClick={(e) => e.stopPropagation()}
             />
-            <div style={{ display: 'flex', gap: 6, marginTop: 8, overflowX: 'auto' }}>
+            <div className="public-atlas-sidebar__filters">
               {(['all', 'live', 'tour'] as AtlasFilterChip[]).map((chip) => (
                 <button
                   key={chip}
@@ -189,9 +189,9 @@ export function PublicAtlasPage() {
 
           <div className="public-atlas-sidebar__list">
             {loading ? (
-              <p style={{ textAlign: 'center', color: '#64748b' }}>Loading atlas data…</p>
+              <p className="public-atlas-sidebar__empty">Loading atlas data…</p>
             ) : filtered.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#64748b' }}>No pandals match your search.</p>
+              <p className="public-atlas-sidebar__empty">No pandals match your search.</p>
             ) : (
               filtered.map((p) => (
                 <div
@@ -210,15 +210,19 @@ export function PublicAtlasPage() {
                       alt={p.name}
                       className="public-atlas-card__thumb"
                     />
-                    <div style={{ minWidth: 0 }}>
-                      <h3 style={{ margin: '0 0 4px', fontSize: '0.95rem' }}>{p.name}</h3>
-                      <p style={{ margin: '0 0 8px', fontSize: '0.8rem', color: '#64748b' }}>{p.location}</p>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.7rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 999, padding: '2px 8px' }}>
+                    <div className="public-atlas-card__content">
+                      <h3 className="public-atlas-card__name">{p.name}</h3>
+                      <p className="public-atlas-card__location">{p.location}</p>
+                      <div className="public-atlas-card__badges">
+                        <span className="public-atlas-badge public-atlas-badge--timing">
                           {p.timing.slice(0, 24)}
                         </span>
-                        {p.hasLivestream && <span style={{ fontSize: '0.7rem', background: '#fee2e2', color: '#b91c1c', borderRadius: 999, padding: '2px 8px' }}>Live</span>}
-                        {p.hasVirtualTour && <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: 999, padding: '2px 8px' }}>360°</span>}
+                        {p.hasLivestream && (
+                          <span className="public-atlas-badge public-atlas-badge--live">Live</span>
+                        )}
+                        {p.hasVirtualTour && (
+                          <span className="public-atlas-badge public-atlas-badge--tour">360°</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -234,10 +238,10 @@ export function PublicAtlasPage() {
           {selected && (
             <>
               <div className="public-atlas-drawer__header">
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <div className="public-atlas-drawer__title-row">
                   <div>
-                    <h3 style={{ margin: 0 }}>{selected.name}</h3>
-                    <small style={{ opacity: 0.85 }}>{selected.location}</small>
+                    <h3 className="public-atlas-drawer__title">{selected.name}</h3>
+                    <small className="public-atlas-drawer__location">{selected.location}</small>
                   </div>
                   <button type="button" className="btn btn--secondary btn--sm" onClick={() => setSelected(null)} aria-label="Close">
                     ✕
@@ -246,61 +250,61 @@ export function PublicAtlasPage() {
               </div>
               <div className="public-atlas-drawer__body">
                 {(selected.photoUrls?.length ?? 0) > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b' }}>Photo Gallery</strong>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 8 }}>
+                  <div className="public-atlas-drawer__section">
+                    <strong className="public-atlas-drawer__section-label">Photo Gallery</strong>
+                    <div className="public-atlas-drawer__gallery">
                       {selected.photoUrls!.map((url, i) => (
                         <a key={url} href={url} target="_blank" rel="noreferrer">
-                          <img src={url} alt={`Photo ${i + 1}`} style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 8 }} />
+                          <img src={url} alt={`Photo ${i + 1}`} />
                         </a>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 12 }}>
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b' }}>Visiting Hours</div>
-                  <div style={{ fontWeight: 600 }}>{selected.timing}</div>
+                <div className="public-atlas-info-box">
+                  <div className="public-atlas-info-box__label">Visiting Hours</div>
+                  <div className="public-atlas-info-box__value">{selected.timing}</div>
                 </div>
 
                 {selected.ritualSchedule && (
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 12 }}>
-                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b' }}>Ritual Schedule</div>
-                    <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: '0.85rem' }}>{selected.ritualSchedule}</pre>
+                  <div className="public-atlas-info-box">
+                    <div className="public-atlas-info-box__label">Ritual Schedule</div>
+                    <pre>{selected.ritualSchedule}</pre>
                   </div>
                 )}
 
-                {selected.hasLivestream && selected.livestreamUrl && (
-                  <a href={selected.livestreamUrl} target="_blank" rel="noreferrer" className="btn btn--danger btn--sm" style={{ width: '100%', marginBottom: 8 }}>
-                    Watch Live Stream
-                  </a>
-                )}
+                <div className="public-atlas-drawer__actions">
+                  {selected.hasLivestream && selected.livestreamUrl && (
+                    <a href={selected.livestreamUrl} target="_blank" rel="noreferrer" className="btn btn--danger btn--sm">
+                      Watch Live Stream
+                    </a>
+                  )}
 
-                {selected.hasVirtualTour && (
+                  {selected.hasVirtualTour && (
+                    <a
+                      href={selected.fullVirtualTourUrl ?? selected.virtualTourUrl ?? '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn--secondary btn--sm"
+                    >
+                      Launch 360° Virtual Tour
+                    </a>
+                  )}
+
                   <a
-                    href={selected.fullVirtualTourUrl ?? selected.virtualTourUrl ?? '#'}
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${selected.latitude},${selected.longitude}`}
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn--secondary btn--sm"
-                    style={{ width: '100%', marginBottom: 8 }}
                   >
-                    Launch 360° Virtual Tour
+                    Get Directions
                   </a>
-                )}
 
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${selected.latitude},${selected.longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn--secondary btn--sm"
-                  style={{ width: '100%', marginBottom: 8 }}
-                >
-                  Get Directions
-                </a>
-
-                <Link to={ROUTES.PUBLIC_ATLAS_DETAIL(selected.id)} className="btn btn--primary btn--sm" style={{ width: '100%' }}>
-                  Open Full Pandal Page
-                </Link>
+                  <Link to={ROUTES.PUBLIC_ATLAS_DETAIL(selected.id)} className="btn btn--primary btn--sm">
+                    Open Full Pandal Page
+                  </Link>
+                </div>
               </div>
             </>
           )}

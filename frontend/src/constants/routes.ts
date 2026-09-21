@@ -62,6 +62,11 @@ export const ROUTES = {
   ARTICLE_NEW: '/articles/new',
   ARTICLE_EDIT: (id: number | string = ':id') => `/articles/${id}/edit`,
   ARTICLE_DETAIL: (id: number | string = ':id') => `/articles/${id}`,
+  ARTICLE_PREVIEW: (id: number | string = ':id') => `/articles/${id}/preview`,
+  CONTENT_MEDIA_LIBRARY: '/content/media',
+
+  PUBLIC_NEWS: '/public/news',
+  PUBLIC_NEWS_DETAIL: (slug: string = ':slug') => `/public/news/${slug}`,
 
   // Gallery
   GALLERY_MEDIA: '/gallery/media',
@@ -103,6 +108,9 @@ export const ROUTES = {
   PUBLIC_ATLAS: '/public/atlas',
   PUBLIC_ATLAS_DETAIL: (id: number | string = ':id') => `/public/atlas/${id}`,
   PUBLIC_WEBINARS: '/public/webinars',
+  PUBLIC_WEBINAR_REPLAYS: '/public/webinars/replays',
+  PUBLIC_WEBINAR_DETAIL: (slug: string = ':slug') => `/public/webinars/${slug}`,
+  PUBLIC_WEBINAR_LIVE: (slug: string = ':slug') => `/public/webinars/${slug}/live`,
   PUBLIC_PODCASTS: '/public/podcasts',
   PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
   PUBLIC_ASSOCIATIONS: '/public/associations',

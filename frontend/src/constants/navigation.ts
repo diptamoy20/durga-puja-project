@@ -44,7 +44,15 @@ export const NAVIGATION: NavSection[] = [
   {
     label: 'Main',
     defaultOpen: true,
-    items: [{ label: 'Dashboard', icon: 'fa-gauge-high', to: ROUTES.DASHBOARD, end: true }],
+    items: [
+      {
+        label: 'Dashboard',
+        icon: 'fa-gauge-high',
+        to: ROUTES.DASHBOARD,
+        end: true,
+        permissions: [PERMISSIONS.VIEW_DASHBOARD],
+      },
+    ],
   },
 
   {
@@ -193,6 +201,7 @@ export const NAVIGATION: NavSection[] = [
         icon: 'fa-cloud-arrow-up',
         permissions: [PERMISSIONS.UPLOAD_MEDIA],
         to: ROUTES.GALLERY_UPLOAD,
+        end: true,
       },
       { label: 'Albums', icon: 'fa-photo-film', permissions: [PERMISSIONS.MANAGE_ALBUMS], to: ROUTES.GALLERY_ALBUMS },
       { label: 'Live Streaming', icon: 'fa-tower-broadcast' },
@@ -209,9 +218,10 @@ export const NAVIGATION: NavSection[] = [
         icon: 'fa-circle-plus',
         permissions: [PERMISSIONS.CREATE_WEBINARS],
         to: ROUTES.WEBINARS_NEW,
+        end: true,
       },
       { label: 'Live Now', icon: 'fa-tower-broadcast', tone: 'danger', to: `${ROUTES.WEBINARS}?status=LIVE` },
-      { label: 'Replay Recordings', icon: 'fa-circle-play', tone: 'success', to: `${ROUTES.WEBINARS}?status=RECORDED` },
+      { label: 'Replay Recordings', icon: 'fa-circle-play', tone: 'success', to: `${ROUTES.WEBINARS}?status=COMPLETED` },
       { label: 'Public Hub', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_WEBINARS },
     ],
   },
@@ -226,6 +236,7 @@ export const NAVIGATION: NavSection[] = [
         icon: 'fa-circle-plus',
         permissions: [PERMISSIONS.CREATE_PODCASTS, PERMISSIONS.CREATE_ARTICLES],
         to: ROUTES.PODCAST_NEW,
+        end: true,
       },
       {
         label: 'Published',
@@ -247,9 +258,37 @@ export const NAVIGATION: NavSection[] = [
     permissions: [PERMISSIONS.VIEW_ARTICLES],
     items: [
       { label: 'Articles', icon: 'fa-newspaper', to: ROUTES.ARTICLES },
+      { label: 'Media Library', icon: 'fa-images', to: ROUTES.CONTENT_MEDIA_LIBRARY, permissions: [PERMISSIONS.MANAGE_MEDIA] },
       { label: 'Drafts', icon: 'fa-file', to: `${ROUTES.ARTICLES}?status=DRAFT` },
-      { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.ARTICLES}?status=IN_REVIEW` },
-      { label: 'Published', icon: 'fa-tower-broadcast', tone: 'success', to: `${ROUTES.ARTICLES}?status=PUBLISHED` },
+      {
+        label: 'Pending Review',
+        icon: 'fa-hourglass-half',
+        tone: 'warning',
+        to: `${ROUTES.ARTICLES}?status=IN_REVIEW`,
+      },
+      {
+        label: 'Pending Approval',
+        icon: 'fa-circle-check',
+        tone: 'info',
+        to: `${ROUTES.ARTICLES}?status=APPROVED`,
+      },
+      {
+        label: 'Scheduled',
+        icon: 'fa-calendar',
+        to: `${ROUTES.ARTICLES}?status=SCHEDULED`,
+      },
+      {
+        label: 'Published',
+        icon: 'fa-tower-broadcast',
+        tone: 'success',
+        to: `${ROUTES.ARTICLES}?status=PUBLISHED`,
+      },
+      {
+        label: 'Rejected',
+        icon: 'fa-circle-xmark',
+        tone: 'danger',
+        to: `${ROUTES.ARTICLES}?status=REJECTED`,
+      },
     ],
   },
 
@@ -301,7 +340,7 @@ export const NAVIGATION: NavSection[] = [
     hiddenWhen: [PERMISSIONS.MANAGE_ALBUMS],
     items: [
       { label: 'Albums', icon: 'fa-photo-film', to: ROUTES.MY_COMMITTEE_ALBUMS },
-      { label: 'Create Album', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_ALBUM_NEW },
+      { label: 'Create Album', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_ALBUM_NEW, end: true },
     ],
   },
 

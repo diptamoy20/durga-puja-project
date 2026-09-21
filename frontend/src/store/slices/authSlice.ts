@@ -80,6 +80,24 @@ export const loadSession = createAsyncThunk<AuthUser | null, void, { rejectValue
   },
 );
 
+/** Reloads roles and permissions from the server without signing out. */
+export const refreshSession = createAsyncThunk<AuthUser, void, { rejectValue: string }>(
+  'auth/refreshSession',
+  async (_, { rejectWithValue }) => {
+    if (!tokenStorage.getAccessToken()) {
+      return rejectWithValue('Not signed in.');
+    }
+
+    try {
+      const user = await authService.me();
+      tokenStorage.setUser(user);
+      return user;
+    } catch (error) {
+      return rejectWithValue(errorMessage(error, 'Unable to refresh your session.'));
+    }
+  },
+);
+
 export const logout = createAsyncThunk<void, void>('auth/logout', async () => {
   const refreshToken = tokenStorage.getRefreshToken();
 
@@ -164,6 +182,11 @@ const authSlice = createSlice({
         state.initialising = false;
         state.user = null;
         state.isAuthenticated = false;
+      })
+
+      .addCase(refreshSession.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isAuthenticated = true;
       })
 
       .addCase(logout.fulfilled, (state) => {

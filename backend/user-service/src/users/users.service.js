@@ -189,8 +189,14 @@ let UsersService = UsersService_1 = class UsersService {
      * Creates a user and assigns roles atomically. When no password is supplied
      * one is generated and returned once, so the administrator can pass it on.
      */
+    assertSingleRole(roleIds) {
+        if (roleIds && roleIds.length > 1) {
+            throw shared_1.ServiceException.badRequest('A user can have only one role.', { roleIds });
+        }
+    }
     async create(payload) {
         const { data, actorId } = payload;
+        this.assertSingleRole(data.roleIds);
         const generated = data.password ? undefined : this.generatePassword();
         const plain = data.password ?? generated;
         try {
@@ -241,6 +247,7 @@ let UsersService = UsersService_1 = class UsersService {
     }
     async update(payload) {
         const { id, data, actorId } = payload;
+        this.assertSingleRole(data.roleIds);
         const existing = await this.findOrFail(id);
         // Deactivating the last Super Admin would lock everyone out.
         if (data.status && data.status !== database_1.UserStatus.ACTIVE) {
@@ -385,6 +392,7 @@ let UsersService = UsersService_1 = class UsersService {
     }
     async assignRoles(payload) {
         const { id, roleIds, actorId } = payload;
+        this.assertSingleRole(roleIds);
         const existing = await this.findOrFail(id);
         // Removing super-admin from the last holder would lock everyone out.
         const keepsSuperAdmin = await this.prisma.role.findFirst({

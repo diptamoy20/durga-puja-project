@@ -20,6 +20,7 @@ import { errorMessage } from '@/services/api';
 import { roleService } from '@/services/userService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { userMgmtBreadcrumbs } from '@/utils/userManagementHelpers';
 import type { PaginationMeta, Permission, Role, RoleListQuery, RoleStats } from '@/types';
 
 interface RoleFormValues {
@@ -184,7 +185,7 @@ export function RolesPage() {
       <PageHeader
         title="Role Management"
         description="Create and manage portal roles for access control."
-        breadcrumbs={[{ label: 'Dashboard', to: ROUTES.DASHBOARD }, { label: 'Roles' }]}
+        breadcrumbs={userMgmtBreadcrumbs({ label: 'Roles' })}
         actions={
           <>
             {canManagePermissions && (

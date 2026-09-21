@@ -97,6 +97,12 @@ const ArticleFormPage = lazy(() =>
 const ArticleDetailPage = lazy(() =>
   import('@/pages/articles/ArticleDetailPage').then((m) => ({ default: m.ArticleDetailPage })),
 );
+const ArticlePreviewPage = lazy(() =>
+  import('@/pages/articles/ArticlePreviewPage').then((m) => ({ default: m.ArticlePreviewPage })),
+);
+const MediaLibraryPage = lazy(() =>
+  import('@/pages/content/MediaLibraryPage').then((m) => ({ default: m.MediaLibraryPage })),
+);
 
 // Gallery & Media
 const MediaListPage = lazy(() =>
@@ -188,6 +194,15 @@ const PublicAtlasDetailPage = lazy(() =>
 const PublicWebinarsPage = lazy(() =>
   import('@/pages/public/PublicWebinarsPage').then((m) => ({ default: m.PublicWebinarsPage })),
 );
+const PublicWebinarDetailPage = lazy(() =>
+  import('@/pages/public/PublicWebinarDetailPage').then((m) => ({ default: m.PublicWebinarDetailPage })),
+);
+const PublicWebinarLivePage = lazy(() =>
+  import('@/pages/public/PublicWebinarLivePage').then((m) => ({ default: m.PublicWebinarLivePage })),
+);
+const PublicWebinarReplaysPage = lazy(() =>
+  import('@/pages/public/PublicWebinarReplaysPage').then((m) => ({ default: m.PublicWebinarReplaysPage })),
+);
 const PublicPodcastsPage = lazy(() =>
   import('@/pages/public/PublicPodcastsPage').then((m) => ({ default: m.PublicPodcastsPage })),
 );
@@ -198,7 +213,13 @@ const PublicAssociationsPage = lazy(() =>
   import('@/pages/public/PublicAssociationsPage').then((m) => ({ default: m.PublicAssociationsPage })),
 );
 const PublicAssociationDetailPage = lazy(() =>
-  import('@/pages/public/PublicAssociationDetailPage').then((m) => ({ default: m.PublicAssociationDetailPage })),
+  import('@/pages/public/PublicAssociationDetailPage').then((m) => ({ default: m.PublicAssociationDetailPage })
+));
+const PublicArticlesPage = lazy(() =>
+  import('@/pages/public/PublicArticlesPage').then((m) => ({ default: m.PublicArticlesPage })),
+);
+const PublicArticleDetailPage = lazy(() =>
+  import('@/pages/public/PublicArticleDetailPage').then((m) => ({ default: m.PublicArticleDetailPage })),
 );
 
 // Podcast Admin Pages
@@ -217,6 +238,12 @@ export function AppRoutes() {
       <Route path={ROUTES.PUBLIC_ATLAS} element={<PublicAtlasPage />} />
       <Route path={ROUTES.PUBLIC_ATLAS_DETAIL()} element={<PublicAtlasDetailPage />} />
 
+      {/* Standalone public webinars (custom festival layout) */}
+      <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
+      <Route path={ROUTES.PUBLIC_WEBINAR_REPLAYS} element={<PublicWebinarReplaysPage />} />
+      <Route path={ROUTES.PUBLIC_WEBINAR_DETAIL()} element={<PublicWebinarDetailPage />} />
+      <Route path={ROUTES.PUBLIC_WEBINAR_LIVE()} element={<PublicWebinarLivePage />} />
+
       {/* Public Pages Layout (Outside auth) */}
       <Route element={<PublicLayout />}>
         <Route path={ROUTES.PUBLIC_CHOOSE_TYPE} element={<ChooseAccountTypePage />} />
@@ -230,6 +257,8 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
         <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
         <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
+        <Route path={ROUTES.PUBLIC_NEWS} element={<PublicArticlesPage />} />
+        <Route path={ROUTES.PUBLIC_NEWS_DETAIL()} element={<PublicArticleDetailPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -254,7 +283,14 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+        <Route
+          path={ROUTES.DASHBOARD}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_DASHBOARD]}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User Management */}
         <Route
@@ -576,6 +612,22 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.EDIT_ARTICLES]}>
               <ArticleFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ARTICLE_PREVIEW()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES]}>
+              <ArticlePreviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.CONTENT_MEDIA_LIBRARY}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES, PERMISSIONS.MANAGE_MEDIA]}>
+              <MediaLibraryPage />
             </ProtectedRoute>
           }
         />

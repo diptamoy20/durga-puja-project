@@ -222,7 +222,12 @@ export function isApiError(value: unknown): value is ApiError {
 }
 
 export function errorMessage(value: unknown, fallback = 'Something went wrong.'): string {
-  if (isApiError(value)) return value.message;
+  if (isApiError(value)) {
+    if (Array.isArray(value.details) && value.details.length > 0) {
+      return value.details.map(String).join(' ');
+    }
+    return value.message;
+  }
   if (value instanceof Error) return value.message;
   return fallback;
 }
