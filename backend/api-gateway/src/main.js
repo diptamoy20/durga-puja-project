@@ -10,10 +10,13 @@ const core_1 = require("@nestjs/core");
 const swagger_1 = require("@nestjs/swagger");
 const compression_1 = __importDefault(require("compression"));
 const helmet_1 = __importDefault(require("helmet"));
+const express_1 = __importDefault(require("express"));
 const app_module_1 = require("./app.module");
 async function bootstrap() {
     const logger = new common_1.Logger('ApiGateway');
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { bufferLogs: true });
+    app.use(express_1.default.json({ limit: '25mb' }));
+    app.use(express_1.default.urlencoded({ limit: '25mb', extended: true }));
     const config = app.get(config_1.ConfigService);
     const port = config.get('gateway.port') ?? 5050;
     const prefix = config.get('gateway.globalPrefix') ?? 'api';

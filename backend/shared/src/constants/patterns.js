@@ -6,7 +6,7 @@
  * silently times out.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NOTIFICATION_PATTERNS = exports.EVENTS_PATTERNS = exports.ATLAS_PATTERNS = exports.GALLERY_PATTERNS = exports.CONTENT_PATTERNS = exports.REGISTRATION_PATTERNS = exports.USER_PATTERNS = exports.AUTH_PATTERNS = exports.SERVICE_TOKENS = void 0;
+exports.TOURISM_PATTERNS = exports.NOTIFICATION_PATTERNS = exports.EVENTS_PATTERNS = exports.ATLAS_PATTERNS = exports.GALLERY_PATTERNS = exports.CONTENT_PATTERNS = exports.REGISTRATION_PATTERNS = exports.USER_PATTERNS = exports.AUTH_PATTERNS = exports.SERVICE_TOKENS = void 0;
 exports.SERVICE_TOKENS = {
     AUTH: 'AUTH_SERVICE',
     USER: 'USER_SERVICE',
@@ -171,4 +171,55 @@ exports.NOTIFICATION_PATTERNS = {
     SEND_EMAIL: 'notification.send_email',
     SEND_PUSH: 'notification.send_push',
     FIND_ALL: 'notification.find_all',
+    STATS: 'notification.stats',
+    RETRY_FAILED: 'notification.retry_failed',
 };
+exports.TOURISM_PATTERNS = {
+    // Public Concierge
+    CAPTCHA_GENERATE: 'tourism.captcha_generate',
+    CIRCUITS_PUBLIC: 'tourism.circuits_public',
+    CIRCUIT_DETAIL: 'tourism.circuit_detail',
+    STAYS_PUBLIC: 'tourism.stays_public',
+    TRANSPORTS_PUBLIC: 'tourism.transports_public',
+    CALENDAR_PUBLIC: 'tourism.calendar_public',
+    ITINERARIES_PUBLIC: 'tourism.itineraries_public',
+    ITINERARY_DETAIL: 'tourism.itinerary_detail',
+    KNOWLEDGE_PUBLIC: 'tourism.knowledge_public',
+    OPERATORS_PUBLIC: 'tourism.operators_public',
+    RECOMMENDATIONS: 'tourism.recommendations',
+    ASSISTANT_CHAT: 'tourism.assistant_chat',
+    ENQUIRY_SUBMIT: 'tourism.enquiry_submit',
+    ENQUIRY_TRACK: 'tourism.enquiry_track',
+    // Admin CMS
+    ADMIN_STATS: 'tourism.admin_stats',
+    ADMIN_CIRCUITS_LIST: 'tourism.admin_circuits_list',
+    ADMIN_CIRCUIT_CREATE: 'tourism.admin_circuit_create',
+    ADMIN_CIRCUIT_UPDATE: 'tourism.admin_circuit_update',
+    ADMIN_CIRCUIT_DELETE: 'tourism.admin_circuit_delete',
+    ADMIN_STAYS_LIST: 'tourism.admin_stays_list',
+    ADMIN_STAY_CREATE: 'tourism.admin_stay_create',
+    ADMIN_STAY_UPDATE: 'tourism.admin_stay_update',
+    ADMIN_STAY_DELETE: 'tourism.admin_stay_delete',
+    ADMIN_TRANSPORTS_LIST: 'tourism.admin_transports_list',
+    ADMIN_TRANSPORT_CREATE: 'tourism.admin_transport_create',
+    ADMIN_TRANSPORT_UPDATE: 'tourism.admin_transport_update',
+    ADMIN_TRANSPORT_DELETE: 'tourism.admin_transport_delete',
+    ADMIN_ITINERARIES_LIST: 'tourism.admin_itineraries_list',
+    ADMIN_ITINERARY_CREATE: 'tourism.admin_itinerary_create',
+    ADMIN_ITINERARY_UPDATE: 'tourism.admin_itinerary_update',
+    ADMIN_ITINERARY_DELETE: 'tourism.admin_itinerary_delete',
+    ADMIN_KNOWLEDGE_LIST: 'tourism.admin_knowledge_list',
+    ADMIN_KNOWLEDGE_CREATE: 'tourism.admin_knowledge_create',
+    ADMIN_KNOWLEDGE_UPDATE: 'tourism.admin_knowledge_update',
+    ADMIN_KNOWLEDGE_DELETE: 'tourism.admin_knowledge_delete',
+    ADMIN_OPERATORS_LIST: 'tourism.admin_operators_list',
+    ADMIN_OPERATOR_CREATE: 'tourism.admin_operator_create',
+    ADMIN_OPERATOR_UPDATE: 'tourism.admin_operator_update',
+    ADMIN_OPERATOR_DELETE: 'tourism.admin_operator_delete',
+    ADMIN_ENQUIRIES_LIST: 'tourism.admin_enquiries_list',
+    ADMIN_ENQUIRY_DETAIL: 'tourism.admin_enquiry_detail',
+    ADMIN_ENQUIRY_UPDATE_STATUS: 'tourism.admin_enquiry_update_status',
+    ADMIN_ENQUIRY_ASSIGN: 'tourism.admin_enquiry_assign',
+    ADMIN_ENQUIRY_ADD_NOTE: 'tourism.admin_enquiry_add_note',
+};
+

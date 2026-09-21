@@ -89,6 +89,13 @@ exports.PERMISSIONS = {
     MANAGE_WEBINAR_RSVPS: 'manage_webinar_rsvps',
     // Settings
     MANAGE_SETTINGS: 'manage_settings',
+    // Notifications
+    VIEW_NOTIFICATIONS: 'view_notifications',
+    SEND_NOTIFICATIONS: 'send_notifications',
+    // Tourism Concierge
+    VIEW_TOURISM: 'view_tourism',
+    MANAGE_TOURISM: 'manage_tourism',
+    MANAGE_TOURISM_ENQUIRIES: 'manage_tourism_enquiries',
 };
 /** Human-readable definitions used to populate the `permissions` table. */
 exports.PERMISSION_DEFINITIONS = [
@@ -158,5 +165,10 @@ exports.PERMISSION_DEFINITIONS = [
     { module: 'Webinars', permissionName: 'Delete Webinars', permissionKey: exports.PERMISSIONS.DELETE_WEBINARS },
     { module: 'Webinars', permissionName: 'Manage Webinar RSVPs', permissionKey: exports.PERMISSIONS.MANAGE_WEBINAR_RSVPS },
     { module: 'Settings', permissionName: 'Manage Settings', permissionKey: exports.PERMISSIONS.MANAGE_SETTINGS },
+    { module: 'Notifications', permissionName: 'View Notifications', permissionKey: exports.PERMISSIONS.VIEW_NOTIFICATIONS },
+    { module: 'Notifications', permissionName: 'Send Notifications', permissionKey: exports.PERMISSIONS.SEND_NOTIFICATIONS },
+    { module: 'Tourism Concierge', permissionName: 'View Tourism Concierge', permissionKey: exports.PERMISSIONS.VIEW_TOURISM },
+    { module: 'Tourism Concierge', permissionName: 'Manage Tourism Concierge', permissionKey: exports.PERMISSIONS.MANAGE_TOURISM },
+    { module: 'Tourism Concierge', permissionName: 'Manage Tourism Enquiries', permissionKey: exports.PERMISSIONS.MANAGE_TOURISM_ENQUIRIES },
 ];
 exports.ALL_PERMISSION_KEYS = exports.PERMISSION_DEFINITIONS.map((definition) => definition.permissionKey);

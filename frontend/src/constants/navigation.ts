@@ -221,6 +221,21 @@ export const NAVIGATION: NavSection[] = [
   },
 
   {
+    label: 'Tourism Concierge',
+    permissions: [PERMISSIONS.VIEW_TOURISM],
+    items: [
+      { label: 'Enquiries', icon: 'fa-envelope-open-text', to: ROUTES.ADMIN_TOURISM_ENQUIRIES },
+      { label: 'Circuits', icon: 'fa-route', to: ROUTES.ADMIN_TOURISM_CIRCUITS },
+      { label: 'Stays', icon: 'fa-hotel', to: ROUTES.ADMIN_TOURISM_STAYS },
+      { label: 'Transports', icon: 'fa-bus', to: ROUTES.ADMIN_TOURISM_TRANSPORTS },
+      { label: 'Itineraries', icon: 'fa-calendar-days', to: ROUTES.ADMIN_TOURISM_ITINERARIES },
+      { label: 'Knowledge Base', icon: 'fa-book-atlas', to: ROUTES.ADMIN_TOURISM_KNOWLEDGE },
+      { label: 'Tour Operators', icon: 'fa-handshake', to: ROUTES.ADMIN_TOURISM_OPERATORS },
+      { label: 'Public Portal', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_TOURISM_CONCIERGE },
+    ],
+  },
+
+  {
     label: 'Content Management',
     permissions: [PERMISSIONS.VIEW_ARTICLES],
     items: [

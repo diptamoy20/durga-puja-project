@@ -251,6 +251,10 @@ model User {
   createdPodcasts     PodcastEpisode[]       @relation("PodcastCreatedBy")
   updatedPodcasts     PodcastEpisode[]       @relation("PodcastUpdatedBy")
 
+  // Tourism domain
+  assignedEnquiries   TourismEnquiry[]       @relation("TourismEnquiryAssignedTo")
+  enquiryHistories    TourismEnquiryHistory[]
+
   @@index([status])
   @@index([createdAt])
   @@index([departmentId])
@@ -1037,4 +1041,205 @@ model PodcastSubscriber {
 
   @@map("podcast_subscribers")
 }
+
+// ===========================================================================
+// Tourism Concierge
+// ===========================================================================
+
+model TourismCircuit {
+  id                   Int       @id @default(autoincrement())
+  name                 String    @db.VarChar(255)
+  slug                 String    @unique @db.VarChar(255)
+  region               String    @db.VarChar(100)
+  description          String    @db.Text
+  highlightPandals     Json?     @map("highlight_pandals")
+  tags                 String[]  @default([])
+  duration             String    @db.VarChar(100)
+  bestTimeOfDay        String?   @map("best_time_of_day") @db.VarChar(100)
+  recommendedTransport String?   @map("recommended_transport") @db.VarChar(255)
+  crowdLevel           String?   @map("crowd_level") @db.VarChar(50)
+  coverImageUrl        String?   @map("cover_image_url") @db.Text
+  galleryImages        Json?     @map("gallery_images")
+  isActive             Boolean   @default(true) @map("is_active")
+  isFeatured           Boolean   @default(false) @map("is_featured")
+  sortOrder            Int       @default(0) @map("sort_order")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  @@index([region, isActive])
+  @@index([isActive, sortOrder])
+  @@map("tourism_circuits")
+}
+
+model TourismStay {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  slug          String   @unique @db.VarChar(255)
+  type          String   @db.VarChar(100)
+  location      String   @db.Text
+  city          String   @default("Kolkata") @db.VarChar(100)
+  district      String   @default("Kolkata") @db.VarChar(100)
+  priceRange    String   @map("price_range") @db.VarChar(100)
+  budgetTier    String   @default("MID_RANGE") @map("budget_tier") @db.VarChar(50)
+  starRating    Int?     @default(3) @map("star_rating")
+  amenities     String[] @default([])
+  contactPhone  String?  @map("contact_phone") @db.VarChar(50)
+  contactEmail  String?  @map("contact_email") @db.VarChar(180)
+  bookingUrl    String?  @map("booking_url") @db.VarChar(500)
+  description   String?  @db.Text
+  coverImageUrl String?  @map("cover_image_url") @db.Text
+  isWbtdc       Boolean  @default(false) @map("is_wbtdc")
+  isActive      Boolean  @default(true) @map("is_active")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([type, isActive])
+  @@index([district, isWbtdc])
+  @@map("tourism_stays")
+}
+
+model TourismTransport {
+  id                Int      @id @default(autoincrement())
+  name              String   @db.VarChar(255)
+  category          String   @db.VarChar(100)
+  operatingHours    String   @map("operating_hours") @db.VarChar(255)
+  routeDescription  String   @map("route_description") @db.Text
+  fareGuide         String   @map("fare_guide") @db.VarChar(255)
+  bookingOrHelpline String?  @map("booking_or_helpline") @db.VarChar(255)
+  tips              Json?
+  coverImageUrl     String?  @map("cover_image_url") @db.Text
+  isActive          Boolean  @default(true) @map("is_active")
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([category, isActive])
+  @@map("tourism_transports")
+}
+
+model TourismFestivalDay {
+  id              Int      @id @default(autoincrement())
+  tithiName       String   @map("tithi_name") @db.VarChar(100)
+  date            DateTime
+  rituals         String   @db.Text
+  tourismTips     String   @map("tourism_tips") @db.Text
+  bestTimeWindows String   @map("best_time_windows") @db.VarChar(255)
+  highlights      Json?
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([date])
+  @@map("tourism_festival_days")
+}
+
+model TourismItinerary {
+  id                 Int      @id @default(autoincrement())
+  title              String   @db.VarChar(255)
+  slug               String   @unique @db.VarChar(255)
+  durationDays       Int      @default(3) @map("duration_days")
+  targetAudience     String   @map("target_audience") @db.VarChar(150)
+  overview           String   @db.Text
+  dayPlans           Json     @map("day_plans")
+  includedHighlights String[] @default([]) @map("included_highlights")
+  coverImageUrl      String?  @map("cover_image_url") @db.Text
+  isCurated          Boolean  @default(true) @map("is_curated")
+  isActive           Boolean  @default(true) @map("is_active")
+  sortOrder          Int      @default(0) @map("sort_order")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([durationDays, isActive])
+  @@map("tourism_itineraries")
+}
+
+model TourismKnowledge {
+  id        Int      @id @default(autoincrement())
+  category  String   @db.VarChar(100)
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  quickTips String[] @default([]) @map("quick_tips")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([category, isActive])
+  @@map("tourism_knowledge")
+}
+
+model TourismOperator {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(255)
+  licenseNo       String?  @map("license_no") @db.VarChar(100)
+  operatorType    String   @map("operator_type") @db.VarChar(100)
+  contactPerson   String?  @map("contact_person") @db.VarChar(150)
+  phone           String   @db.VarChar(50)
+  email           String   @db.VarChar(180)
+  website         String?  @db.VarChar(500)
+  address         String?  @db.Text
+  packagesOffered Json?    @map("packages_offered")
+  rating          Decimal? @default(4.5) @db.Decimal(2, 1)
+  isVerified      Boolean  @default(true) @map("is_verified")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, isVerified])
+  @@map("tourism_operators")
+}
+
+model TourismEnquiry {
+  id                  Int       @id @default(autoincrement())
+  enquiryCode         String    @unique @map("enquiry_code") @db.VarChar(50)
+  fullName            String    @map("full_name") @db.VarChar(150)
+  email               String    @db.VarChar(180)
+  phone               String    @db.VarChar(50)
+  country             String    @default("India") @db.VarChar(100)
+  city                String?   @db.VarChar(100)
+  numberOfTravellers  Int       @default(1) @map("number_of_travellers")
+  startDate           DateTime? @map("start_date")
+  endDate             DateTime? @map("end_date")
+  durationPreference  String?   @map("duration_preference") @db.VarChar(100)
+  preferredCircuits   Json?     @map("preferred_circuits")
+  interests           String[]  @default([])
+  stayPreference      String?   @map("stay_preference") @db.VarChar(100)
+  transportPreference String?   @map("transport_preference") @db.VarChar(100)
+  pujaPreferences     String[]  @default([]) @map("puja_preferences")
+  specialRequirements String?   @map("special_requirements") @db.Text
+  status              String    @default("NEW") @db.VarChar(50)
+  assignedToId        Int?      @map("assigned_to_id")
+  adminRemarks        String?   @map("admin_remarks") @db.Text
+  consentGiven        Boolean   @default(true) @map("consent_given")
+  preferredLanguage   String    @default("en") @map("preferred_language") @db.VarChar(10)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  assignedTo User?                   @relation("TourismEnquiryAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  histories  TourismEnquiryHistory[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@map("tourism_enquiries")
+}
+
+model TourismEnquiryHistory {
+  id          Int      @id @default(autoincrement())
+  enquiryId   Int      @map("enquiry_id")
+  changedById Int?     @map("changed_by_id")
+  action      String   @db.VarChar(50)
+  fromStatus  String?  @map("from_status") @db.VarChar(50)
+  toStatus    String?  @map("to_status") @db.VarChar(50)
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  enquiry   TourismEnquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  changedBy User?          @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([enquiryId, createdAt])
+  @@map("tourism_enquiry_history")
+}
+
 

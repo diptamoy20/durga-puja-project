@@ -174,12 +174,73 @@ const PodcastDetailPage = lazy(() =>
   import('@/pages/public/PodcastDetailPage').then((m) => ({ default: m.PodcastDetailPage })),
 );
 
+// Public Tourism Concierge Pages
+const PublicTourismConciergePage = lazy(() =>
+  import('@/pages/public/PublicTourismConciergePage').then((m) => ({ default: m.PublicTourismConciergePage })),
+);
+const PublicTripPlannerPage = lazy(() =>
+  import('@/pages/public/PublicTripPlannerPage').then((m) => ({ default: m.PublicTripPlannerPage })),
+);
+const PublicTourismCircuitsPage = lazy(() =>
+  import('@/pages/public/PublicTourismCircuitsPage').then((m) => ({ default: m.PublicTourismCircuitsPage })),
+);
+const PublicTourismCircuitDetailPage = lazy(() =>
+  import('@/pages/public/PublicTourismCircuitDetailPage').then((m) => ({ default: m.PublicTourismCircuitDetailPage })),
+);
+const PublicTourismItinerariesPage = lazy(() =>
+  import('@/pages/public/PublicTourismItinerariesPage').then((m) => ({ default: m.PublicTourismItinerariesPage })),
+);
+const PublicTourismItineraryDetailPage = lazy(() =>
+  import('@/pages/public/PublicTourismItineraryDetailPage').then((m) => ({ default: m.PublicTourismItineraryDetailPage })),
+);
+const PublicTourismStaysPage = lazy(() =>
+  import('@/pages/public/PublicTourismStaysPage').then((m) => ({ default: m.PublicTourismStaysPage })),
+);
+const PublicTourismTransportsPage = lazy(() =>
+  import('@/pages/public/PublicTourismTransportsPage').then((m) => ({ default: m.PublicTourismTransportsPage })),
+);
+const PublicTourismKnowledgePage = lazy(() =>
+  import('@/pages/public/PublicTourismKnowledgePage').then((m) => ({ default: m.PublicTourismKnowledgePage })),
+);
+const PublicTourismOperatorsPage = lazy(() =>
+  import('@/pages/public/PublicTourismOperatorsPage').then((m) => ({ default: m.PublicTourismOperatorsPage })),
+);
+const PublicTourismEnquiryPage = lazy(() =>
+  import('@/pages/public/PublicTourismEnquiryPage').then((m) => ({ default: m.PublicTourismEnquiryPage })),
+);
+
 // Podcast Admin Pages
 const PodcastListPage = lazy(() =>
   import('@/pages/podcasts/PodcastListPage').then((m) => ({ default: m.PodcastListPage })),
 );
 const PodcastFormPage = lazy(() =>
   import('@/pages/podcasts/PodcastFormPage').then((m) => ({ default: m.PodcastFormPage })),
+);
+
+// Tourism Concierge Admin Pages
+const TourismEnquiriesPage = lazy(() =>
+  import('@/pages/tourism/TourismEnquiriesPage').then((m) => ({ default: m.TourismEnquiriesPage })),
+);
+const TourismEnquiryDetailPage = lazy(() =>
+  import('@/pages/tourism/TourismEnquiryDetailPage').then((m) => ({ default: m.TourismEnquiryDetailPage })),
+);
+const TourismCircuitsManagePage = lazy(() =>
+  import('@/pages/tourism/TourismCircuitsManagePage').then((m) => ({ default: m.TourismCircuitsManagePage })),
+);
+const TourismStaysManagePage = lazy(() =>
+  import('@/pages/tourism/TourismStaysManagePage').then((m) => ({ default: m.TourismStaysManagePage })),
+);
+const TourismTransportsManagePage = lazy(() =>
+  import('@/pages/tourism/TourismTransportsManagePage').then((m) => ({ default: m.TourismTransportsManagePage })),
+);
+const TourismItinerariesManagePage = lazy(() =>
+  import('@/pages/tourism/TourismItinerariesManagePage').then((m) => ({ default: m.TourismItinerariesManagePage })),
+);
+const TourismKnowledgeManagePage = lazy(() =>
+  import('@/pages/tourism/TourismKnowledgeManagePage').then((m) => ({ default: m.TourismKnowledgeManagePage })),
+);
+const TourismOperatorsManagePage = lazy(() =>
+  import('@/pages/tourism/TourismOperatorsManagePage').then((m) => ({ default: m.TourismOperatorsManagePage })),
 );
 
 
@@ -201,6 +262,19 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
         <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
         <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
+
+        {/* Public Tourism Concierge */}
+        <Route path={ROUTES.PUBLIC_TOURISM_CONCIERGE} element={<PublicTourismConciergePage />} />
+        <Route path={ROUTES.PUBLIC_TRIP_PLANNER} element={<PublicTripPlannerPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_CIRCUITS} element={<PublicTourismCircuitsPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_CIRCUIT_DETAIL()} element={<PublicTourismCircuitDetailPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_ITINERARIES} element={<PublicTourismItinerariesPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_ITINERARY_DETAIL()} element={<PublicTourismItineraryDetailPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_STAYS} element={<PublicTourismStaysPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_TRANSPORTS} element={<PublicTourismTransportsPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_KNOWLEDGE} element={<PublicTourismKnowledgePage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_OPERATORS} element={<PublicTourismOperatorsPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_ENQUIRY} element={<PublicTourismEnquiryPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -525,6 +599,72 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.EDIT_PODCASTS, PERMISSIONS.EDIT_ARTICLES]}>
               <PodcastFormPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Tourism Concierge Admin */}
+        <Route
+          path={ROUTES.ADMIN_TOURISM_ENQUIRIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismEnquiriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_ENQUIRY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismEnquiryDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_CIRCUITS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismCircuitsManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_STAYS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismStaysManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_TRANSPORTS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismTransportsManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_ITINERARIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismItinerariesManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_KNOWLEDGE}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismKnowledgeManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_OPERATORS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismOperatorsManagePage />
             </ProtectedRoute>
           }
         />

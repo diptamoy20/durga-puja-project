@@ -131,14 +131,30 @@ let TaxonomyService = class TaxonomyService {
     async removeCategory(payload) {
         const category = await this.prisma.category.findUnique({
             where: { id: payload.id },
-            include: { _count: { select: { subcategories: true } } },
+            include: {
+                subcategories: {
+                    include: {
+                        _count: { select: { articles: true } },
+                    },
+                },
+                _count: { select: { albums: true } },
+            },
         });
         if (!category)
             throw shared_1.ServiceException.notFound(`No category exists with id ${payload.id}.`);
-        if (category._count.subcategories > 0) {
-            throw shared_1.ServiceException.conflict('Cannot delete a category that has subcategories.', { counts: category._count });
+        
+        const hasArticles = category.subcategories.some(s => s._count?.articles > 0);
+        if (hasArticles) {
+            throw shared_1.ServiceException.conflict('Cannot delete category because some of its subcategories contain published or drafted articles. Please reassign or delete those articles first.');
         }
-        await this.prisma.category.delete({ where: { id: payload.id } });
+        if (category._count.albums > 0) {
+            throw shared_1.ServiceException.conflict('Cannot delete category because it is referenced by gallery albums.');
+        }
+
+        await this.prisma.$transaction([
+            this.prisma.subcategory.deleteMany({ where: { categoryId: payload.id } }),
+            this.prisma.category.delete({ where: { id: payload.id } }),
+        ]);
         return { id: payload.id, deleted: true };
     }
     async findAllSubcategories(query) {
@@ -216,9 +232,13 @@ let TaxonomyService = class TaxonomyService {
     async removeSubcategory(payload) {
         const subcategory = await this.prisma.subcategory.findUnique({
             where: { id: payload.id },
+            include: { _count: { select: { articles: true } } },
         });
         if (!subcategory) {
             throw shared_1.ServiceException.notFound(`No subcategory exists with id ${payload.id}.`);
+        }
+        if (subcategory._count?.articles > 0) {
+            throw shared_1.ServiceException.conflict('Cannot delete subcategory because it is referenced by existing articles. Please reassign or delete those articles first.');
         }
         await this.prisma.subcategory.delete({ where: { id: payload.id } });
         return { id: payload.id, deleted: true };

@@ -98,6 +98,29 @@ export const ROUTES = {
   PUBLIC_PODCASTS: '/public/podcasts',
   PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
 
+  // Public Tourism Concierge
+  PUBLIC_TOURISM_CONCIERGE: '/public/tourism',
+  PUBLIC_TRIP_PLANNER: '/public/tourism/trip-planner',
+  PUBLIC_TOURISM_CIRCUITS: '/public/tourism/circuits',
+  PUBLIC_TOURISM_CIRCUIT_DETAIL: (slug: string = ':slug') => `/public/tourism/circuits/${slug}`,
+  PUBLIC_TOURISM_ITINERARIES: '/public/tourism/itineraries',
+  PUBLIC_TOURISM_ITINERARY_DETAIL: (slug: string = ':slug') => `/public/tourism/itineraries/${slug}`,
+  PUBLIC_TOURISM_STAYS: '/public/tourism/stays',
+  PUBLIC_TOURISM_TRANSPORTS: '/public/tourism/transports',
+  PUBLIC_TOURISM_KNOWLEDGE: '/public/tourism/knowledge',
+  PUBLIC_TOURISM_OPERATORS: '/public/tourism/operators',
+  PUBLIC_TOURISM_ENQUIRY: '/public/tourism/enquiry',
+
+  // Admin Tourism Concierge
+  ADMIN_TOURISM_ENQUIRIES: '/admin/tourism/enquiries',
+  ADMIN_TOURISM_ENQUIRY_DETAIL: (id: number | string = ':id') => `/admin/tourism/enquiries/${id}`,
+  ADMIN_TOURISM_CIRCUITS: '/admin/tourism/circuits',
+  ADMIN_TOURISM_STAYS: '/admin/tourism/stays',
+  ADMIN_TOURISM_TRANSPORTS: '/admin/tourism/transports',
+  ADMIN_TOURISM_ITINERARIES: '/admin/tourism/itineraries',
+  ADMIN_TOURISM_KNOWLEDGE: '/admin/tourism/knowledge',
+  ADMIN_TOURISM_OPERATORS: '/admin/tourism/operators',
+
   FORBIDDEN: '/forbidden',
 } as const;
 

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoader } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/ui/Badge';
@@ -10,17 +12,22 @@ import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { subcategoryService } from '@/services/contentService';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
 import type { Subcategory } from '@/types/content';
 import { formatCategoryDate } from '@/pages/categories/CategoriesPage';
 
 export function SubcategoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const subcategoryId = Number(id);
+  const navigate = useNavigate();
+  const toast = useToast();
   const { can } = useAuth();
 
   const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!Number.isFinite(subcategoryId)) return;
@@ -46,6 +53,24 @@ export function SubcategoryDetailPage() {
       active = false;
     };
   }, [subcategoryId]);
+
+  const handleDelete = async () => {
+    if (!subcategory) return;
+    setDeleting(true);
+    try {
+      await subcategoryService.remove(subcategory.id);
+      toast.success('Subcategory deleted successfully.');
+      navigate(ROUTES.SUBCATEGORIES);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Failed to delete subcategory.';
+      toast.error(msg);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return <PageLoader label="Loading subcategory" />;
@@ -75,9 +100,14 @@ export function SubcategoryDetailPage() {
         actions={
           <>
             {canManage && (
-              <Link to={ROUTES.SUBCATEGORY_EDIT(subcategory.id)} className="btn btn--primary btn--md">
-                Edit
-              </Link>
+              <>
+                <Link to={ROUTES.SUBCATEGORY_EDIT(subcategory.id)} className="btn btn--primary btn--md">
+                  Edit
+                </Link>
+                <Button variant="danger" size="md" onClick={() => setShowDeleteConfirm(true)}>
+                  Delete
+                </Button>
+              </>
             )}
             <Link to={ROUTES.SUBCATEGORIES} className="btn btn--secondary btn--md">
               Back
@@ -116,6 +146,17 @@ export function SubcategoryDetailPage() {
           )}
         </dl>
       </Card>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete Subcategory"
+        message={`Are you sure you want to delete subcategory "${subcategory.name}"?`}
+        confirmLabel="Delete"
+        destructive
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

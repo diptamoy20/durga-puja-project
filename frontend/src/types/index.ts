@@ -9,3 +9,4 @@ export type * from './gallery';
 export type * from './atlas';
 export type * from './events';
 export type * from './podcast';
+export type * from './tourism';

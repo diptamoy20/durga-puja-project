@@ -96,6 +96,11 @@ export const PERMISSIONS = {
 
   // Settings
   MANAGE_SETTINGS: 'manage_settings',
+
+  // Tourism Concierge
+  VIEW_TOURISM: 'view_tourism',
+  MANAGE_TOURISM: 'manage_tourism',
+  MANAGE_TOURISM_ENQUIRIES: 'manage_tourism_enquiries',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

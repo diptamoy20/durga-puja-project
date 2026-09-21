@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContentController = void 0;
 const shared_1 = require("@dpgc/shared");
@@ -20,14 +20,17 @@ const microservices_1 = require("@nestjs/microservices");
 const articles_service_1 = require("./articles/articles.service");
 const taxonomy_service_1 = require("./taxonomy/taxonomy.service");
 const podcasts_service_1 = require("./podcasts/podcasts.service");
+const tourism_service_1 = require("./tourism/tourism.service");
 let ContentController = class ContentController {
     articles;
     taxonomy;
     podcasts;
-    constructor(articles, taxonomy, podcasts) {
+    tourism;
+    constructor(articles, taxonomy, podcasts, tourism) {
         this.articles = articles;
         this.taxonomy = taxonomy;
         this.podcasts = podcasts;
+        this.tourism = tourism;
     }
     ping() {
         return { service: 'content-service', status: 'ok' };
@@ -133,6 +136,139 @@ let ContentController = class ContentController {
     }
     podcastRss() {
         return this.podcasts.getRssData();
+    }
+    // Tourism Concierge
+    tourismCaptchaGenerate() {
+        return this.tourism.generateCaptcha();
+    }
+    tourismCircuitsPublic(payload) {
+        return this.tourism.getCircuits(payload);
+    }
+    tourismCircuitDetail(payload) {
+        return this.tourism.getCircuitBySlug(payload.slug);
+    }
+    tourismStaysPublic(payload) {
+        return this.tourism.getStays(payload);
+    }
+    tourismTransportsPublic() {
+        return this.tourism.getTransports();
+    }
+    tourismCalendarPublic() {
+        return this.tourism.getFestivalCalendar();
+    }
+    tourismItinerariesPublic(payload) {
+        return this.tourism.getItineraries(payload);
+    }
+    tourismItineraryDetail(payload) {
+        return this.tourism.getItineraryBySlug(payload.slug);
+    }
+    tourismKnowledgePublic() {
+        return this.tourism.getKnowledge();
+    }
+    tourismOperatorsPublic() {
+        return this.tourism.getOperators();
+    }
+    tourismRecommendations(payload) {
+        return this.tourism.getRecommendations(payload);
+    }
+    tourismAssistantChat(payload) {
+        return this.tourism.handleChatbot(payload);
+    }
+    tourismEnquirySubmit(payload) {
+        return this.tourism.submitEnquiry(payload);
+    }
+    tourismEnquiryTrack(payload) {
+        return this.tourism.trackEnquiry(payload.code);
+    }
+    tourismAdminStats() {
+        return this.tourism.getAdminStats();
+    }
+    tourismAdminCircuitsList(payload) {
+        return this.tourism.getCircuits(payload);
+    }
+    tourismAdminCircuitCreate(payload) {
+        return this.tourism.createCircuit(payload);
+    }
+    tourismAdminCircuitUpdate(payload) {
+        return this.tourism.updateCircuit(payload);
+    }
+    tourismAdminCircuitDelete(payload) {
+        return this.tourism.deleteCircuit(payload.id);
+    }
+    tourismAdminStaysList(payload) {
+        return this.tourism.getStays(payload);
+    }
+    tourismAdminStayCreate(payload) {
+        return this.tourism.createStay(payload);
+    }
+    tourismAdminStayUpdate(payload) {
+        return this.tourism.updateStay(payload);
+    }
+    tourismAdminStayDelete(payload) {
+        return this.tourism.deleteStay(payload.id);
+    }
+    tourismAdminTransportsList() {
+        return this.tourism.getTransports();
+    }
+    tourismAdminTransportCreate(payload) {
+        return this.tourism.createTransport(payload);
+    }
+    tourismAdminTransportUpdate(payload) {
+        return this.tourism.updateTransport(payload);
+    }
+    tourismAdminTransportDelete(payload) {
+        return this.tourism.deleteTransport(payload.id);
+    }
+    tourismAdminItinerariesList(payload) {
+        return this.tourism.getItineraries(payload);
+    }
+    tourismAdminItineraryCreate(payload) {
+        return this.tourism.createItinerary(payload);
+    }
+    tourismAdminItineraryUpdate(payload) {
+        return this.tourism.updateItinerary(payload);
+    }
+    tourismAdminItineraryDelete(payload) {
+        return this.tourism.deleteItinerary(payload.id);
+    }
+    tourismAdminKnowledgeList() {
+        return this.tourism.getKnowledge();
+    }
+    tourismAdminKnowledgeCreate(payload) {
+        return this.tourism.createKnowledge(payload);
+    }
+    tourismAdminKnowledgeUpdate(payload) {
+        return this.tourism.updateKnowledge(payload);
+    }
+    tourismAdminKnowledgeDelete(payload) {
+        return this.tourism.deleteKnowledge(payload.id);
+    }
+    tourismAdminOperatorsList() {
+        return this.tourism.getOperators();
+    }
+    tourismAdminOperatorCreate(payload) {
+        return this.tourism.createOperator(payload);
+    }
+    tourismAdminOperatorUpdate(payload) {
+        return this.tourism.updateOperator(payload);
+    }
+    tourismAdminOperatorDelete(payload) {
+        return this.tourism.deleteOperator(payload.id);
+    }
+    tourismAdminEnquiriesList(payload) {
+        return this.tourism.getAdminEnquiries(payload);
+    }
+    tourismAdminEnquiryDetail(payload) {
+        return this.tourism.getAdminEnquiryDetail(payload.id);
+    }
+    tourismAdminEnquiryUpdateStatus(payload) {
+        return this.tourism.updateEnquiryStatus(payload);
+    }
+    tourismAdminEnquiryAssign(payload) {
+        return this.tourism.assignEnquiry(payload);
+    }
+    tourismAdminEnquiryAddNote(payload) {
+        return this.tourism.addEnquiryNote(payload);
     }
 };
 exports.ContentController = ContentController;
@@ -369,11 +505,311 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], ContentController.prototype, "podcastRss", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.CAPTCHA_GENERATE),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismCaptchaGenerate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.CIRCUITS_PUBLIC),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismCircuitsPublic", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.CIRCUIT_DETAIL),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismCircuitDetail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.STAYS_PUBLIC),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismStaysPublic", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.TRANSPORTS_PUBLIC),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismTransportsPublic", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.CALENDAR_PUBLIC),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismCalendarPublic", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ITINERARIES_PUBLIC),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismItinerariesPublic", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ITINERARY_DETAIL),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismItineraryDetail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.KNOWLEDGE_PUBLIC),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismKnowledgePublic", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.OPERATORS_PUBLIC),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismOperatorsPublic", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.RECOMMENDATIONS),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismRecommendations", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ASSISTANT_CHAT),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAssistantChat", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ENQUIRY_SUBMIT),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismEnquirySubmit", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ENQUIRY_TRACK),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismEnquiryTrack", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_STATS),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminStats", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_CIRCUITS_LIST),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminCircuitsList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_CIRCUIT_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminCircuitCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_CIRCUIT_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminCircuitUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_CIRCUIT_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminCircuitDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_STAYS_LIST),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminStaysList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_STAY_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminStayCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_STAY_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminStayUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_STAY_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminStayDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_TRANSPORTS_LIST),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminTransportsList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_TRANSPORT_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminTransportCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_TRANSPORT_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminTransportUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_TRANSPORT_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminTransportDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ITINERARIES_LIST),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminItinerariesList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ITINERARY_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminItineraryCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ITINERARY_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminItineraryUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ITINERARY_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminItineraryDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_KNOWLEDGE_LIST),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminKnowledgeList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_KNOWLEDGE_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminKnowledgeCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_KNOWLEDGE_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminKnowledgeUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_KNOWLEDGE_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminKnowledgeDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_OPERATORS_LIST),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminOperatorsList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_OPERATOR_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminOperatorCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_OPERATOR_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminOperatorUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_OPERATOR_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminOperatorDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ENQUIRIES_LIST),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminEnquiriesList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ENQUIRY_DETAIL),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminEnquiryDetail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ENQUIRY_UPDATE_STATUS),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminEnquiryUpdateStatus", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ENQUIRY_ASSIGN),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminEnquiryAssign", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.ADMIN_ENQUIRY_ADD_NOTE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "tourismAdminEnquiryAddNote", null);
 exports.ContentController = ContentController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [
         typeof (_a = typeof articles_service_1.ArticlesService !== "undefined" && articles_service_1.ArticlesService) === "function" ? _a : Object,
         typeof (_b = typeof taxonomy_service_1.TaxonomyService !== "undefined" && taxonomy_service_1.TaxonomyService) === "function" ? _b : Object,
-        typeof (_c = typeof podcasts_service_1.PodcastsService !== "undefined" && podcasts_service_1.PodcastsService) === "function" ? _c : Object
+        typeof (_c = typeof podcasts_service_1.PodcastsService !== "undefined" && podcasts_service_1.PodcastsService) === "function" ? _c : Object,
+        typeof (_d = typeof tourism_service_1.TourismService !== "undefined" && tourism_service_1.TourismService) === "function" ? _d : Object
     ])
 ], ContentController);

@@ -7,13 +7,23 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  className?: string;
 }
 
 /**
  * Accessible dialog built on the native `<dialog>` element, which gives focus
  * trapping and Escape-to-close for free rather than reimplementing them.
  */
-export function Modal({ open, title, onClose, children, footer }: ModalProps) {
+export function Modal({
+  open,
+  title,
+  onClose,
+  children,
+  footer,
+  size = 'md',
+  className = '',
+}: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -42,8 +52,14 @@ export function Modal({ open, title, onClose, children, footer }: ModalProps) {
     return () => dialog.removeEventListener('cancel', handleCancel);
   }, [onClose]);
 
+  const sizeClass = size ? `modal--${size}` : '';
+
   return (
-    <dialog ref={ref} className="modal" aria-labelledby="modal-title">
+    <dialog
+      ref={ref}
+      className={`modal ${sizeClass} ${className}`.trim()}
+      aria-labelledby="modal-title"
+    >
       <div className="modal__panel">
         <header className="modal__header">
           <h2 className="modal__title" id="modal-title">

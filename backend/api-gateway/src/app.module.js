@@ -28,6 +28,7 @@ const services_config_1 = __importDefault(require("./config/services.config"));
 const env_validation_1 = require("./config/env.validation");
 const all_exceptions_filter_1 = require("./filters/all-exceptions.filter");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
+const notifications_module_1 = require("./notifications/notifications.module");
 const permissions_guard_1 = require("./guards/permissions.guard");
 const registrations_module_1 = require("./registrations/registrations.module");
 const roles_guard_1 = require("./guards/roles.guard");
@@ -67,6 +68,7 @@ exports.AppModule = AppModule = __decorate([
             gallery_module_1.GalleryModule,
             atlas_module_1.AtlasModule,
             events_module_1.EventsModule,
+            notifications_module_1.NotificationsModule,
         ],
         controllers: [health_controller_1.HealthController],
         providers: [

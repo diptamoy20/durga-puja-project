@@ -55,6 +55,7 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.CREATE_WEBINARS, permissions_1.PERMISSIONS.EDIT_WEBINARS,
             permissions_1.PERMISSIONS.MANAGE_WEBINAR_RSVPS,
             permissions_1.PERMISSIONS.MANAGE_SETTINGS,
+            permissions_1.PERMISSIONS.VIEW_TOURISM, permissions_1.PERMISSIONS.MANAGE_TOURISM, permissions_1.PERMISSIONS.MANAGE_TOURISM_ENQUIRIES,
         ],
     },
     {
@@ -158,6 +159,7 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.VIEW_DASHBOARD, permissions_1.PERMISSIONS.VIEW_REPORTS, permissions_1.PERMISSIONS.EXPORT_REPORTS,
             permissions_1.PERMISSIONS.VIEW_COMMITTEES, permissions_1.PERMISSIONS.VIEW_PANDAL_ATLAS, permissions_1.PERMISSIONS.VIEW_GALLERY,
             permissions_1.PERMISSIONS.VIEW_ARTICLES, permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.VIEW_PODCASTS,
+            permissions_1.PERMISSIONS.VIEW_TOURISM, permissions_1.PERMISSIONS.MANAGE_TOURISM_ENQUIRIES,
         ],
     },
     {

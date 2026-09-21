@@ -219,6 +219,17 @@ let NotificationService = NotificationService_1 = class NotificationService {
         ]);
         return { items, pagination: (0, shared_1.buildPaginationMeta)(page, perPage, total) };
     }
+    /** Totals by status for the admin notifications summary screen. */
+    async stats() {
+        const [total, queued, sent, failed, retryable] = await this.prisma.$transaction([
+            this.prisma.notificationLog.count(),
+            this.prisma.notificationLog.count({ where: { status: database_1.NotificationStatus.QUEUED } }),
+            this.prisma.notificationLog.count({ where: { status: database_1.NotificationStatus.SENT } }),
+            this.prisma.notificationLog.count({ where: { status: database_1.NotificationStatus.FAILED } }),
+            this.prisma.notificationLog.count({ where: { status: database_1.NotificationStatus.FAILED, attempts: { lt: 3 } } }),
+        ]);
+        return { total, queued, sent, failed, retryable };
+    }
     /** Retries failed sends, capped so a permanently bad address stops early. */
     async retryFailed(maxAttempts = 3) {
         const failed = await this.prisma.notificationLog.findMany({

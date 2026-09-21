@@ -13,6 +13,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
+const node_path_1 = require("node:path");
+try {
+    require('dotenv').config({ path: (0, node_path_1.join)(__dirname, '..', '.env'), override: true });
+} catch (_e) {}
 /** Cap pool size per microservice so 9 services do not exhaust PostgreSQL max_connections. */
 function databaseUrlWithPoolLimit(url, limit = Number(process.env.PRISMA_CONNECTION_LIMIT ?? 2)) {
     if (!url || url.includes('connection_limit='))

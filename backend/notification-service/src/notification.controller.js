@@ -42,6 +42,12 @@ let NotificationController = class NotificationController {
     findAll(query) {
         return this.notifications.findAll(query);
     }
+    stats() {
+        return this.notifications.stats();
+    }
+    retryFailed(payload) {
+        return this.notifications.retryFailed(payload?.maxAttempts);
+    }
 };
 exports.NotificationController = NotificationController;
 __decorate([
@@ -71,6 +77,19 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], NotificationController.prototype, "findAll", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.NOTIFICATION_PATTERNS.STATS),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], NotificationController.prototype, "stats", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.NOTIFICATION_PATTERNS.RETRY_FAILED),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], NotificationController.prototype, "retryFailed", null);
 exports.NotificationController = NotificationController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof notification_service_1.NotificationService !== "undefined" && notification_service_1.NotificationService) === "function" ? _a : Object])

@@ -1,0 +1,1707 @@
+/* ==========================================================================
+   Public Tourism Concierge — BEM stylesheet
+   Uses design tokens from global.css
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Page shell
+   -------------------------------------------------------------------------- */
+.public-tourism {
+  min-height: 100vh;
+  background: var(--colour-canvas);
+}
+
+/* --------------------------------------------------------------------------
+   Hero
+   -------------------------------------------------------------------------- */
+.public-tourism__hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  align-items: center;
+  background: linear-gradient(135deg, var(--colour-brand) 0%, var(--colour-brand-dark) 60%, #3b0000 100%);
+  color: #fff;
+  padding: 64px var(--space-6);
+  min-height: 420px;
+}
+
+.public-tourism__hero-content {
+  max-width: 580px;
+}
+
+.public-tourism__hero-title {
+  margin: 0 0 var(--space-4);
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.public-tourism__hero-subtitle {
+  margin: 0 0 var(--space-5);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.public-tourism__hero-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.public-tourism__hero-visual {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.public-tourism__hero-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.public-tourism__stat {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.public-tourism__stat-icon {
+  font-size: 1.8rem;
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.public-tourism__stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+
+.public-tourism__stat-label {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------------
+   Section
+   -------------------------------------------------------------------------- */
+.public-tourism__section {
+  padding: 56px var(--space-6);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.public-tourism__section--alt {
+  background: var(--colour-surface);
+  max-width: 100%;
+}
+
+.public-tourism__section--alt > .public-tourism__section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px var(--space-6);
+  background: transparent;
+}
+
+.public-tourism__section--cta {
+  background: var(--colour-canvas);
+  padding: 56px var(--space-6);
+  max-width: 100%;
+}
+
+.public-tourism__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.public-tourism__section-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+}
+
+.public-tourism__view-all {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--colour-brand);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.public-tourism__view-all:hover {
+  text-decoration: underline;
+}
+
+.public-tourism__loading {
+  text-align: center;
+  padding: 80px var(--space-6);
+  color: var(--colour-ink-soft);
+  font-size: 1rem;
+}
+
+.public-tourism__empty {
+  padding: var(--space-6);
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: var(--colour-ink-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Card grids
+   -------------------------------------------------------------------------- */
+.public-tourism__card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-5);
+}
+
+.public-tourism__card-grid--itinerary {
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+/* --------------------------------------------------------------------------
+   Circuit cards
+   -------------------------------------------------------------------------- */
+.public-tourism__circuit-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.public-tourism__circuit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.public-tourism__circuit-card-image {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--colour-canvas);
+}
+
+.public-tourism__circuit-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.public-tourism__circuit-card:hover .public-tourism__circuit-card-image img {
+  transform: scale(1.04);
+}
+
+.public-tourism__circuit-card-content {
+  padding: var(--space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.public-tourism__circuit-card-meta {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.public-tourism__circuit-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+  line-height: 1.3;
+}
+
+.public-tourism__circuit-card-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.public-tourism__circuit-card-highlights {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Itinerary cards
+   -------------------------------------------------------------------------- */
+.public-tourism__itinerary-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.public-tourism__itinerary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.public-tourism__itinerary-card-image {
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+  background: var(--colour-canvas);
+}
+
+.public-tourism__itinerary-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.public-tourism__itinerary-card-content {
+  padding: var(--space-4);
+  flex: 1;
+}
+
+.public-tourism__itinerary-card-meta {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.public-tourism__itinerary-card-title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+}
+
+.public-tourism__itinerary-card-desc {
+  margin: 0 0 var(--space-3);
+  font-size: 0.88rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.5;
+}
+
+.public-tourism__itinerary-card-highlights {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: 0.85rem;
+  color: var(--colour-ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --------------------------------------------------------------------------
+   Tags & badges
+   -------------------------------------------------------------------------- */
+.public-tourism__tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.public-tourism__tag--region {
+  background: var(--colour-brand-tint);
+  color: var(--colour-brand);
+}
+
+.public-tourism__tag--duration {
+  background: var(--colour-info-tint);
+  color: var(--colour-info);
+}
+
+.public-tourism__tag--days {
+  background: var(--colour-success-tint);
+  color: var(--colour-success);
+}
+
+.public-tourism__tag--audience {
+  background: var(--colour-warning-tint);
+  color: var(--colour-warning);
+}
+
+.public-tourism__highlight-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--colour-canvas);
+  border: 1px solid var(--colour-border);
+  font-size: 0.75rem;
+  color: var(--colour-ink-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Quick links grid
+   -------------------------------------------------------------------------- */
+.public-tourism__quick-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-6) 56px;
+}
+
+.public-tourism__quick-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-5);
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  box-shadow: var(--shadow-sm);
+  gap: var(--space-2);
+}
+
+.public-tourism__quick-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--colour-brand);
+}
+
+.public-tourism__quick-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-2);
+}
+
+.public-tourism__quick-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+}
+
+.public-tourism__quick-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.4;
+}
+
+.public-tourism__quick-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--colour-brand);
+  margin-top: var(--space-1);
+}
+
+/* --------------------------------------------------------------------------
+   CTA section
+   -------------------------------------------------------------------------- */
+.public-tourism__cta-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, var(--colour-brand-tint) 0%, #fff8f0 100%);
+  border: 1px solid rgba(155, 28, 28, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 48px var(--space-6);
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.public-tourism__cta-content h2 {
+  margin: 0 0 var(--space-3);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--colour-ink);
+}
+
+.public-tourism__cta-content p {
+  margin: 0 0 var(--space-5);
+  color: var(--colour-ink-soft);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   List pages (circuits, stays, etc.)
+   -------------------------------------------------------------------------- */
+.public-tourism-list {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.public-tourism-list__header {
+  margin-bottom: var(--space-5);
+}
+
+.public-tourism-list__title {
+  margin: 0 0 var(--space-2);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--colour-ink);
+}
+
+.public-tourism-list__subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--colour-ink-soft);
+}
+
+.public-tourism-list__filters {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.public-tourism-list__filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 160px;
+}
+
+.public-tourism-list__filter-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--colour-ink-soft);
+}
+
+.public-tourism-list__filter-group select,
+.public-tourism-list__filter-group input {
+  padding: 6px 10px;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  background: var(--colour-canvas);
+  color: var(--colour-ink);
+}
+
+.public-tourism-list__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--colour-brand);
+  text-decoration: none;
+  margin-bottom: var(--space-4);
+}
+
+.public-tourism-list__back:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Detail pages
+   -------------------------------------------------------------------------- */
+.public-tourism-detail {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.public-tourism-detail__hero {
+  position: relative;
+  height: 360px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-5);
+  background: var(--colour-canvas);
+}
+
+.public-tourism-detail__hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.public-tourism-detail__hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);
+  display: flex;
+  align-items: flex-end;
+  padding: var(--space-5);
+}
+
+.public-tourism-detail__hero-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.public-tourism-detail__body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: var(--space-5);
+}
+
+.public-tourism-detail__content {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.public-tourism-detail__sidebar {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  align-self: start;
+  position: sticky;
+  top: 80px;
+}
+
+.public-tourism-detail__section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--colour-ink-faint);
+  margin: 0 0 var(--space-3);
+}
+
+.public-tourism-detail__desc {
+  font-size: 0.95rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.7;
+  margin: 0 0 var(--space-4);
+}
+
+.public-tourism-detail__pandals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.public-tourism-detail__pandal {
+  padding: var(--space-4);
+  background: var(--colour-canvas);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+}
+
+.public-tourism-detail__pandal h4 {
+  margin: 0 0 var(--space-1);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.public-tourism-detail__pandal p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--colour-ink-soft);
+}
+
+.public-tourism-detail__meta-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.public-tourism-detail__meta-item {
+  display: flex;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+}
+
+.public-tourism-detail__meta-item strong {
+  min-width: 100px;
+  color: var(--colour-ink-soft);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Day plan (itinerary)
+   -------------------------------------------------------------------------- */
+.public-tourism__day-plan {
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--colour-surface);
+}
+
+.public-tourism__day-plan-header {
+  background: var(--colour-brand-tint);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.public-tourism__day-badge {
+  background: var(--colour-brand);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.public-tourism__day-plan-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+}
+
+.public-tourism__day-plan-body {
+  padding: var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.public-tourism__day-slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.public-tourism__day-slot-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--colour-ink-faint);
+}
+
+.public-tourism__day-slot-text {
+  font-size: 0.88rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Trip Planner wizard
+   -------------------------------------------------------------------------- */
+.trip-planner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.trip-planner__header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.trip-planner__title {
+  margin: 0 0 var(--space-3);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--colour-ink);
+}
+
+.trip-planner__subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--colour-ink-soft);
+}
+
+.trip-planner__steps {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.trip-planner__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--colour-ink-faint);
+  padding: var(--space-2) var(--space-3);
+}
+
+.trip-planner__step--active {
+  color: var(--colour-brand);
+}
+
+.trip-planner__step--done {
+  color: var(--colour-success);
+}
+
+.trip-planner__step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.trip-planner__step-connector {
+  width: 40px;
+  height: 2px;
+  background: var(--colour-border);
+  flex-shrink: 0;
+}
+
+.trip-planner__card {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-5);
+}
+
+.trip-planner__card-title {
+  margin: 0 0 var(--space-4);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+}
+
+.trip-planner__options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.trip-planner__option {
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--colour-ink);
+  background: var(--colour-surface);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.trip-planner__option:hover {
+  border-color: var(--colour-brand);
+  background: var(--colour-brand-tint);
+}
+
+.trip-planner__option--selected {
+  border-color: var(--colour-brand);
+  background: var(--colour-brand-tint);
+  color: var(--colour-brand);
+}
+
+.trip-planner__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Recommendations result
+   -------------------------------------------------------------------------- */
+.trip-planner__results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.trip-planner__result-section {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.trip-planner__result-title {
+  margin: 0 0 var(--space-4);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--colour-border);
+}
+
+.trip-planner__circuit-match {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--colour-canvas);
+}
+
+.trip-planner__circuit-match:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.trip-planner__match-score {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--colour-brand-tint);
+  color: var(--colour-brand);
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.trip-planner__match-info h4 {
+  margin: 0 0 var(--space-1);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.trip-planner__match-reasons {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.trip-planner__match-reason {
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--colour-success-tint);
+  color: var(--colour-success);
+  font-weight: 600;
+}
+
+.trip-planner__summary-note {
+  background: var(--colour-info-tint);
+  border: 1px solid rgba(23, 92, 211, 0.15);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: 0.9rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   Stays page
+   -------------------------------------------------------------------------- */
+.public-tourism__stay-card {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.18s ease;
+}
+
+.public-tourism__stay-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.public-tourism__stay-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.public-tourism__stay-card-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.public-tourism__stay-card-meta {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.public-tourism__stay-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.public-tourism__price {
+  font-weight: 700;
+  color: var(--colour-brand);
+  font-size: 0.9rem;
+}
+
+.public-tourism__wbtdc-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--colour-warning-tint);
+  color: var(--colour-warning);
+}
+
+/* --------------------------------------------------------------------------
+   Enquiry form
+   -------------------------------------------------------------------------- */
+.tourism-enquiry {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.tourism-enquiry__card {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.tourism-enquiry__title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.tourism-enquiry__subtitle {
+  margin: 0 0 var(--space-5);
+  color: var(--colour-ink-soft);
+}
+
+.tourism-enquiry__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.tourism-enquiry__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tourism-enquiry__field--full {
+  grid-column: 1 / -1;
+}
+
+.tourism-enquiry__field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--colour-ink-soft);
+}
+
+.tourism-enquiry__field label span {
+  color: var(--colour-danger);
+}
+
+.tourism-enquiry__field input,
+.tourism-enquiry__field select,
+.tourism-enquiry__field textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--colour-canvas);
+  color: var(--colour-ink);
+  transition: border-color 0.15s ease;
+}
+
+.tourism-enquiry__field input:focus,
+.tourism-enquiry__field select:focus,
+.tourism-enquiry__field textarea:focus {
+  outline: none;
+  border-color: var(--colour-brand);
+  background: var(--colour-surface);
+}
+
+.tourism-enquiry__checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tourism-enquiry__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  background: var(--colour-canvas);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.tourism-enquiry__checkbox-label:hover {
+  background: var(--colour-brand-tint);
+  border-color: var(--colour-brand);
+}
+
+.tourism-enquiry__captcha {
+  background: var(--colour-canvas);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.tourism-enquiry__captcha-question {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--colour-ink);
+  flex: 1;
+}
+
+.tourism-enquiry__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--colour-ink-soft);
+  margin-bottom: var(--space-4);
+}
+
+.tourism-enquiry__success {
+  text-align: center;
+  padding: var(--space-6);
+}
+
+.tourism-enquiry__success h2 {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: 1.5rem;
+  color: var(--colour-success);
+}
+
+.tourism-enquiry__success p {
+  color: var(--colour-ink-soft);
+  margin: 0 0 var(--space-4);
+}
+
+.tourism-enquiry__success-icon {
+  font-size: 3rem;
+}
+
+/* --------------------------------------------------------------------------
+   Knowledge page
+   -------------------------------------------------------------------------- */
+.public-tourism__knowledge-card {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.public-tourism__knowledge-card-category {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--colour-brand);
+  margin-bottom: var(--space-2);
+}
+
+.public-tourism__knowledge-card-title {
+  margin: 0 0 var(--space-3);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.public-tourism__knowledge-card-content {
+  font-size: 0.88rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.6;
+  margin: 0 0 var(--space-3);
+}
+
+.public-tourism__knowledge-card-tips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.public-tourism__knowledge-card-tips li {
+  font-size: 0.85rem;
+  color: var(--colour-ink-soft);
+  padding-left: var(--space-4);
+  position: relative;
+}
+
+.public-tourism__knowledge-card-tips li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--colour-success);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Operator cards
+   -------------------------------------------------------------------------- */
+.public-tourism__operator-card {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.public-tourism__operator-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.public-tourism__operator-meta {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.public-tourism__operator-contact {
+  font-size: 0.85rem;
+  color: var(--colour-ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.public-tourism__operator-contact a {
+  color: var(--colour-brand);
+  text-decoration: none;
+}
+
+.public-tourism__operator-contact a:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Transport page
+   -------------------------------------------------------------------------- */
+.public-tourism__transport-card {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.public-tourism__transport-name {
+  margin: 0 0 var(--space-2);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.public-tourism__transport-category {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--colour-info-tint);
+  color: var(--colour-info);
+  display: inline-block;
+  margin-bottom: var(--space-3);
+}
+
+.public-tourism__transport-details {
+  font-size: 0.88rem;
+  color: var(--colour-ink-soft);
+  line-height: 1.6;
+}
+
+.public-tourism__transport-tips {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.public-tourism__transport-tips li {
+  font-size: 0.83rem;
+  color: var(--colour-ink-soft);
+  padding-left: var(--space-4);
+  position: relative;
+}
+
+.public-tourism__transport-tips li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--colour-brand);
+}
+
+/* --------------------------------------------------------------------------
+   Error
+   -------------------------------------------------------------------------- */
+.public-tourism__error {
+  text-align: center;
+  padding: 80px var(--space-6);
+  color: var(--colour-ink-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .public-tourism__hero {
+    grid-template-columns: 1fr;
+    padding: 48px var(--space-5);
+    text-align: center;
+  }
+
+  .public-tourism__hero-visual {
+    justify-content: center;
+  }
+
+  .public-tourism-detail__body {
+    grid-template-columns: 1fr;
+  }
+
+  .public-tourism-detail__sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .public-tourism__hero-title {
+    font-size: 1.8rem;
+  }
+
+  .public-tourism__section {
+    padding: 40px var(--space-4);
+  }
+
+  .public-tourism__quick-links {
+    padding: 0 var(--space-4) 40px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .public-tourism-list {
+    padding: var(--space-4);
+  }
+
+  .tourism-enquiry {
+    padding: var(--space-4);
+  }
+
+  .tourism-enquiry__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trip-planner {
+    padding: var(--space-4);
+  }
+
+  .public-tourism__hero-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-tourism__hero-actions {
+    flex-direction: column;
+  }
+
+  .public-tourism__hero-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .public-tourism__quick-links {
+    grid-template-columns: 1fr;
+  }
+
+  .public-tourism__day-plan-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Tourism Concierge AI / Chatbot Assistant
+   -------------------------------------------------------------------------- */
+.tourism-chatbot__toggle-trigger {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  background: linear-gradient(135deg, var(--colour-brand, #9b1c1c) 0%, #b91c1c 100%);
+  color: #fff;
+  border: 2px solid rgba(255, 215, 0, 0.6);
+  border-radius: 999px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 24px rgba(155, 28, 28, 0.4);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tourism-chatbot__toggle-trigger:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 32px rgba(155, 28, 28, 0.55);
+}
+
+.tourism-chatbot__trigger-icon {
+  font-size: 1.25rem;
+}
+
+.tourism-chatbot--floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: 560px;
+  max-height: calc(100vh - 100px);
+  z-index: 1000;
+  background: var(--colour-surface, #ffffff);
+  border: 1px solid var(--colour-border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: chatbotSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes chatbotSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tourism-chatbot--inline {
+  width: 100%;
+  max-width: 760px;
+  height: 520px;
+  margin: 0 auto;
+  background: var(--colour-surface, #ffffff);
+  border: 1px solid var(--colour-border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.06));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tourism-chatbot__header {
+  background: linear-gradient(135deg, var(--colour-brand, #9b1c1c) 0%, #6f0e0e 100%);
+  color: #fff;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.tourism-chatbot__title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tourism-chatbot__icon {
+  font-size: 1.5rem;
+}
+
+.tourism-chatbot__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.tourism-chatbot__badge {
+  font-size: 0.7rem;
+  background: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.tourism-chatbot__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tourism-chatbot__lang-pills {
+  display: flex;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.tourism-chatbot__lang-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tourism-chatbot__lang-btn--active {
+  background: #fff;
+  color: var(--colour-brand, #9b1c1c);
+}
+
+.tourism-chatbot__close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.tourism-chatbot__close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.tourism-chatbot__messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--colour-canvas, #f8fafc);
+}
+
+.tourism-chatbot__msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 82%;
+}
+
+.tourism-chatbot__msg--assistant {
+  align-self: flex-start;
+}
+
+.tourism-chatbot__msg--user {
+  align-self: flex-end;
+}
+
+.tourism-chatbot__bubble {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.tourism-chatbot__msg--assistant .tourism-chatbot__bubble {
+  background: var(--colour-surface, #ffffff);
+  color: var(--colour-ink, #0f172a);
+  border: 1px solid var(--colour-border, #e2e8f0);
+  border-top-left-radius: 2px;
+}
+
+.tourism-chatbot__msg--user .tourism-chatbot__bubble {
+  background: var(--colour-brand, #9b1c1c);
+  color: #ffffff;
+  border-top-right-radius: 2px;
+}
+
+.tourism-chatbot__time {
+  font-size: 0.68rem;
+  color: var(--colour-ink-soft, #64748b);
+  margin-top: 4px;
+  align-self: flex-end;
+}
+
+.tourism-chatbot__bubble--typing {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+}
+
+.tourism-chatbot__dot {
+  width: 6px;
+  height: 6px;
+  background: var(--colour-brand, #9b1c1c);
+  border-radius: 50%;
+  animation: typingBounce 1s infinite alternate;
+}
+
+.tourism-chatbot__dot:nth-child(2) { animation-delay: 0.2s; }
+.tourism-chatbot__dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0% { transform: translateY(0); opacity: 0.4; }
+  100% { transform: translateY(-4px); opacity: 1; }
+}
+
+.tourism-chatbot__suggestions {
+  padding: 8px 14px;
+  background: var(--colour-surface, #ffffff);
+  border-top: 1px solid var(--colour-border, #e2e8f0);
+}
+
+.tourism-chatbot__suggestions-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--colour-ink-soft, #64748b);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.tourism-chatbot__suggestions-list {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.tourism-chatbot__chip {
+  background: rgba(155, 28, 28, 0.08);
+  border: 1px solid rgba(155, 28, 28, 0.2);
+  color: var(--colour-brand, #9b1c1c);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.tourism-chatbot__chip:hover {
+  background: var(--colour-brand, #9b1c1c);
+  color: #fff;
+}
+
+.tourism-chatbot__input-form {
+  display: flex;
+  padding: 10px 14px;
+  background: var(--colour-surface, #ffffff);
+  border-top: 1px solid var(--colour-border, #e2e8f0);
+  gap: 8px;
+}
+
+.tourism-chatbot__input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--colour-border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.tourism-chatbot__input:focus {
+  border-color: var(--colour-brand, #9b1c1c);
+}
+
+.tourism-chatbot__send-btn {
+  background: var(--colour-brand, #9b1c1c);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.tourism-chatbot__send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tourism-chatbot__footer {
+  padding: 6px 14px;
+  background: var(--colour-canvas, #f8fafc);
+  border-top: 1px solid var(--colour-border, #e2e8f0);
+  font-size: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--colour-ink-soft, #64748b);
+}
+
+.tourism-chatbot__enquiry-link {
+  color: var(--colour-brand, #9b1c1c);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tourism-chatbot__enquiry-link:hover {
+  text-decoration: underline;
+}
+

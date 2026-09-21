@@ -103,6 +103,47 @@ const TAXONOMY = [
             { name: 'Community Service', slug: 'community-service' },
         ],
     },
+    {
+        name: 'Tour Operator',
+        slug: 'tour-operator',
+        description: 'Certified travel agencies, government-accredited operators, heritage tour guides, and luxury concierge partners.',
+        subcategories: [
+            { name: 'Govt Accredited Tour Operator', slug: 'govt-accredited-tour-operator' },
+            { name: 'WBTDCL Approved Partner', slug: 'wbtdcl-approved-partner' },
+            { name: 'Registered Heritage Tour Agency', slug: 'registered-heritage-tour-agency' },
+            { name: 'Cultural Walking Tour Specialist', slug: 'cultural-walking-tour-specialist' },
+            { name: 'Luxury VIP Parikrama Service', slug: 'luxury-vip-parikrama-service' },
+            { name: 'Private Destination Management Company', slug: 'private-destination-management-company' },
+            { name: 'Festival Transport & Logistics Partner', slug: 'festival-transport-logistics-partner' },
+        ],
+    },
+    {
+        name: 'Transport',
+        slug: 'transport',
+        description: 'Festive transit options, metro corridors, special parikrama buses, river ferries, and local shuttles.',
+        subcategories: [
+            { name: 'Metro Corridor', slug: 'metro-corridor' },
+            { name: 'Special AC Bus / Parikrama Coach', slug: 'special-ac-bus-parikrama-coach' },
+            { name: 'Heritage River Cruise & Ferry', slug: 'heritage-river-cruise-ferry' },
+            { name: 'Tourist Taxi & App Cab', slug: 'tourist-taxi-app-cab' },
+            { name: 'Suburban Railway', slug: 'suburban-railway' },
+            { name: 'Heritage Tramway', slug: 'heritage-tramway' },
+            { name: 'E-Rickshaw & Local Shuttle', slug: 'e-rickshaw-local-shuttle' },
+        ],
+    },
+    {
+        name: 'Circuit',
+        slug: 'circuit',
+        description: 'Curated pilgrimage circuits, thematic art trails, heritage walking circuits, and festive corridor zones.',
+        subcategories: [
+            { name: 'North Kolkata Heritage & Bonedi Bari', slug: 'north-kolkata-heritage-bonedi-bari' },
+            { name: 'South Kolkata Contemporary & Art Odyssey', slug: 'south-kolkata-art-odyssey' },
+            { name: 'Central Kolkata & Colonial Riverbank', slug: 'central-kolkata-riverbank-trail' },
+            { name: 'Salt Lake & Eastern Corridor', slug: 'salt-lake-eastern-corridor' },
+            { name: 'Howrah & Hooghly Riverfront', slug: 'howrah-hooghly-riverfront' },
+            { name: 'Rarh Bengal & Santiniketan', slug: 'rarh-bengal-santiniketan' },
+        ],
+    },
 ];
 async function seedPermissions() {
     for (const definition of permissions_1.PERMISSION_DEFINITIONS) {
