@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { PageLoader } from '@/components/ui/Spinner';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
@@ -48,6 +48,7 @@ export function MediaEditPage({ mode }: MediaEditPageProps) {
 
   const listRoute = isAdmin ? ROUTES.GALLERY_MEDIA : ROUTES.MY_COMMITTEE_MEDIA;
   const detailRoute = isAdmin ? ROUTES.GALLERY_DETAIL : ROUTES.MY_COMMITTEE_MEDIA_DETAIL;
+  const listLabel = isAdmin ? 'All Media' : 'My Media';
 
   useEffect(() => {
     categoryService.list().then((r) => setCategories(r.items)).catch(() => {});
@@ -125,14 +126,14 @@ export function MediaEditPage({ mode }: MediaEditPageProps) {
 
   return (
     <div className="page">
-      <PageHeader
-        title="Edit Media"
-        description={media?.title || media?.originalFilename || 'Update media details or replace the file.'}
+      <GalleryModuleHeader
         breadcrumbs={[
           { label: 'Dashboard', to: ROUTES.DASHBOARD },
-          { label: isAdmin ? 'Media Gallery' : 'My Media', to: listRoute },
-          { label: media?.title || 'Edit' },
+          { label: listLabel, to: listRoute },
+          { label: 'Edit Media' },
         ]}
+        title="Edit Media"
+        subtitle={media?.title || media?.originalFilename || 'Update media details or replace the file.'}
       />
 
       {error && <Alert tone="danger">{error}</Alert>}

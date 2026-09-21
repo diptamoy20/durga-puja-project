@@ -1,7 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { MediaUploadForm } from '@/components/gallery/MediaUploadForm';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,25 +13,23 @@ export function MediaUploadPage() {
   const { can } = useAuth();
   const isAdmin = can(PERMISSIONS.MODERATE_MEDIA);
 
+  const listRoute = isAdmin ? ROUTES.GALLERY_MEDIA : ROUTES.MY_COMMITTEE_MEDIA;
+  const listLabel = isAdmin ? 'All Media' : 'My Media';
+
   return (
     <div className="page">
-      <PageHeader
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: listLabel, to: listRoute },
+          { label: 'Upload' },
+        ]}
         title={isAdmin ? 'Upload Media for Committee' : 'Upload Photo or Video'}
-        description={
+        subtitle={
           isAdmin
             ? 'Select the committee this photo or video belongs to.'
             : 'Upload photos and videos for your committee gallery.'
         }
-        breadcrumbs={[
-          { label: 'Dashboard', to: ROUTES.DASHBOARD },
-          { label: 'Media Gallery', to: ROUTES.GALLERY_MEDIA },
-          { label: 'Upload' },
-        ]}
-        actions={(
-          <Link to={ROUTES.GALLERY_MEDIA} className="btn btn--secondary btn--sm">
-            ← Back to Gallery
-          </Link>
-        )}
       />
 
       <MediaUploadForm

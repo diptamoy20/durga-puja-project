@@ -13,6 +13,7 @@ import { errorMessage } from '@/services/api';
 import { roleService } from '@/services/userService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { userMgmtBreadcrumbs, USER_MGMT_CRUMBS } from '@/utils/userManagementHelpers';
 import type { Permission } from '@/types';
 
 interface MatrixRole {
@@ -36,7 +37,7 @@ const cellKey = (roleId: number, permissionId: number) => `${roleId}:${permissio
  */
 export function PermissionsPage() {
   const toast = useToast();
-  const { can } = useAuth();
+  const { can, refreshPermissions } = useAuth();
 
   const [data, setData] = useState<MatrixData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -169,9 +170,10 @@ export function PermissionsPage() {
         await roleService.syncPermissions(roleId, permissionIdsFor(roleId));
       }
 
-      toast.success('Permission matrix saved.');
+      toast.success('Permission matrix saved. Other signed-in users must sign in again to pick up role changes.');
       setConfirmSave(false);
       await load();
+      await refreshPermissions();
     } catch (caught) {
       toast.error(errorMessage(caught, 'Unable to save the permission matrix.'));
     } finally {
@@ -189,11 +191,10 @@ export function PermissionsPage() {
       <PageHeader
         title="Role Permission Matrix"
         description="Assign permissions across roles in a single view."
-        breadcrumbs={[
-          { label: 'Dashboard', to: ROUTES.DASHBOARD },
-          { label: 'Roles', to: ROUTES.ROLES },
+        breadcrumbs={userMgmtBreadcrumbs(
+          USER_MGMT_CRUMBS.roles,
           { label: 'Permission Matrix' },
-        ]}
+        )}
         actions={
           <Link className="btn btn--secondary btn--md" to={ROUTES.ROLES}>
             <i className="fas fa-arrow-left" aria-hidden="true" />

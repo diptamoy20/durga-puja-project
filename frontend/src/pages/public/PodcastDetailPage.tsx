@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import type { PodcastEpisode } from '@/types/podcast';
-import { publicPodcastService } from '@/services/podcastService';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+
 import { AudioPlayer } from '@/components/podcast/AudioPlayer';
 import { ReactionButtons } from '@/components/podcast/ReactionButtons';
 import { ROUTES } from '@/constants/routes';
+import { publicPodcastService } from '@/services/podcastService';
+import type { PodcastEpisode } from '@/types/podcast';
+
+import '@/styles/public-podcasts.css';
 
 export function PodcastDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -16,7 +19,7 @@ export function PodcastDetailPage() {
 
   useEffect(() => {
     if (!slug) return;
-    loadEpisode(slug);
+    void loadEpisode(slug);
   }, [slug]);
 
   const loadEpisode = async (episodeSlug: string) => {
@@ -41,137 +44,77 @@ export function PodcastDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--color-text-muted)' }}>
-        <div style={{ fontSize: '36px', marginBottom: '14px' }}>🎙️</div>
-        <div>Loading episode details...</div>
+      <div className="public-podcasts-detail">
+        <div className="public-podcasts__state">
+          <div className="public-podcasts__state-icon" aria-hidden="true">
+            🎙️
+          </div>
+          <div>Loading episode details...</div>
+        </div>
       </div>
     );
   }
 
   if (error || !episode) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <h2 style={{ color: '#b91c1c' }}>Episode Not Found</h2>
-        <p style={{ color: 'var(--color-text-muted)', marginBottom: '20px' }}>
-          {error || 'The requested podcast episode could not be retrieved.'}
-        </p>
-        <Link to={ROUTES.PUBLIC_PODCASTS} className="btn btn--primary">
-          ← Back to All Episodes
-        </Link>
+      <div className="public-podcasts-detail">
+        <div className="public-podcasts__state public-podcasts__state--error">
+          <h2>Episode Not Found</h2>
+          <p>{error || 'The requested podcast episode could not be retrieved.'}</p>
+          <Link to={ROUTES.PUBLIC_PODCASTS} className="btn btn--primary btn--md">
+            ← Back to All Episodes
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '960px', margin: '0 auto', paddingBottom: '60px' }}>
-      {/* Breadcrumb */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '24px' }}>
-        <Link to={ROUTES.PUBLIC_PODCASTS} style={{ color: 'var(--color-brand, #9b1c1c)', textDecoration: 'none', fontWeight: 500 }}>
-          Podcasts
-        </Link>
+    <div className="public-podcasts-detail">
+      <nav className="public-podcasts-detail__breadcrumb" aria-label="Breadcrumb">
+        <Link to={ROUTES.PUBLIC_PODCASTS}>Podcasts</Link>
         <span>/</span>
         <span>Season {episode.seasonNumber}</span>
         <span>/</span>
-        <span style={{ color: 'var(--color-text)' }}>Episode {episode.episodeNumber}</span>
+        <span>Episode {episode.episodeNumber}</span>
       </nav>
 
-      {/* Episode Header */}
-      <header style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-          <span
-            style={{
-              background: 'var(--color-brand, #9b1c1c)',
-              color: '#fff',
-              fontSize: '11px',
-              fontWeight: 700,
-              padding: '3px 10px',
-              borderRadius: '12px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-            }}
-          >
+      <header className="public-podcasts-detail__header">
+        <div className="public-podcasts-detail__badges">
+          <span className="public-podcasts-detail__season-badge">
             Season {episode.seasonNumber} • Episode {episode.episodeNumber}
           </span>
           {episode.language && (
-            <span
-              style={{
-                background: 'var(--color-bg, #f1f5f9)',
-                color: 'var(--color-text-muted)',
-                fontSize: '11px',
-                fontWeight: 600,
-                padding: '3px 8px',
-                borderRadius: '6px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Language: {episode.language}
-            </span>
+            <span className="public-podcasts-detail__lang-badge">Language: {episode.language}</span>
           )}
           {episode.publishedAt && (
-            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Released {new Date(episode.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+            <span className="public-podcasts__meta-text">
+              Released{' '}
+              {new Date(episode.publishedAt).toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              })}
             </span>
           )}
         </div>
 
-        <h1
-          style={{
-            fontSize: '32px',
-            fontWeight: 800,
-            lineHeight: '1.25',
-            margin: '0 0 16px 0',
-            color: 'var(--color-text, #1e293b)',
-          }}
-        >
-          {episode.title}
-        </h1>
-
-        <p style={{ fontSize: '16px', lineHeight: '1.6', color: 'var(--color-text-muted)', margin: 0 }}>
-          {episode.summary}
-        </p>
+        <h1 className="public-podcasts-detail__title">{episode.title}</h1>
+        <p className="public-podcasts-detail__summary">{episode.summary}</p>
       </header>
 
-      {/* Embedded Audio Player */}
-      <div style={{ marginBottom: '32px' }}>
+      <div className="public-podcasts-detail__player-wrap">
         <AudioPlayer episode={episode} autoPlay={false} />
       </div>
 
-      {/* Interactive Bar (Reactions, Share, Syndication) */}
-      <div
-        style={{
-          background: 'var(--color-surface, #ffffff)',
-          border: '1px solid var(--color-border, #e2e8f0)',
-          borderRadius: '14px',
-          padding: '16px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '16px',
-          marginBottom: '36px',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
+      <div className="public-podcasts-detail__actions-bar">
         <ReactionButtons episode={episode} size="md" />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="public-podcasts-detail__share-group">
           <button
             type="button"
+            className={`public-podcasts-detail__share-btn${copiedLink ? ' is-copied' : ''}`}
             onClick={copyEpisodeLink}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: '1px solid var(--color-border)',
-              background: copiedLink ? '#10b981' : 'var(--color-bg)',
-              color: copiedLink ? '#ffffff' : 'var(--color-text)',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'background 0.15s ease',
-            }}
           >
             {copiedLink ? 'Link Copied! ✓' : '🔗 Share Episode'}
           </button>
@@ -181,15 +124,7 @@ export function PodcastDetailPage() {
               href={episode.spotifyUrl}
               target="_blank"
               rel="noreferrer"
-              style={{
-                color: '#1db954',
-                textDecoration: 'none',
-                fontSize: '13px',
-                fontWeight: 600,
-                padding: '6px 12px',
-                borderRadius: '8px',
-                background: 'rgba(29, 185, 84, 0.1)',
-              }}
+              className="public-podcasts-detail__syndication-link public-podcasts-detail__syndication-link--spotify"
             >
               Spotify
             </a>
@@ -200,16 +135,7 @@ export function PodcastDetailPage() {
               href={episode.applePodcastsUrl}
               target="_blank"
               rel="noreferrer"
-              style={{
-                color: 'var(--color-text)',
-                textDecoration: 'none',
-                fontSize: '13px',
-                fontWeight: 600,
-                padding: '6px 12px',
-                borderRadius: '8px',
-                background: 'var(--color-bg)',
-                border: '1px solid var(--color-border)',
-              }}
+              className="public-podcasts-detail__syndication-link public-podcasts-detail__syndication-link--apple"
             >
               Apple Podcasts
             </a>
@@ -217,53 +143,18 @@ export function PodcastDetailPage() {
         </div>
       </div>
 
-      {/* Main Content Grid (Show Notes + Guest Sidebar) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px', marginBottom: '40px' }}>
-        {/* Left: Show Notes & Details */}
-        <div style={{ flex: '2' }}>
-          <section
-            style={{
-              background: 'var(--color-surface, #ffffff)',
-              border: '1px solid var(--color-border, #e2e8f0)',
-              borderRadius: '16px',
-              padding: '28px',
-              boxShadow: 'var(--shadow-sm)',
-              marginBottom: '28px',
-            }}
-          >
-            <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 16px 0', borderBottom: '1px solid var(--color-border)', paddingBottom: '10px' }}>
-              📝 Episode Show Notes
-            </h2>
-            <div
-              style={{
-                fontSize: '15px',
-                lineHeight: '1.7',
-                color: 'var(--color-text)',
-                whiteSpace: 'pre-line',
-              }}
-            >
-              {episode.description}
-            </div>
+      <div className="public-podcasts-detail__grid">
+        <div>
+          <section className="public-podcasts-detail__panel">
+            <h2 className="public-podcasts-detail__panel-title">📝 Episode Show Notes</h2>
+            <div className="public-podcasts-detail__notes">{episode.description}</div>
 
-            {/* Tags */}
             {Array.isArray(episode.tags) && episode.tags.length > 0 && (
-              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-                  KEY TOPICS & THEMES
-                </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="public-podcasts-detail__topics">
+                <div className="public-podcasts-detail__topics-label">KEY TOPICS & THEMES</div>
+                <div className="public-podcasts-detail__topic-list">
                   {episode.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        background: 'rgba(155, 28, 28, 0.08)',
-                        color: 'var(--color-brand, #9b1c1c)',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                      }}
-                    >
+                    <span key={tag} className="public-podcasts-detail__topic">
                       #{tag}
                     </span>
                   ))}
@@ -272,129 +163,67 @@ export function PodcastDetailPage() {
             )}
           </section>
 
-          {/* Collapsible Transcript */}
           {episode.transcript && (
-            <section
-              style={{
-                background: 'var(--color-surface, #ffffff)',
-                border: '1px solid var(--color-border, #e2e8f0)',
-                borderRadius: '16px',
-                padding: '24px 28px',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
+            <section className="public-podcasts-detail__panel">
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                }}
+                className="public-podcasts-detail__transcript-toggle"
                 onClick={() => setIsTranscriptExpanded(!isTranscriptExpanded)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsTranscriptExpanded(!isTranscriptExpanded);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>📜</span>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-                    Episode Transcript
-                  </h3>
+                <div className="public-podcasts-detail__transcript-heading">
+                  <span aria-hidden="true">📜</span>
+                  <h3>Episode Transcript</h3>
                 </div>
-                <button
-                  type="button"
-                  style={{
-                    background: 'var(--color-bg)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '6px',
-                    padding: '4px 12px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
+                <button type="button" className="public-podcasts-detail__transcript-btn">
                   {isTranscriptExpanded ? 'Collapse ▲' : 'Expand Transcript ▼'}
                 </button>
               </div>
 
               {isTranscriptExpanded && (
-                <div
-                  style={{
-                    marginTop: '20px',
-                    paddingTop: '16px',
-                    borderTop: '1px solid var(--color-border)',
-                    fontSize: '14px',
-                    lineHeight: '1.8',
-                    color: 'var(--color-text)',
-                    whiteSpace: 'pre-line',
-                    background: 'var(--color-bg, #f8fafc)',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    maxHeight: '400px',
-                    overflowY: 'auto',
-                  }}
-                >
-                  {episode.transcript}
-                </div>
+                <div className="public-podcasts-detail__transcript-body">{episode.transcript}</div>
               )}
             </section>
           )}
         </div>
 
-        {/* Right: Guest & Host Profile Card */}
-        <div style={{ flex: '1', minWidth: '260px' }}>
-          <div
-            style={{
-              background: 'var(--color-surface, #ffffff)',
-              border: '1px solid var(--color-border, #e2e8f0)',
-              borderRadius: '16px',
-              padding: '24px',
-              boxShadow: 'var(--shadow-sm)',
-              position: 'sticky',
-              top: '90px',
-            }}
-          >
-            <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-brand)', letterSpacing: '0.8px', marginBottom: '14px' }}>
-              Featured Speaker
-            </div>
+        <aside className="public-podcasts-detail__sidebar">
+          <div className="public-podcasts-detail__panel">
+            <div className="public-podcasts-detail__speaker-label">Featured Speaker</div>
 
             {episode.coverImageUrl && (
               <img
                 src={episode.coverImageUrl}
                 alt={episode.guestName || episode.title}
-                style={{
-                  width: '100%',
-                  height: '180px',
-                  borderRadius: '12px',
-                  objectFit: 'cover',
-                  marginBottom: '16px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                }}
+                className="public-podcasts-detail__speaker-image"
               />
             )}
 
-            <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 700 }}>
+            <h3 className="public-podcasts-detail__speaker-name">
               {episode.guestName || 'Special Cultural Guest'}
             </h3>
 
-            <div style={{ fontSize: '13px', color: 'var(--color-brand, #9b1c1c)', fontWeight: 600, marginBottom: '12px' }}>
+            <div className="public-podcasts-detail__speaker-host">
               Host: {episode.hostName || 'Department of Tourism'}
             </div>
 
             {episode.guestBio && (
-              <p style={{ fontSize: '13px', lineHeight: '1.6', color: 'var(--color-text-muted)', margin: '0 0 16px 0' }}>
-                {episode.guestBio}
-              </p>
+              <p className="public-podcasts-detail__speaker-bio">{episode.guestBio}</p>
             )}
 
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-              <Link
-                to={ROUTES.PUBLIC_PODCASTS}
-                className="btn btn--secondary"
-                style={{ width: '100%', textAlign: 'center', textDecoration: 'none', display: 'block', boxSizing: 'border-box' }}
-              >
+            <div className="public-podcasts-detail__sidebar-footer">
+              <Link to={ROUTES.PUBLIC_PODCASTS} className="btn btn--secondary btn--md">
                 ← Browse All Episodes
               </Link>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

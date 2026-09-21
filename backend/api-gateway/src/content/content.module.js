@@ -21,6 +21,8 @@ exports.ContentModule = ContentModule = __decorate([
             content_controller_1.PublicNewsController,
             content_controller_1.CategoriesController,
             content_controller_1.SubcategoriesController,
+            content_controller_1.ContentMediaController,
+            content_controller_1.ContentFilesController,
             podcasts_controller_1.PublicPodcastsController,
             podcasts_controller_1.AdminPodcastsController,
             tourism_controller_1.PublicTourismController,

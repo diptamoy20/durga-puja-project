@@ -1,0 +1,119 @@
+/* Shared shell for gallery, podcasts, and registration public pages */
+
+.public-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--colour-canvas);
+}
+
+.public-layout__header {
+  background: var(--colour-surface);
+  border-bottom: 1px solid var(--colour-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.public-layout__header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.public-layout__brand {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--colour-brand);
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.public-layout__brand:hover {
+  text-decoration: none;
+  color: var(--colour-brand-dark);
+}
+
+.public-layout__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.public-layout__nav-link {
+  text-decoration: none;
+  color: var(--colour-ink);
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.public-layout__nav-link:hover {
+  color: var(--colour-brand);
+  text-decoration: none;
+}
+
+.public-layout__nav .btn {
+  text-decoration: none;
+}
+
+.public-layout__main {
+  flex: 1;
+  padding: var(--space-5) var(--space-4);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.public-layout__footer {
+  background: var(--colour-surface);
+  border-top: 1px solid var(--colour-border);
+  padding: var(--space-5) var(--space-4);
+  margin-top: auto;
+}
+
+.public-layout__footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.public-layout__footer-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--colour-ink);
+}
+
+.public-layout__footer-copy {
+  margin: var(--space-1) 0 0;
+  font-size: 0.8125rem;
+  color: var(--colour-ink-soft);
+}
+
+.public-layout__footer-meta {
+  font-size: 0.8125rem;
+  color: var(--colour-ink-soft);
+}
+
+@media (max-width: 720px) {
+  .public-layout__header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .public-layout__nav {
+    width: 100%;
+  }
+}

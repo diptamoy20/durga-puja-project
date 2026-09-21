@@ -60,7 +60,10 @@ let ResponseInterceptor = class ResponseInterceptor {
                 return {
                     ...base,
                     data: payload.items,
-                    meta: { pagination: payload.pagination },
+                    meta: {
+                        pagination: payload.pagination,
+                        ...(payload.stats ? { stats: payload.stats } : {}),
+                    },
                 };
             }
             return { ...base, data: payload ?? null };

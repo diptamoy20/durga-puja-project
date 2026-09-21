@@ -19,6 +19,7 @@ import { errorMessage } from '@/services/api';
 import { permissionService } from '@/services/userService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { userMgmtBreadcrumbs } from '@/utils/userManagementHelpers';
 import type {
   PaginationMeta,
   Permission,
@@ -200,7 +201,7 @@ export function PermissionsListPage() {
       <PageHeader
         title="Permission Management"
         description="Manage module permissions used by portal roles."
-        breadcrumbs={[{ label: 'Dashboard', to: ROUTES.DASHBOARD }, { label: 'Permissions' }]}
+        breadcrumbs={userMgmtBreadcrumbs({ label: 'Permissions' })}
         actions={
           <>
             {canManageRolePermissions && (

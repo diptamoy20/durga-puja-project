@@ -19,6 +19,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { userMgmtBreadcrumbs, USER_MGMT_CRUMBS } from '@/utils/userManagementHelpers';
 
 function formatDate(value: string | null): string {
   return value ? new Date(value).toLocaleString() : '—';
@@ -87,11 +88,11 @@ export function UserDetailPage() {
   const isSelf = selected.id === currentUser?.id;
 
   return (
-    <>
+    <div className="page">
       <PageHeader
         title={selected.name ?? selected.email}
         description={selected.email}
-        breadcrumbs={[{ label: 'Users', to: ROUTES.USERS }, { label: 'Details' }]}
+        breadcrumbs={userMgmtBreadcrumbs(USER_MGMT_CRUMBS.users, { label: 'View User' })}
         actions={
           <>
             {can(PERMISSIONS.EDIT_USERS) && (
@@ -219,7 +220,7 @@ export function UserDetailPage() {
         onConfirm={handleConfirm}
         onCancel={() => setConfirming(null)}
       />
-    </>
+    </div>
   );
 }
 

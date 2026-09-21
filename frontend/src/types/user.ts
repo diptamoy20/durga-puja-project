@@ -60,6 +60,7 @@ export interface UserFormValues {
   address?: string;
   departmentId?: number;
   status?: UserStatus;
+  /** Exactly one role id; the API accepts an array but only one entry is allowed. */
   roleIds?: number[];
 }
 

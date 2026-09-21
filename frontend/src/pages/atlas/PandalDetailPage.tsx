@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { StaticMap } from '@/components/atlas/StaticMap';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -13,7 +14,7 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { adminAtlasService } from '@/services/atlasService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { atlasFileUrl, atlasStatusTone, formatAtlasStatus, formatDateTime } from '@/utils/atlasHelpers';
+import { atlasFileUrl, atlasListRoute, ATLAS_LIST_LABEL, atlasStatusTone, formatAtlasStatus, formatDateTime } from '@/utils/atlasHelpers';
 import type { PandalAtlas } from '@/types/atlas';
 
 export function PandalDetailPage() {
@@ -90,27 +91,38 @@ export function PandalDetailPage() {
     ? pandal.photoUrls
     : (Array.isArray(pandal.photos) ? pandal.photos : []).map(atlasFileUrl);
 
+  const pageTitle = pandal.name.length > 60 ? `${pandal.name.slice(0, 60)}…` : pandal.name;
+
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
-        <div>
-          <Link to={ROUTES.PANDAL_ATLAS} className="btn btn--secondary btn--sm">← Directory</Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-200)', marginTop: 'var(--space-100)' }}>
-            <h1 className="page__title">{pandal.name}</h1>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: ATLAS_LIST_LABEL, to: atlasListRoute(pandal.status) },
+          { label: pageTitle },
+        ]}
+        title={pandal.name}
+        subtitle={pandal.location}
+        meta={
+          <div className="media-detail-header__meta" style={{ marginBottom: 'var(--space-2)' }}>
             <StatusBadge tone={atlasStatusTone(pandal.status)}>{formatAtlasStatus(pandal.status)}</StatusBadge>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--space-200)', flexWrap: 'wrap' }}>
-          {pandal.status === 'APPROVED' && (
-            <Link to={ROUTES.PUBLIC_ATLAS_DETAIL(pandal.id)} target="_blank" className="btn btn--secondary btn--md">
-              Public Page ↗
-            </Link>
-          )}
-          {canEdit && (
-            <Link to={ROUTES.PANDAL_ATLAS_EDIT(pandal.id)} className="btn btn--secondary btn--md">Edit Entry</Link>
-          )}
-        </div>
-      </header>
+        }
+        actions={
+          <>
+            {pandal.status === 'APPROVED' && (
+              <Link to={ROUTES.PUBLIC_ATLAS_DETAIL(pandal.id)} target="_blank" className="btn btn--outline-secondary btn--md">
+                <i className="fas fa-arrow-up-right-from-square" aria-hidden="true" /> Public Page
+              </Link>
+            )}
+            {canEdit && (
+              <Link to={ROUTES.PANDAL_ATLAS_EDIT(pandal.id)} className="btn btn--outline-secondary btn--md">
+                <i className="fas fa-pencil" aria-hidden="true" /> Edit Entry
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {pandal.status === 'DRAFT' && (
         <Alert tone="default">

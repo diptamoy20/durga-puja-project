@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { StatusBadge } from '@/components/ui/Badge';
 import { adminAtlasService } from '@/services/atlasService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { atlasFileUrl, atlasStatusTone, formatAtlasStatus } from '@/utils/atlasHelpers';
+import { atlasFileUrl, atlasListSubtitle, atlasListTitle, atlasStatusTone, formatAtlasStatus, ATLAS_LIST_LABEL } from '@/utils/atlasHelpers';
 import type { AtlasStats, AtlasStatus, PandalAtlas, PandalListQuery } from '@/types/atlas';
 import type { PaginationMeta } from '@/types';
 
@@ -122,22 +123,34 @@ export function PandalListPage() {
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
-        <div>
-          <h1 className="page__title">Pandal Atlas Management</h1>
-          <p className="page__subtitle">Manage pandal entries, moderation workflow, and map database publication.</p>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--space-200)' }}>
-          <Link to={ROUTES.PUBLIC_ATLAS} className="btn btn--secondary btn--md" target="_blank">
-            Public Interactive Map
-          </Link>
-          {canCreate && (
-            <Link to={ROUTES.PANDAL_ATLAS_NEW} className="btn btn--primary btn--md">
-              + Add New Pandal
+      <GalleryModuleHeader
+        breadcrumbs={
+          statusFilter
+            ? [
+                { label: 'Dashboard', to: ROUTES.DASHBOARD },
+                { label: ATLAS_LIST_LABEL, to: ROUTES.PANDAL_ATLAS },
+                { label: atlasListTitle(statusFilter) },
+              ]
+            : [
+                { label: 'Dashboard', to: ROUTES.DASHBOARD },
+                { label: ATLAS_LIST_LABEL },
+              ]
+        }
+        title={atlasListTitle(statusFilter)}
+        subtitle={atlasListSubtitle(statusFilter)}
+        actions={
+          <>
+            <Link to={ROUTES.PUBLIC_ATLAS} className="btn btn--outline-secondary btn--md" target="_blank">
+              <i className="fas fa-location-dot" aria-hidden="true" /> Public Map
             </Link>
-          )}
-        </div>
-      </header>
+            {canCreate && (
+              <Link to={ROUTES.PANDAL_ATLAS_NEW} className="btn btn--primary btn--md">
+                <i className="fas fa-circle-plus" aria-hidden="true" /> Add New Pandal
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {stats && (
         <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>

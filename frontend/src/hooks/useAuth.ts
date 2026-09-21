@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
-import { useAppSelector } from '@/store/hooks';
+import { refreshSession } from '@/store/slices/authSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { PermissionKey } from '@/constants/permissions';
 
 /**
@@ -11,6 +12,7 @@ import type { PermissionKey } from '@/constants/permissions';
  * short-circuits every check, mirroring the backend guards.
  */
 export function useAuth() {
+  const dispatch = useAppDispatch();
   const { user, isAuthenticated, initialising, status, error } = useAppSelector(
     (state) => state.auth,
   );
@@ -45,6 +47,10 @@ export function useAuth() {
     [user],
   );
 
+  const refreshPermissions = useCallback(async () => {
+    await dispatch(refreshSession());
+  }, [dispatch]);
+
   return {
     user,
     isAuthenticated,
@@ -54,6 +60,7 @@ export function useAuth() {
     can,
     canAll,
     hasRole,
+    refreshPermissions,
     displayName: user?.name ?? user?.email ?? 'Signed in',
   };
 }

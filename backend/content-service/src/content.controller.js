@@ -21,6 +21,7 @@ const articles_service_1 = require("./articles/articles.service");
 const taxonomy_service_1 = require("./taxonomy/taxonomy.service");
 const podcasts_service_1 = require("./podcasts/podcasts.service");
 const tourism_service_1 = require("./tourism/tourism.service");
+const media_service_1 = require("./media/media.service");
 let ContentController = class ContentController {
     articles;
     taxonomy;
@@ -31,6 +32,12 @@ let ContentController = class ContentController {
         this.taxonomy = taxonomy;
         this.podcasts = podcasts;
         this.tourism = tourism;
+    media;
+    constructor(articles, taxonomy, podcasts, media) {
+        this.articles = articles;
+        this.taxonomy = taxonomy;
+        this.podcasts = podcasts;
+        this.media = media;
     }
     ping() {
         return { service: 'content-service', status: 'ok' };
@@ -269,6 +276,15 @@ let ContentController = class ContentController {
     }
     tourismAdminEnquiryAddNote(payload) {
         return this.tourism.addEnquiryNote(payload);
+    // CMS Media Library
+    findAllMedia(query) {
+        return this.media.findAll(query);
+    }
+    createMedia(payload) {
+        return this.media.create(payload);
+    }
+    removeMedia(payload) {
+        return this.media.remove(payload);
     }
 };
 exports.ContentController = ContentController;
@@ -513,6 +529,7 @@ __decorate([
 ], ContentController.prototype, "tourismCaptchaGenerate", null);
 __decorate([
     (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.CIRCUITS_PUBLIC),
+    (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.MEDIA_FIND_ALL),
     __param(0, (0, microservices_1.Payload)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -520,6 +537,9 @@ __decorate([
 ], ContentController.prototype, "tourismCircuitsPublic", null);
 __decorate([
     (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.CIRCUIT_DETAIL),
+], ContentController.prototype, "findAllMedia", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.MEDIA_CREATE),
     __param(0, (0, microservices_1.Payload)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -527,6 +547,9 @@ __decorate([
 ], ContentController.prototype, "tourismCircuitDetail", null);
 __decorate([
     (0, microservices_1.MessagePattern)(shared_1.TOURISM_PATTERNS.STAYS_PUBLIC),
+], ContentController.prototype, "createMedia", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.MEDIA_REMOVE),
     __param(0, (0, microservices_1.Payload)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -804,6 +827,7 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ContentController.prototype, "tourismAdminEnquiryAddNote", null);
+], ContentController.prototype, "removeMedia", null);
 exports.ContentController = ContentController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [
@@ -811,5 +835,6 @@ exports.ContentController = ContentController = __decorate([
         typeof (_b = typeof taxonomy_service_1.TaxonomyService !== "undefined" && taxonomy_service_1.TaxonomyService) === "function" ? _b : Object,
         typeof (_c = typeof podcasts_service_1.PodcastsService !== "undefined" && podcasts_service_1.PodcastsService) === "function" ? _c : Object,
         typeof (_d = typeof tourism_service_1.TourismService !== "undefined" && tourism_service_1.TourismService) === "function" ? _d : Object
+        typeof (_d = typeof media_service_1.MediaService !== "undefined" && media_service_1.MediaService) === "function" ? _d : Object
     ])
 ], ContentController);
