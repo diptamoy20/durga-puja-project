@@ -19,11 +19,18 @@ export function PageHeader({ title, description, actions, breadcrumbs }: PageHea
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="breadcrumbs" aria-label="Breadcrumb">
           <ol>
-            {breadcrumbs.map((crumb, index) => (
-              <li key={`${crumb.label}-${index}`}>
-                {crumb.to ? <Link to={crumb.to}>{crumb.label}</Link> : <span>{crumb.label}</span>}
-              </li>
-            ))}
+            {breadcrumbs.map((crumb, index) => {
+              const isLast = index === breadcrumbs.length - 1;
+              return (
+                <li key={`${crumb.label}-${index}`}>
+                  {crumb.to && !isLast ? (
+                    <Link to={crumb.to}>{crumb.label}</Link>
+                  ) : (
+                    <span aria-current={isLast ? 'page' : undefined}>{crumb.label}</span>
+                  )}
+                </li>
+              );
+            })}
           </ol>
         </nav>
       )}

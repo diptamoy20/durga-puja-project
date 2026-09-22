@@ -459,7 +459,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(':id/status'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.APPROVE_COMMITTEES),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.APPROVE_COMMITTEES, shared_1.PERMISSIONS.REJECT_COMMITTEES),
     (0, response_interceptor_1.ResponseMessage)('Committee status updated successfully'),
     (0, swagger_1.ApiOperation)({
         summary: 'Change committee application status',

@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateSubcategoryDto = exports.CreateSubcategoryDto = exports.UpdateCategoryDto = exports.CreateCategoryDto = exports.ListSubcategoriesQueryDto = exports.ListCategoriesQueryDto = exports.ArticleWorkflowDto = exports.UpdateArticleDto = exports.CreateArticleDto = exports.ListArticlesQueryDto = exports.ArticleStatusDto = void 0;
+exports.UpdateSubcategoryDto = exports.CreateSubcategoryDto = exports.UpdateCategoryDto = exports.CreateCategoryDto = exports.ListSubcategoriesQueryDto = exports.ListCategoriesQueryDto = exports.ListMediaQueryDto = exports.ArticleWorkflowDto = exports.UpdateArticleDto = exports.CreateArticleDto = exports.ListArticlesQueryDto = exports.ArticleStatusDto = void 0;
 const shared_1 = require("@dpgc/shared");
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
@@ -33,6 +33,10 @@ class ListArticlesQueryDto extends shared_1.PaginationQueryDto {
     sortBy = 'createdAt';
     status;
     subcategoryId;
+    categoryId;
+    authorId;
+    createdDate;
+    publishedDate;
 }
 exports.ListArticlesQueryDto = ListArticlesQueryDto;
 __decorate([
@@ -54,9 +58,37 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], ListArticlesQueryDto.prototype, "subcategoryId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], ListArticlesQueryDto.prototype, "categoryId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], ListArticlesQueryDto.prototype, "authorId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by created date (YYYY-MM-DD).' }),
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ListArticlesQueryDto.prototype, "createdDate", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Filter by published date (YYYY-MM-DD).' }),
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ListArticlesQueryDto.prototype, "publishedDate", void 0);
 class CreateArticleDto {
     title;
     subcategoryId;
+    slug;
+    authorId;
     excerpt;
     content;
     featuredImage;
@@ -81,6 +113,21 @@ __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateArticleDto.prototype, "subcategoryId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Auto-generated from title when omitted.' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(220),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], CreateArticleDto.prototype, "slug", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateArticleDto.prototype, "authorId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
@@ -137,6 +184,8 @@ __decorate([
 class UpdateArticleDto {
     title;
     subcategoryId;
+    slug;
+    authorId;
     excerpt;
     content;
     featuredImage;
@@ -162,6 +211,21 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], UpdateArticleDto.prototype, "subcategoryId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(220),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], UpdateArticleDto.prototype, "slug", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdateArticleDto.prototype, "authorId", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsString)(),
@@ -242,6 +306,17 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], ArticleWorkflowDto.prototype, "scheduledAt", void 0);
+const MEDIA_TYPES = ['image', 'video', 'document'];
+class ListMediaQueryDto extends shared_1.PaginationQueryDto {
+    type;
+}
+exports.ListMediaQueryDto = ListMediaQueryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: MEDIA_TYPES, description: 'Filter by file type.' }),
+    (0, class_validator_1.IsIn)(MEDIA_TYPES),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ListMediaQueryDto.prototype, "type", void 0);
 // ---------------------------------------------------------------------------
 // Categories / Subcategories
 // ---------------------------------------------------------------------------

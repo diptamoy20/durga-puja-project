@@ -76,6 +76,12 @@ const ArticleFormPage = lazy(() =>
 const ArticleDetailPage = lazy(() =>
   import('@/pages/articles/ArticleDetailPage').then((m) => ({ default: m.ArticleDetailPage })),
 );
+const ArticlePreviewPage = lazy(() =>
+  import('@/pages/articles/ArticlePreviewPage').then((m) => ({ default: m.ArticlePreviewPage })),
+);
+const MediaLibraryPage = lazy(() =>
+  import('@/pages/content/MediaLibraryPage').then((m) => ({ default: m.MediaLibraryPage })),
+);
 
 // Gallery & Media
 const MediaListPage = lazy(() =>
@@ -182,6 +188,12 @@ const PublicPodcastsPage = lazy(() =>
 const PodcastDetailPage = lazy(() =>
   import('@/pages/public/PodcastDetailPage').then((m) => ({ default: m.PodcastDetailPage })),
 );
+const PublicArticlesPage = lazy(() =>
+  import('@/pages/public/PublicArticlesPage').then((m) => ({ default: m.PublicArticlesPage })),
+);
+const PublicArticleDetailPage = lazy(() =>
+  import('@/pages/public/PublicArticleDetailPage').then((m) => ({ default: m.PublicArticleDetailPage })),
+);
 
 // Podcast Admin Pages
 const PodcastListPage = lazy(() =>
@@ -215,6 +227,8 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_GALLERY_DETAIL()} element={<PublicGalleryDetailPage />} />
         <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
         <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
+        <Route path={ROUTES.PUBLIC_NEWS} element={<PublicArticlesPage />} />
+        <Route path={ROUTES.PUBLIC_NEWS_DETAIL()} element={<PublicArticleDetailPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -239,7 +253,14 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+        <Route
+          path={ROUTES.DASHBOARD}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_DASHBOARD]}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User Management */}
         <Route
@@ -513,6 +534,22 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.EDIT_ARTICLES]}>
               <ArticleFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ARTICLE_PREVIEW()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES]}>
+              <ArticlePreviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.CONTENT_MEDIA_LIBRARY}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ARTICLES, PERMISSIONS.MANAGE_MEDIA]}>
+              <MediaLibraryPage />
             </ProtectedRoute>
           }
         />

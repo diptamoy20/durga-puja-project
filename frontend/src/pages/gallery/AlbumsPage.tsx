@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
-import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { StatusBadge } from '@/components/ui/Badge';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
+import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { albumService } from '@/services/galleryService';
 import { categoryService, subcategoryService } from '@/services/contentService';
 import { adminAtlasService } from '@/services/atlasService';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import type { Album, MediaListQuery } from '@/types/gallery';
 import type { Category, Subcategory } from '@/types/content';
@@ -22,6 +24,8 @@ import '@/styles/gallery-admin.css';
 
 export function AlbumsPage() {
   const toast = useToast();
+  const { can } = useAuth();
+  const canManage = can(PERMISSIONS.MANAGE_ALBUMS);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -152,9 +156,11 @@ export function AlbumsPage() {
         title="Albums"
         subtitle="Organize approved committee media into curated albums for public galleries."
         actions={
-          <Link to={ROUTES.GALLERY_ALBUM_NEW} className="btn btn--primary btn--md">
-            <i className="fas fa-circle-plus" aria-hidden="true" /> Create Album
-          </Link>
+          canManage ? (
+            <Link to={ROUTES.GALLERY_ALBUM_NEW} className="btn btn--primary btn--md">
+              <i className="fas fa-circle-plus" aria-hidden="true" /> Create Album
+            </Link>
+          ) : undefined
         }
       />
 
@@ -356,21 +362,25 @@ export function AlbumsPage() {
                           >
                             <i className="fas fa-eye" aria-hidden="true" />
                           </Link>
-                          <Link
-                            to={ROUTES.GALLERY_ALBUM_EDIT(album.id)}
-                            className="media-action-btn"
-                            title="Edit album"
-                          >
-                            <i className="fas fa-pencil" aria-hidden="true" />
-                          </Link>
-                          <button
-                            type="button"
-                            className="media-action-btn media-action-btn--danger"
-                            title="Delete album"
-                            onClick={() => setDeleteTarget(album)}
-                          >
-                            <i className="fas fa-trash" aria-hidden="true" />
-                          </button>
+                          {canManage && (
+                            <>
+                              <Link
+                                to={ROUTES.GALLERY_ALBUM_EDIT(album.id)}
+                                className="media-action-btn"
+                                title="Edit album"
+                              >
+                                <i className="fas fa-pencil" aria-hidden="true" />
+                              </Link>
+                              <button
+                                type="button"
+                                className="media-action-btn media-action-btn--danger"
+                                title="Delete album"
+                                onClick={() => setDeleteTarget(album)}
+                              >
+                                <i className="fas fa-trash" aria-hidden="true" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </td>

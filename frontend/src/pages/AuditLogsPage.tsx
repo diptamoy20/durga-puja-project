@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { auditService } from '@/services/auditService';
 import { errorMessage } from '@/services/api';
 import { useDebounce } from '@/hooks/useDebounce';
+import { userMgmtBreadcrumbs } from '@/utils/userManagementHelpers';
 import type { AuditLog, AuditLogQuery, PaginationMeta } from '@/types';
 
 export function AuditLogsPage() {
@@ -47,8 +48,9 @@ export function AuditLogsPage() {
   return (
     <>
       <PageHeader
-        title="Audit logs"
+        title="User Activity Log"
         description="Every administrative action, newest first."
+        breadcrumbs={userMgmtBreadcrumbs({ label: 'User Activity Log' })}
       />
 
       {error && <Alert variant="error">{error}</Alert>}

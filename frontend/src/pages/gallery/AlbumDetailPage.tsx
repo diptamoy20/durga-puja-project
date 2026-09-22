@@ -11,8 +11,10 @@ import { MediaPreviewThumb } from '@/components/gallery/MediaPreviewThumb';
 import { PageLoader } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/ui/Badge';
 import { ROUTES } from '@/constants/routes';
+import { PERMISSIONS } from '@/constants/permissions';
 import { albumService, committeeAlbumService } from '@/services/galleryService';
 import { formatMediaType } from '@/utils/galleryHelpers';
+import { useAuth } from '@/hooks/useAuth';
 import type { Album, CommitteeMedia } from '@/types/gallery';
 
 import '@/styles/gallery-admin.css';
@@ -24,7 +26,9 @@ interface AlbumDetailPageProps {
 export function AlbumDetailPage({ mode }: AlbumDetailPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { can } = useAuth();
   const isAdmin = mode === 'admin';
+  const canManage = can(PERMISSIONS.MANAGE_ALBUMS);
   const service = isAdmin ? albumService : committeeAlbumService;
   const listRoute = isAdmin ? ROUTES.GALLERY_ALBUMS : ROUTES.MY_COMMITTEE_ALBUMS;
   const editRoute = isAdmin ? ROUTES.GALLERY_ALBUM_EDIT : ROUTES.MY_COMMITTEE_ALBUM_EDIT;
@@ -108,14 +112,16 @@ export function AlbumDetailPage({ mode }: AlbumDetailPageProps) {
           </div>
         }
         actions={
-          <>
-            <Link to={editRoute(album.id)} className="btn btn--outline-secondary btn--md">
-              <i className="fas fa-pencil" aria-hidden="true" /> Edit Album
-            </Link>
-            <Button variant="danger" size="md" onClick={() => setDeleteOpen(true)}>
-              <i className="fas fa-trash" aria-hidden="true" /> Delete
-            </Button>
-          </>
+          canManage ? (
+            <>
+              <Link to={editRoute(album.id)} className="btn btn--outline-secondary btn--md">
+                <i className="fas fa-pencil" aria-hidden="true" /> Edit Album
+              </Link>
+              <Button variant="danger" size="md" onClick={() => setDeleteOpen(true)}>
+                <i className="fas fa-trash" aria-hidden="true" /> Delete
+              </Button>
+            </>
+          ) : undefined
         }
       />
 

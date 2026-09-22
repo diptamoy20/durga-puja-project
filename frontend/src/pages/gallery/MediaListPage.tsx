@@ -49,7 +49,7 @@ export function MediaListPage() {
 
   const canModerate = can(PERMISSIONS.MODERATE_MEDIA);
   const canUpload = can(PERMISSIONS.UPLOAD_MEDIA);
-  const canEdit = canUpload || canModerate;
+  const canEdit = can(PERMISSIONS.EDIT_MEDIA) || can(PERMISSIONS.UPLOAD_MEDIA) || canModerate;
   const showUpload = canModerate || canUpload;
   const uploadRoute = canModerate ? ROUTES.GALLERY_UPLOAD : ROUTES.MY_COMMITTEE_MEDIA_CREATE;
   const editRoute = canModerate ? ROUTES.GALLERY_MEDIA_EDIT : ROUTES.MY_COMMITTEE_MEDIA_EDIT;

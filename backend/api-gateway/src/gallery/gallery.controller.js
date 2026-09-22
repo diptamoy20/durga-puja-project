@@ -272,7 +272,7 @@ __decorate([
 __decorate([
     (0, common_1.Put)(':id'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, gallery_upload_util_1.committeeMediaUploadOptions)(PUBLIC_UPLOAD_DIR))),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.UPLOAD_MEDIA),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.UPLOAD_MEDIA, shared_1.PERMISSIONS.EDIT_MEDIA),
     (0, response_interceptor_1.ResponseMessage)('Media updated successfully'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.UploadedFile)()),
@@ -284,7 +284,7 @@ __decorate([
 ], CommitteeMediaController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.UPLOAD_MEDIA),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.UPLOAD_MEDIA, shared_1.PERMISSIONS.DELETE_MEDIA),
     (0, response_interceptor_1.ResponseMessage)('Media deleted successfully'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, shared_1.CurrentUser)()),
@@ -408,7 +408,7 @@ __decorate([
 __decorate([
     (0, common_1.Put)(':id'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', (0, gallery_upload_util_1.committeeMediaUploadOptions)(PUBLIC_UPLOAD_DIR))),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MODERATE_MEDIA),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MODERATE_MEDIA, shared_1.PERMISSIONS.EDIT_MEDIA),
     (0, response_interceptor_1.ResponseMessage)('Media updated successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Update media metadata or replace file (admin)' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

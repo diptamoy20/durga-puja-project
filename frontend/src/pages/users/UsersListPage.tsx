@@ -5,6 +5,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { PERMISSIONS } from '@/constants/permissions';
 import { Pagination } from '@/components/ui/Pagination';
 import { ROUTES } from '@/constants/routes';
@@ -27,6 +28,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { userMgmtBreadcrumbs } from '@/utils/userManagementHelpers';
 import type { Department, RoleSummary, User, UserListQuery, UserStatus } from '@/types';
 
 type PendingAction =
@@ -190,20 +192,23 @@ export function UsersListPage() {
   const columnCount = canSelect ? 9 : 8;
 
   return (
-    <div className="users-page">
-      <div className="users-page__head">
-        <h1 className="users-page__title">User Management</h1>
-
-        {canCreate && (
-          <Button
-            variant="success"
-            leadingIcon={<i className="fas fa-circle-plus" aria-hidden="true" />}
-            onClick={() => navigate(ROUTES.USER_NEW)}
-          >
-            Create User
-          </Button>
-        )}
-      </div>
+    <div className="page users-page">
+      <PageHeader
+        title="User Management"
+        description="Create, edit and manage portal user accounts."
+        breadcrumbs={userMgmtBreadcrumbs({ label: 'Users' })}
+        actions={
+          canCreate ? (
+            <Button
+              variant="success"
+              leadingIcon={<i className="fas fa-circle-plus" aria-hidden="true" />}
+              onClick={() => navigate(ROUTES.USER_NEW)}
+            >
+              Create User
+            </Button>
+          ) : undefined
+        }
+      />
 
       {generatedPassword && (
         <Alert

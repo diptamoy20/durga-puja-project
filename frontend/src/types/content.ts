@@ -23,6 +23,8 @@ export interface Article {
   allowComments: boolean;
   scheduledAt: string | null;
   publishedAt: string | null;
+  rejectionReason: string | null;
+  reviewComment: string | null;
   createdAt: string;
   updatedAt: string;
   subcategory?: { id: number; name: string; category?: { id: number; name: string } };
@@ -44,10 +46,14 @@ export interface ArticleHistory {
 
 export interface ArticleFormValues {
   title: string;
+  slug?: string;
   subcategoryId: number;
+  authorId?: number;
   excerpt?: string;
   content: string;
   featuredImage?: string;
+  featuredImageFile?: File;
+  tags?: string;
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
@@ -57,7 +63,7 @@ export interface ArticleFormValues {
 
 export type ArticleWorkflowAction =
   | 'submit_for_review' | 'start_review' | 'approve'
-  | 'reject' | 'schedule' | 'publish' | 'archive';
+  | 'reject' | 'schedule' | 'publish' | 'archive' | 'return_to_draft';
 
 export interface ArticleListQuery {
   page?: number;
@@ -67,6 +73,34 @@ export interface ArticleListQuery {
   sortDir?: 'asc' | 'desc';
   status?: ArticleStatus;
   subcategoryId?: number;
+  categoryId?: number;
+  authorId?: number;
+  createdDate?: string;
+  publishedDate?: string;
+}
+
+export type ContentMediaType = 'image' | 'video' | 'document';
+
+export interface ContentMedia {
+  id: number;
+  fileName: string;
+  originalName: string;
+  filePath: string;
+  fileType: ContentMediaType;
+  mimeType: string;
+  fileSize: number;
+  title: string | null;
+  altText: string | null;
+  url?: string;
+  createdAt: string;
+  uploadedBy?: { id: number; name: string } | null;
+}
+
+export interface ContentMediaListQuery {
+  page?: number;
+  perPage?: number;
+  search?: string;
+  type?: ContentMediaType | '';
 }
 
 // ---------------------------------------------------------------------------

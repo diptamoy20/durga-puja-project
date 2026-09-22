@@ -54,6 +54,11 @@ export const ROUTES = {
   ARTICLE_NEW: '/articles/new',
   ARTICLE_EDIT: (id: number | string = ':id') => `/articles/${id}/edit`,
   ARTICLE_DETAIL: (id: number | string = ':id') => `/articles/${id}`,
+  ARTICLE_PREVIEW: (id: number | string = ':id') => `/articles/${id}/preview`,
+  CONTENT_MEDIA_LIBRARY: '/content/media',
+
+  PUBLIC_NEWS: '/public/news',
+  PUBLIC_NEWS_DETAIL: (slug: string = ':slug') => `/public/news/${slug}`,
 
   // Gallery
   GALLERY_MEDIA: '/gallery/media',
