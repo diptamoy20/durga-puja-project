@@ -22,22 +22,22 @@ const taxonomy_service_1 = require("./taxonomy/taxonomy.service");
 const podcasts_service_1 = require("./podcasts/podcasts.service");
 const tourism_service_1 = require("./tourism/tourism.service");
 const media_service_1 = require("./media/media.service");
+const investments_service_1 = require("./investments/investments.service");
+var _f;
 let ContentController = class ContentController {
     articles;
     taxonomy;
     podcasts;
     tourism;
-    constructor(articles, taxonomy, podcasts, tourism) {
+    media;
+    investments;
+    constructor(articles, taxonomy, podcasts, tourism, media, investments) {
         this.articles = articles;
         this.taxonomy = taxonomy;
         this.podcasts = podcasts;
         this.tourism = tourism;
-    media;
-    constructor(articles, taxonomy, podcasts, media) {
-        this.articles = articles;
-        this.taxonomy = taxonomy;
-        this.podcasts = podcasts;
         this.media = media;
+        this.investments = investments;
     }
     ping() {
         return { service: 'content-service', status: 'ok' };
@@ -276,6 +276,7 @@ let ContentController = class ContentController {
     }
     tourismAdminEnquiryAddNote(payload) {
         return this.tourism.addEnquiryNote(payload);
+    }
     // CMS Media Library
     findAllMedia(query) {
         return this.media.findAll(query);
@@ -285,6 +286,62 @@ let ContentController = class ContentController {
     }
     removeMedia(payload) {
         return this.media.remove(payload);
+    }
+    // Investor Showcase - Public
+    investmentPublicList(query) {
+        return this.investments.publicList(query);
+    }
+    investmentPublicDetail(payload) {
+        return this.investments.publicDetail(payload.slug);
+    }
+    investmentPublicAssociations(query) {
+        return this.investments.publicAssociations(query);
+    }
+    investmentEnquirySubmit(payload) {
+        return this.investments.submitEnquiry(payload);
+    }
+    // Investor Showcase - Admin
+    investmentAdminStats() {
+        return this.investments.stats();
+    }
+    investmentAdminOpportunitiesList(query) {
+        return this.investments.findAll(query);
+    }
+    investmentAdminOpportunityDetail(payload) {
+        return this.investments.findOne(payload.id);
+    }
+    investmentAdminOpportunityCreate(payload) {
+        return this.investments.create(payload);
+    }
+    investmentAdminOpportunityUpdate(payload) {
+        return this.investments.update(payload);
+    }
+    investmentAdminOpportunityWorkflow(payload) {
+        return this.investments.workflow(payload);
+    }
+    investmentAdminOpportunityDelete(payload) {
+        return this.investments.remove(payload);
+    }
+    investmentAdminAssociationsList(query) {
+        return this.investments.findAssociations(query);
+    }
+    investmentAdminAssociationCreate(payload) {
+        return this.investments.createAssociation(payload);
+    }
+    investmentAdminAssociationUpdate(payload) {
+        return this.investments.updateAssociation(payload);
+    }
+    investmentAdminAssociationDelete(payload) {
+        return this.investments.removeAssociation(payload);
+    }
+    investmentAdminEnquiriesList(query) {
+        return this.investments.findEnquiries(query);
+    }
+    investmentAdminEnquiryDetail(payload) {
+        return this.investments.findEnquiry(payload.id);
+    }
+    investmentAdminEnquiryUpdateStatus(payload) {
+        return this.investments.updateEnquiryStatus(payload);
     }
 };
 exports.ContentController = ContentController;
@@ -827,14 +884,160 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ContentController.prototype, "tourismAdminEnquiryAddNote", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.MEDIA_FIND_ALL),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "findAllMedia", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.MEDIA_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "createMedia", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.CONTENT_PATTERNS.MEDIA_REMOVE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
 ], ContentController.prototype, "removeMedia", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.OPPORTUNITIES_PUBLIC),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentPublicList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.OPPORTUNITY_DETAIL),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentPublicDetail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ASSOCIATIONS_PUBLIC),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentPublicAssociations", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ENQUIRY_SUBMIT),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentEnquirySubmit", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_STATS),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminStats", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_OPPORTUNITIES_LIST),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminOpportunitiesList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_OPPORTUNITY_DETAIL),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminOpportunityDetail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_OPPORTUNITY_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminOpportunityCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_OPPORTUNITY_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminOpportunityUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_OPPORTUNITY_WORKFLOW),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminOpportunityWorkflow", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_OPPORTUNITY_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminOpportunityDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_ASSOCIATIONS_LIST),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminAssociationsList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_ASSOCIATION_CREATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminAssociationCreate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_ASSOCIATION_UPDATE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminAssociationUpdate", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_ASSOCIATION_DELETE),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminAssociationDelete", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_ENQUIRIES_LIST),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminEnquiriesList", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_ENQUIRY_DETAIL),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminEnquiryDetail", null);
+__decorate([
+    (0, microservices_1.MessagePattern)(shared_1.INVESTMENT_PATTERNS.ADMIN_ENQUIRY_UPDATE_STATUS),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "investmentAdminEnquiryUpdateStatus", null);
 exports.ContentController = ContentController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [
         typeof (_a = typeof articles_service_1.ArticlesService !== "undefined" && articles_service_1.ArticlesService) === "function" ? _a : Object,
         typeof (_b = typeof taxonomy_service_1.TaxonomyService !== "undefined" && taxonomy_service_1.TaxonomyService) === "function" ? _b : Object,
         typeof (_c = typeof podcasts_service_1.PodcastsService !== "undefined" && podcasts_service_1.PodcastsService) === "function" ? _c : Object,
-        typeof (_d = typeof tourism_service_1.TourismService !== "undefined" && tourism_service_1.TourismService) === "function" ? _d : Object
-        typeof (_d = typeof media_service_1.MediaService !== "undefined" && media_service_1.MediaService) === "function" ? _d : Object
+        typeof (_d = typeof tourism_service_1.TourismService !== "undefined" && tourism_service_1.TourismService) === "function" ? _d : Object,
+        typeof (_e = typeof media_service_1.MediaService !== "undefined" && media_service_1.MediaService) === "function" ? _e : Object,
+        typeof (_f = typeof investments_service_1.InvestmentsService !== "undefined" && investments_service_1.InvestmentsService) === "function" ? _f : Object
     ])
 ], ContentController);

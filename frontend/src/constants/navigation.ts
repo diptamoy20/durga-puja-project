@@ -247,6 +247,46 @@ export const NAVIGATION: NavSection[] = [
   },
 
   {
+    label: 'Investor Showcase',
+    permissions: [PERMISSIONS.VIEW_INVESTMENTS],
+    items: [
+      { label: 'All Opportunities', icon: 'fa-briefcase', to: ROUTES.ADMIN_INVESTMENTS },
+      {
+        label: 'Add Opportunity',
+        icon: 'fa-circle-plus',
+        permissions: [PERMISSIONS.CREATE_INVESTMENTS],
+        to: ROUTES.ADMIN_INVESTMENT_NEW,
+        end: true,
+      },
+      {
+        label: 'Pending Approval',
+        icon: 'fa-hourglass-half',
+        tone: 'warning',
+        to: `${ROUTES.ADMIN_INVESTMENTS}?status=PENDING_APPROVAL`,
+      },
+      {
+        label: 'Published',
+        icon: 'fa-circle-check',
+        tone: 'success',
+        to: `${ROUTES.ADMIN_INVESTMENTS}?status=PUBLISHED`,
+      },
+      {
+        label: 'Investor Enquiries',
+        icon: 'fa-envelope-open-text',
+        permissions: [PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES],
+        to: ROUTES.ADMIN_INVESTMENT_ENQUIRIES,
+      },
+      {
+        label: 'Chambers & Associations',
+        icon: 'fa-building-columns',
+        permissions: [PERMISSIONS.MANAGE_ASSOCIATIONS],
+        to: ROUTES.ADMIN_INVESTMENT_ASSOCIATIONS,
+      },
+      { label: 'Public Showcase', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_INVESTOR_SHOWCASE },
+    ],
+  },
+
+  {
     label: 'Content Management',
     permissions: [PERMISSIONS.VIEW_ARTICLES],
     items: [

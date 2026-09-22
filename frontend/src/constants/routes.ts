@@ -129,6 +129,25 @@ export const ROUTES = {
   ADMIN_TOURISM_KNOWLEDGE: '/admin/tourism/knowledge',
   ADMIN_TOURISM_OPERATORS: '/admin/tourism/operators',
 
+  // Public Investor Showcase
+  PUBLIC_INVESTOR_SHOWCASE: '/public/investments',
+  PUBLIC_INVESTOR_DETAIL: (slug: string = ':slug') => `/public/investments/${slug}`,
+  PUBLIC_INVESTOR_OPPORTUNITY_DETAIL: (slug: string = ':slug') => `/public/investments/${slug}`,
+  PUBLIC_INVESTOR_ASSOCIATIONS: '/public/investments/associations',
+
+  // Admin Investor Showcase
+  ADMIN_INVESTMENTS: '/admin/investments',
+  ADMIN_INVESTMENT_OPPORTUNITIES: '/admin/investments',
+  ADMIN_INVESTMENT_NEW: '/admin/investments/new',
+  ADMIN_INVESTMENT_OPPORTUNITY_NEW: '/admin/investments/new',
+  ADMIN_INVESTMENT_EDIT: (id: number | string = ':id') => `/admin/investments/${id}/edit`,
+  ADMIN_INVESTMENT_OPPORTUNITY_EDIT: (id: number | string = ':id') => `/admin/investments/${id}/edit`,
+  ADMIN_INVESTMENT_DETAIL: (id: number | string = ':id') => `/admin/investments/${id}`,
+  ADMIN_INVESTMENT_OPPORTUNITY_DETAIL: (id: number | string = ':id') => `/admin/investments/${id}`,
+  ADMIN_INVESTMENT_ASSOCIATIONS: '/admin/investments/associations',
+  ADMIN_INVESTMENT_ENQUIRIES: '/admin/investments/enquiries',
+  ADMIN_INVESTMENT_ENQUIRY_DETAIL: (id: number | string = ':id') => `/admin/investments/enquiries/${id}`,
+
   FORBIDDEN: '/forbidden',
 } as const;
 

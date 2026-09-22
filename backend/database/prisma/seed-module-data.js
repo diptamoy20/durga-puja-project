@@ -10,6 +10,7 @@ const {
   DiasporaStatus,
   RsvpStatus,
   WebinarStatus,
+  InvestmentOpportunityStatus,
 } = require('@prisma/client');
 
 const SAMPLE_DIASPORA = [
@@ -361,7 +362,311 @@ async function seedModuleData(prisma = new PrismaClient()) {
     }
   }
 
-  console.log(`  Module data: ${diasporaCount} diaspora, ${committeeCount} committees, ${pandalCount} pandals, ${articleCount} articles, ${webinarCount} webinars, ${rsvpCount} RSVPs`);
+  // Seed Industry Associations
+  const SAMPLE_ASSOCIATIONS = [
+    {
+      code: 'BCCI',
+      name: 'The Bengal Chamber of Commerce and Industry',
+      category: 'Apex Chamber',
+      description: 'The oldest chamber of commerce in India, established in 1853, actively promoting economic growth and investment across West Bengal.',
+      contactPerson: 'Arunav Ghosh (Director General)',
+      email: 'invest@bengalchamber.com',
+      phone: '+91-33-2220-8332',
+      website: 'https://bengalchamber.com',
+      address: 'Royal Exchange, 6 Netaji Subhas Road, Kolkata 700001',
+      sortOrder: 1,
+    },
+    {
+      code: 'CII-ER',
+      name: 'Confederation of Indian Industry (Eastern Region)',
+      category: 'Apex Chamber',
+      description: 'Premier business association driving industrial competitiveness, tourism development, and public-private partnerships.',
+      contactPerson: 'Priyanka Mukherjee (Head - Investment Promotion)',
+      email: 'invest.east@cii.in',
+      phone: '+91-33-2280-7320',
+      website: 'https://cii.in',
+      address: '6 Netaji Subhas Road, Dalhousie, Kolkata 700001',
+      sortOrder: 2,
+    },
+    {
+      code: 'ICC',
+      name: 'Indian Chamber of Commerce',
+      category: 'National Chamber',
+      description: 'Pioneering chamber facilitating regional cross-border commerce, diaspora investments, and MSME integration in West Bengal.',
+      contactPerson: 'Sanjay Sen (Director - Trade & Investment)',
+      email: 'investor.desk@indianchamber.net',
+      phone: '+91-33-2253-4200',
+      website: 'https://indianchamber.net',
+      address: 'ICC Towers, 4 India Exchange Place, Kolkata 700001',
+      sortOrder: 3,
+    },
+    {
+      code: 'BNCCI',
+      name: 'Bengal National Chamber of Commerce & Industry',
+      category: 'Heritage Chamber',
+      description: 'Established in 1887, promoting indigenous industries, creative crafts, and heritage hospitality in Bengal.',
+      contactPerson: 'Debolina Roy (Secretary)',
+      email: 'bncci@bncci.com',
+      phone: '+91-33-2248-2951',
+      website: 'https://bncci.com',
+      address: '23 R.N. Mukherjee Road, Kolkata 700001',
+      sortOrder: 4,
+    },
+    {
+      code: 'FOSMI',
+      name: 'Federation of Small & Medium Industries',
+      category: 'MSME Council',
+      description: 'Dedicated body championing micro and small enterprise manufacturing, artisan clusters, and supply chain modernisation.',
+      contactPerson: 'Kamal Nandi (Vice President)',
+      email: 'info@fosmi.org.in',
+      phone: '+91-33-2248-5114',
+      website: 'https://fosmi.org.in',
+      address: '23 Circus Avenue, Kolkata 700017',
+      sortOrder: 5,
+    },
+  ];
+
+  const associationMap = {};
+  let associationCount = 0;
+  for (const assoc of SAMPLE_ASSOCIATIONS) {
+    const record = await prisma.industryAssociation.upsert({
+      where: { code: assoc.code },
+      update: { ...assoc, isActive: true },
+      create: { ...assoc, isActive: true },
+    });
+    associationMap[assoc.code] = record.id;
+    associationCount += 1;
+  }
+
+  // Seed Investment Opportunities
+  const SAMPLE_OPPORTUNITIES = [
+    {
+      title: 'Heritage Boutique Hotels & Riverfront Stays along Hooghly',
+      slug: 'heritage-boutique-hotels-hooghly-riverfront',
+      sector: 'Tourism & Hospitality',
+      category: 'Heritage Restoration',
+      location: 'Kolkata, Howrah & Hooghly Ghats',
+      district: 'Kolkata',
+      summary: 'Adaptive reuse of 18th & 19th-century colonial rajbaris, Dutch trading houses, and ghat warehouses into experiential boutique heritage hotels for high-yield festival tourism.',
+      description: `<h3>Project Overview</h3>
+<p>Durga Puja attracts over 2 million global and domestic visitors to Kolkata annually. This project offers private investors and diaspora hoteliers turn-key architectural conservation sites along the historic Hooghly River corridor with fast-track single window approvals.</p>
+<h3>Investment Scope</h3>
+<ul>
+  <li>5 identified riverfront heritage mansions ready for adaptive hospitality reuse</li>
+  <li>Private jetty connectivity for luxury Durga Puja pandal-hopping river cruises</li>
+  <li>Curated gastronomy showcasing royal Bengal cuisine and culinary heritage</li>
+</ul>`,
+      investmentRange: '₹5 Cr - ₹20 Cr',
+      investmentMin: 50000000,
+      investmentMax: 200000000,
+      projectType: 'PPP & Private Equity',
+      expectedRoi: '18% - 24% IRR',
+      highlights: [
+        'Prime riverfront ghat access with dedicated cruise docking',
+        'State heritage tax rebates & concessional electricity tariffs',
+        'Pre-approved master architectural conservation blueprints',
+        'Guaranteed autumn festival peak occupancy pipeline',
+      ],
+      incentives: 'West Bengal Tourism Policy 2023 provides 20% capital investment subsidy up to ₹1.5 Crore, 100% stamp duty waiver, and power tariff incentives for 5 years.',
+      coverImageUrl: 'https://images.unsplash.com/photo-1590059390047-94a56a6ecfa1?auto=format&fit=crop&w=1200&q=80',
+      associationCode: 'BCCI',
+      contactEmail: 'heritage.invest@bengalchamber.com',
+      contactPhone: '+91-33-2220-8332',
+      status: InvestmentOpportunityStatus.PUBLISHED,
+      isFeatured: true,
+      publishedAt: new Date('2026-02-01'),
+    },
+    {
+      title: 'Kumartuli Idol Craft & Clay Artisan Modernisation Hub',
+      slug: 'kumartuli-idol-craft-artisan-hub',
+      sector: 'Handicrafts & Artisans',
+      category: 'Creative Manufacturing',
+      location: 'Kumartuli, North Kolkata',
+      district: 'Kolkata',
+      summary: 'Modernised solar-powered drying units, eco-friendly natural clay R&D laboratory, and export-grade fiberglass packing facility for global diaspora Puja deliveries.',
+      description: `<h3>Preserving Heritage, Expanding Global Reach</h3>
+<p>Kumartuli crafts over 4,500 Durga idols annually, exporting to 45+ countries. This project creates common facility centers, dehumidified drying chambers, lightweight material casting, and global logistics corridors.</p>`,
+      investmentRange: '₹50 Lakhs - ₹2 Cr',
+      investmentMin: 5000000,
+      investmentMax: 20000000,
+      projectType: 'Joint Venture & Impact Investment',
+      expectedRoi: '15% - 20% IRR',
+      highlights: [
+        'Direct export linkage to 500+ global diaspora Puja committees',
+        'State-of-the-art climate-controlled curing and packaging center',
+        'Eco-friendly non-toxic natural pigment certification laboratory',
+      ],
+      incentives: 'MSME Cluster Development subsidy up to 70% of project machinery costs under West Bengal MSME Policy.',
+      coverImageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80',
+      associationCode: 'FOSMI',
+      contactEmail: 'artisan.cluster@fosmi.org.in',
+      contactPhone: '+91-33-2248-5114',
+      status: InvestmentOpportunityStatus.PUBLISHED,
+      isFeatured: true,
+      publishedAt: new Date('2026-02-15'),
+    },
+    {
+      title: 'AR/VR Durga Puja Immersive Metaverse & Cultural Tech Platform',
+      slug: 'ar-vr-durga-puja-metaverse-cultural-tech',
+      sector: 'IT & Cultural Tech',
+      category: 'Digital Media & Web3',
+      location: 'Silicon Valley Hub, New Town, Kolkata',
+      district: 'North 24 Parganas',
+      summary: 'High-fidelity spatial computing and VR live streaming infrastructure enabling diaspora worldwide to participate in Kolkata’s UNESCO heritage festival virtually.',
+      description: `<h3>Digitalizing Bengal’s Living Heritage</h3>
+<p>Building an ultra-low latency photogrammetric 3D capture and live spatial audio streaming platform connecting 200+ landmark pandals with global VR headset users and mobile apps.</p>`,
+      investmentRange: '₹1 Cr - ₹5 Cr',
+      investmentMin: 10000000,
+      investmentMax: 50000000,
+      projectType: 'Venture Capital & Angel Syndicate',
+      expectedRoi: '25%+ IRR',
+      highlights: [
+        'Official digital streaming partnership with top 100 Sarbojanin pandals',
+        'Monetisation via VIP virtual darshan passes, VR puja kits, and diaspora sponsorships',
+        'Incubated at New Town Silicon Valley IT corridor',
+      ],
+      incentives: 'West Bengal IT & ITeS Policy 2024 offers 100% electricity duty waiver for 5 years and up to ₹50 Lakhs innovation grant.',
+      coverImageUrl: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=1200&q=80',
+      associationCode: 'CII-ER',
+      contactEmail: 'tech.invest@cii.in',
+      contactPhone: '+91-33-2280-7320',
+      status: InvestmentOpportunityStatus.PUBLISHED,
+      isFeatured: true,
+      publishedAt: new Date('2026-03-01'),
+    },
+    {
+      title: 'Terracotta & Dokra Creative Village Tourism Corridor',
+      slug: 'terracotta-dokra-creative-village-tourism-corridor',
+      sector: 'Creative Economy',
+      category: 'Rural Tourism & Crafts',
+      location: 'Bishnupur & Bikna, Bankura District',
+      district: 'Bankura',
+      summary: 'Integrated rural artisan residency, terracotta craft retail experiential pavilion, and heritage homestay cluster in Bankura.',
+      description: `<h3>Empowering Rural Master Craftsmen</h3>
+<p>An eco-resort and artisan village corridor where international visitors experience terracotta temple history and dokra lost-wax metal casting firsthand.</p>`,
+      investmentRange: '₹2 Cr - ₹8 Cr',
+      investmentMin: 20000000,
+      investmentMax: 80000000,
+      projectType: 'PPP & Social Impact Capital',
+      expectedRoi: '14% - 18% IRR',
+      highlights: [
+        'Adjacent to UNESCO tentative list Bishnupur Terracotta Temples',
+        'Direct livelihood impact for 800+ indigenous artisan families',
+        'Integrated GI-tagged Baluchari silk weaving and Dokra metal craft',
+      ],
+      incentives: 'Homestay & Rural Tourism Subsidy scheme providing 1.5x capital incentive in rural districts.',
+      coverImageUrl: 'https://images.unsplash.com/photo-1582650625119-3a31f8418365?auto=format&fit=crop&w=1200&q=80',
+      associationCode: 'BNCCI',
+      contactEmail: 'craft.investment@bncci.com',
+      contactPhone: '+91-33-2248-2951',
+      status: InvestmentOpportunityStatus.APPROVED, // APPROVED but not PUBLISHED (tests visibility rule)
+      isFeatured: false,
+      approvedAt: new Date('2026-03-10'),
+    },
+    {
+      title: 'Green Solar Microgrid & Eco Infrastructure for Pandals',
+      slug: 'green-solar-microgrid-pandal-infrastructure',
+      sector: 'Smart City & Clean Tech',
+      category: 'Renewable Energy',
+      location: 'Greater Kolkata Urban Area',
+      district: 'Kolkata',
+      summary: 'Modular plug-and-play solar storage units, quiet hybrid battery banks, and biodegradable decor supply chain for zero-carbon Durga Puja celebrations.',
+      description: `<h3>Powering Zero-Emission Festivities</h3>
+<p>Transitioning 3,000+ Kolkata pandals from diesel generator sets to hybrid solar-lithium battery microgrids and smart energy metering.</p>`,
+      investmentRange: '₹1 Cr - ₹3 Cr',
+      investmentMin: 10000000,
+      investmentMax: 30000000,
+      projectType: 'Equipment Leasing & Green Infra Debt',
+      expectedRoi: '16% - 20% IRR',
+      highlights: [
+        'Massive recurring annual equipment rental contracts across 500+ puja committees',
+        'Carbon credit generation through verified diesel generator displacement',
+      ],
+      incentives: 'Green Energy Open Access & Renewable Energy subsidy from WBREDA.',
+      coverImageUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=1200&q=80',
+      associationCode: 'ICC',
+      contactEmail: 'green.energy@indianchamber.net',
+      contactPhone: '+91-33-2253-4200',
+      status: InvestmentOpportunityStatus.PENDING_APPROVAL, // PENDING_APPROVAL
+      isFeatured: false,
+      submittedAt: new Date('2026-03-12'),
+    },
+    {
+      title: 'Authentic Bengali Sweets & Culinary Cold Chain Export Network',
+      slug: 'bengali-sweets-culinary-cold-chain-export-network',
+      sector: 'F&B & Agri-business',
+      category: 'Food Processing & Export',
+      location: 'Dankuni Food Park, Hooghly',
+      district: 'Hooghly',
+      summary: 'Cryogenic freezing and MAP packaging hub for GI-tagged Joynagar Moa, Bengal Rosogolla, and festive delicacies for international delivery.',
+      description: `<h3>Global Export of Bengal’s Heritage Sweets</h3>
+<p>Modernized food processing facility with modified atmosphere packaging and direct air-freight consolidation to North America, Europe, and Middle East.</p>`,
+      investmentRange: '₹3 Cr - ₹10 Cr',
+      investmentMin: 30000000,
+      investmentMax: 100000000,
+      projectType: 'Private Equity & Export Venture',
+      expectedRoi: '20% - 28% IRR',
+      highlights: [
+        'Dedicated GI-certified production lines',
+        'Pre-booked holiday festive diaspora distribution agreements',
+      ],
+      incentives: 'Food Processing Capital Subsidy of up to ₹2.5 Crore under West Bengal Agri-Marketing scheme.',
+      coverImageUrl: 'https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=1200&q=80',
+      associationCode: 'BCCI',
+      contactEmail: 'agri.food@bengalchamber.com',
+      contactPhone: '+91-33-2220-8332',
+      status: InvestmentOpportunityStatus.DRAFT, // DRAFT
+      isFeatured: false,
+    },
+  ];
+
+  let opportunityCount = 0;
+  for (const opp of SAMPLE_OPPORTUNITIES) {
+    const { associationCode, ...data } = opp;
+    const associationId = associationCode ? associationMap[associationCode] : null;
+
+    await prisma.investmentOpportunity.upsert({
+      where: { slug: opp.slug },
+      update: {
+        ...data,
+        associationId,
+        updatedById: adminId,
+      },
+      create: {
+        ...data,
+        associationId,
+        createdById: adminId,
+        updatedById: adminId,
+        submittedById: opp.status === InvestmentOpportunityStatus.PENDING_APPROVAL ? adminId : null,
+        approvedById: (opp.status === InvestmentOpportunityStatus.APPROVED || opp.status === InvestmentOpportunityStatus.PUBLISHED) ? adminId : null,
+        publishedById: opp.status === InvestmentOpportunityStatus.PUBLISHED ? adminId : null,
+        histories: {
+          create: [
+            {
+              userId: adminId,
+              action: 'created',
+              newStatus: InvestmentOpportunityStatus.DRAFT,
+            },
+            ...(opp.status === InvestmentOpportunityStatus.PENDING_APPROVAL
+              ? [{ userId: adminId, action: 'submitted', previousStatus: InvestmentOpportunityStatus.DRAFT, newStatus: InvestmentOpportunityStatus.PENDING_APPROVAL }]
+              : []),
+            ...(opp.status === InvestmentOpportunityStatus.APPROVED
+              ? [{ userId: adminId, action: 'approved', previousStatus: InvestmentOpportunityStatus.PENDING_APPROVAL, newStatus: InvestmentOpportunityStatus.APPROVED }]
+              : []),
+            ...(opp.status === InvestmentOpportunityStatus.PUBLISHED
+              ? [
+                  { userId: adminId, action: 'approved', previousStatus: InvestmentOpportunityStatus.PENDING_APPROVAL, newStatus: InvestmentOpportunityStatus.APPROVED },
+                  { userId: adminId, action: 'published', previousStatus: InvestmentOpportunityStatus.APPROVED, newStatus: InvestmentOpportunityStatus.PUBLISHED },
+                ]
+              : []),
+          ],
+        },
+      },
+    });
+    opportunityCount += 1;
+  }
+
+  console.log(`  Module data: ${diasporaCount} diaspora, ${committeeCount} committees, ${pandalCount} pandals, ${articleCount} articles, ${webinarCount} webinars, ${rsvpCount} RSVPs, ${associationCount} associations, ${opportunityCount} investment opportunities`);
 }
 
 module.exports = { seedModuleData };

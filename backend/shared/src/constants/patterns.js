@@ -6,7 +6,7 @@
  * silently times out.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TOURISM_PATTERNS = exports.NOTIFICATION_PATTERNS = exports.EVENTS_PATTERNS = exports.ATLAS_PATTERNS = exports.GALLERY_PATTERNS = exports.CONTENT_PATTERNS = exports.REGISTRATION_PATTERNS = exports.USER_PATTERNS = exports.AUTH_PATTERNS = exports.SERVICE_TOKENS = void 0;
+exports.INVESTMENT_PATTERNS = exports.TOURISM_PATTERNS = exports.NOTIFICATION_PATTERNS = exports.EVENTS_PATTERNS = exports.ATLAS_PATTERNS = exports.GALLERY_PATTERNS = exports.CONTENT_PATTERNS = exports.REGISTRATION_PATTERNS = exports.USER_PATTERNS = exports.AUTH_PATTERNS = exports.SERVICE_TOKENS = void 0;
 exports.SERVICE_TOKENS = {
     AUTH: 'AUTH_SERVICE',
     USER: 'USER_SERVICE',
@@ -221,5 +221,30 @@ exports.TOURISM_PATTERNS = {
     ADMIN_ENQUIRY_UPDATE_STATUS: 'tourism.admin_enquiry_update_status',
     ADMIN_ENQUIRY_ASSIGN: 'tourism.admin_enquiry_assign',
     ADMIN_ENQUIRY_ADD_NOTE: 'tourism.admin_enquiry_add_note',
+};
+exports.INVESTMENT_PATTERNS = {
+    // Public Showcase
+    OPPORTUNITIES_PUBLIC: 'investment.opportunities_public',
+    OPPORTUNITY_DETAIL: 'investment.opportunity_detail',
+    ASSOCIATIONS_PUBLIC: 'investment.associations_public',
+    ASSOCIATION_DETAIL: 'investment.association_detail',
+    ENQUIRY_SUBMIT: 'investment.enquiry_submit',
+    // Admin Management & Workflow
+    ADMIN_STATS: 'investment.admin_stats',
+    ADMIN_OPPORTUNITIES_LIST: 'investment.admin_opportunities_list',
+    ADMIN_OPPORTUNITY_DETAIL: 'investment.admin_opportunity_detail',
+    ADMIN_OPPORTUNITY_CREATE: 'investment.admin_opportunity_create',
+    ADMIN_OPPORTUNITY_UPDATE: 'investment.admin_opportunity_update',
+    ADMIN_OPPORTUNITY_WORKFLOW: 'investment.admin_opportunity_workflow',
+    ADMIN_OPPORTUNITY_DELETE: 'investment.admin_opportunity_delete',
+    ADMIN_ASSOCIATIONS_LIST: 'investment.admin_associations_list',
+    ADMIN_ASSOCIATION_CREATE: 'investment.admin_association_create',
+    ADMIN_ASSOCIATION_UPDATE: 'investment.admin_association_update',
+    ADMIN_ASSOCIATION_DELETE: 'investment.admin_association_delete',
+    ADMIN_ENQUIRIES_LIST: 'investment.admin_enquiries_list',
+    ADMIN_ENQUIRY_DETAIL: 'investment.admin_enquiry_detail',
+    ADMIN_ENQUIRY_UPDATE_STATUS: 'investment.admin_enquiry_update_status',
+    ADMIN_ENQUIRY_ASSIGN: 'investment.admin_enquiry_assign',
+    ADMIN_ENQUIRY_ADD_NOTE: 'investment.admin_enquiry_add_note',
 };
 

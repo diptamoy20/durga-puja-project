@@ -264,6 +264,35 @@ const TourismOperatorsManagePage = lazy(() =>
   import('@/pages/tourism/TourismOperatorsManagePage').then((m) => ({ default: m.TourismOperatorsManagePage })),
 );
 
+// Investor Showcase Public Pages
+const PublicInvestorShowcasePage = lazy(() =>
+  import('@/pages/public/investments/PublicInvestorShowcasePage').then((m) => ({ default: m.PublicInvestorShowcasePage })),
+);
+const PublicInvestorDetailPage = lazy(() =>
+  import('@/pages/public/investments/PublicInvestorDetailPage').then((m) => ({ default: m.PublicInvestorDetailPage })),
+);
+
+// Investor Showcase Admin Pages
+const InvestmentOpportunitiesPage = lazy(() =>
+  import('@/pages/investments/InvestmentOpportunitiesPage').then((m) => ({ default: m.InvestmentOpportunitiesPage })),
+);
+const InvestmentOpportunityFormPage = lazy(() =>
+  import('@/pages/investments/InvestmentOpportunityFormPage').then((m) => ({ default: m.InvestmentOpportunityFormPage })),
+);
+const InvestmentOpportunityDetailPage = lazy(() =>
+  import('@/pages/investments/InvestmentOpportunityDetailPage').then((m) => ({ default: m.InvestmentOpportunityDetailPage })),
+);
+const IndustryAssociationsPage = lazy(() =>
+  import('@/pages/investments/IndustryAssociationsPage').then((m) => ({ default: m.IndustryAssociationsPage })),
+);
+const InvestmentEnquiriesPage = lazy(() =>
+  import('@/pages/investments/InvestmentEnquiriesPage').then((m) => ({ default: m.InvestmentEnquiriesPage })),
+);
+const InvestmentEnquiryDetailPage = lazy(() =>
+  import('@/pages/investments/InvestmentEnquiryDetailPage').then((m) => ({ default: m.InvestmentEnquiryDetailPage })),
+);
+
+
 
 export function AppRoutes() {
   return (
@@ -303,6 +332,10 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_TOURISM_ENQUIRY} element={<PublicTourismEnquiryPage />} />
         <Route path={ROUTES.PUBLIC_NEWS} element={<PublicArticlesPage />} />
         <Route path={ROUTES.PUBLIC_NEWS_DETAIL()} element={<PublicArticleDetailPage />} />
+
+        {/* Public Investor Showcase */}
+        <Route path={ROUTES.PUBLIC_INVESTOR_SHOWCASE} element={<PublicInvestorShowcasePage />} />
+        <Route path={ROUTES.PUBLIC_INVESTOR_DETAIL()} element={<PublicInvestorDetailPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -869,6 +902,65 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        {/* Investor Showcase Admin */}
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_INVESTMENTS]}>
+              <InvestmentOpportunitiesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITY_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_INVESTMENTS]}>
+              <InvestmentOpportunityFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_INVESTMENTS]}>
+              <InvestmentOpportunityDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITY_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_INVESTMENTS]}>
+              <InvestmentOpportunityFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_ASSOCIATIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ASSOCIATIONS]}>
+              <IndustryAssociationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_ENQUIRIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES]}>
+              <InvestmentEnquiriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_ENQUIRY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES]}>
+              <InvestmentEnquiryDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
 
         {/* Account */}
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />

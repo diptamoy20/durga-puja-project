@@ -101,6 +101,16 @@ export const PERMISSIONS = {
   VIEW_TOURISM: 'view_tourism',
   MANAGE_TOURISM: 'manage_tourism',
   MANAGE_TOURISM_ENQUIRIES: 'manage_tourism_enquiries',
+
+  // Investor Showcase
+  VIEW_INVESTMENTS: 'view_investments',
+  CREATE_INVESTMENTS: 'create_investments',
+  EDIT_INVESTMENTS: 'edit_investments',
+  DELETE_INVESTMENTS: 'delete_investments',
+  APPROVE_INVESTMENTS: 'approve_investments',
+  PUBLISH_INVESTMENTS: 'publish_investments',
+  MANAGE_INVESTMENT_ENQUIRIES: 'manage_investment_enquiries',
+  MANAGE_ASSOCIATIONS: 'manage_associations',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

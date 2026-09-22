@@ -96,6 +96,15 @@ exports.PERMISSIONS = {
     VIEW_TOURISM: 'view_tourism',
     MANAGE_TOURISM: 'manage_tourism',
     MANAGE_TOURISM_ENQUIRIES: 'manage_tourism_enquiries',
+    // Investor Showcase
+    VIEW_INVESTMENTS: 'view_investments',
+    CREATE_INVESTMENTS: 'create_investments',
+    EDIT_INVESTMENTS: 'edit_investments',
+    DELETE_INVESTMENTS: 'delete_investments',
+    APPROVE_INVESTMENTS: 'approve_investments',
+    PUBLISH_INVESTMENTS: 'publish_investments',
+    MANAGE_INVESTMENT_ENQUIRIES: 'manage_investment_enquiries',
+    MANAGE_ASSOCIATIONS: 'manage_associations',
 };
 /** Human-readable definitions used to populate the `permissions` table. */
 exports.PERMISSION_DEFINITIONS = [
@@ -170,5 +179,13 @@ exports.PERMISSION_DEFINITIONS = [
     { module: 'Tourism Concierge', permissionName: 'View Tourism Concierge', permissionKey: exports.PERMISSIONS.VIEW_TOURISM },
     { module: 'Tourism Concierge', permissionName: 'Manage Tourism Concierge', permissionKey: exports.PERMISSIONS.MANAGE_TOURISM },
     { module: 'Tourism Concierge', permissionName: 'Manage Tourism Enquiries', permissionKey: exports.PERMISSIONS.MANAGE_TOURISM_ENQUIRIES },
+    { module: 'Investor Showcase', permissionName: 'View Investment Opportunities', permissionKey: exports.PERMISSIONS.VIEW_INVESTMENTS },
+    { module: 'Investor Showcase', permissionName: 'Create Investment Opportunities', permissionKey: exports.PERMISSIONS.CREATE_INVESTMENTS },
+    { module: 'Investor Showcase', permissionName: 'Edit Investment Opportunities', permissionKey: exports.PERMISSIONS.EDIT_INVESTMENTS },
+    { module: 'Investor Showcase', permissionName: 'Delete Investment Opportunities', permissionKey: exports.PERMISSIONS.DELETE_INVESTMENTS },
+    { module: 'Investor Showcase', permissionName: 'Approve / Reject Opportunities', permissionKey: exports.PERMISSIONS.APPROVE_INVESTMENTS },
+    { module: 'Investor Showcase', permissionName: 'Publish Opportunities', permissionKey: exports.PERMISSIONS.PUBLISH_INVESTMENTS },
+    { module: 'Investor Showcase', permissionName: 'Manage Investment Enquiries', permissionKey: exports.PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES },
+    { module: 'Investor Showcase', permissionName: 'Manage Industry Associations', permissionKey: exports.PERMISSIONS.MANAGE_ASSOCIATIONS },
 ];
 exports.ALL_PERMISSION_KEYS = exports.PERMISSION_DEFINITIONS.map((definition) => definition.permissionKey);

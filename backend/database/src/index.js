@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WebinarStatus = exports.VirusScanStatus = exports.UserStatus = exports.RsvpStatus = exports.RecordStatus = exports.ProcessingStatus = exports.Prisma = exports.NotificationStatus = exports.NotificationChannel = exports.MediaType = exports.MediaModerationStatus = exports.DiasporaStatus = exports.CommitteeStatus = exports.AtlasStatus = exports.ArticleStatus = exports.AiModerationStatus = exports.PrismaModule = exports.PrismaService = void 0;
+exports.WebinarStatus = exports.VirusScanStatus = exports.UserStatus = exports.RsvpStatus = exports.RecordStatus = exports.ProcessingStatus = exports.Prisma = exports.NotificationStatus = exports.NotificationChannel = exports.MediaType = exports.MediaModerationStatus = exports.DiasporaStatus = exports.CommitteeStatus = exports.AtlasStatus = exports.ArticleStatus = exports.AiModerationStatus = exports.InvestmentOpportunityStatus = exports.InvestmentEnquiryStatus = exports.PrismaModule = exports.PrismaService = void 0;
 var prisma_service_1 = require("../prisma.service");
 Object.defineProperty(exports, "PrismaService", { enumerable: true, get: function () { return prisma_service_1.PrismaService; } });
 var prisma_module_1 = require("./prisma.module");
@@ -24,3 +24,5 @@ Object.defineProperty(exports, "RsvpStatus", { enumerable: true, get: function (
 Object.defineProperty(exports, "UserStatus", { enumerable: true, get: function () { return client_1.UserStatus; } });
 Object.defineProperty(exports, "VirusScanStatus", { enumerable: true, get: function () { return client_1.VirusScanStatus; } });
 Object.defineProperty(exports, "WebinarStatus", { enumerable: true, get: function () { return client_1.WebinarStatus; } });
+Object.defineProperty(exports, "InvestmentOpportunityStatus", { enumerable: true, get: function () { return client_1.InvestmentOpportunityStatus; } });
+Object.defineProperty(exports, "InvestmentEnquiryStatus", { enumerable: true, get: function () { return client_1.InvestmentEnquiryStatus; } });
