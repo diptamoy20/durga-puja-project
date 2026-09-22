@@ -55,6 +55,8 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.VIEW_WEBINARS, permissions_1.PERMISSIONS.CREATE_WEBINARS, permissions_1.PERMISSIONS.EDIT_WEBINARS,
             permissions_1.PERMISSIONS.MANAGE_WEBINAR_RSVPS,
             permissions_1.PERMISSIONS.MANAGE_SETTINGS,
+            permissions_1.PERMISSIONS.VIEW_NOMINATIONS, permissions_1.PERMISSIONS.MANAGE_NOMINATIONS,
+            permissions_1.PERMISSIONS.REVIEW_NOMINATIONS, permissions_1.PERMISSIONS.SHORTLIST_NOMINATIONS,
         ],
     },
     {

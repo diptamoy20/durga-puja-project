@@ -41,7 +41,12 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
   }
 
   // Unfiltered list links stay inactive when a status query is present.
-  if (item.to === ROUTES.PANDAL_ATLAS || item.to === ROUTES.COMMITTEES || item.to === ROUTES.ARTICLES) {
+  if (
+    item.to === ROUTES.PANDAL_ATLAS ||
+    item.to === ROUTES.COMMITTEES ||
+    item.to === ROUTES.ARTICLES ||
+    item.to === ROUTES.SHARAD_SAMMAN_NOMINATIONS
+  ) {
     return !currentParams.get('status');
   }
 
@@ -50,6 +55,10 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
   }
 
   if (item.to === ROUTES.MY_COMMITTEE_MEDIA) {
+    return !currentParams.get('status');
+  }
+
+  if (item.to === ROUTES.MY_COMMITTEE_NOMINATIONS) {
     return !currentParams.get('status');
   }
 
@@ -69,7 +78,7 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
 }
 
 export function Sidebar({ open, onNavigate }: SidebarProps) {
-  const { can } = useAuth();
+  const { can, user } = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
@@ -81,14 +90,15 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
       NAVIGATION.filter(
         (section) =>
           (!section.permissions || can(...section.permissions)) &&
-          !(section.hiddenWhen && can(...section.hiddenWhen)),
+          !(section.hiddenWhen && can(...section.hiddenWhen)) &&
+          !(section.requiresCommittee && !user?.committeeId),
       )
         .map((section) => ({
           ...section,
           items: section.items.filter((item) => !item.permissions || can(...item.permissions)),
         }))
         .filter((section) => section.items.length > 0),
-    [can],
+    [can, user?.committeeId],
   );
 
   const activeSection = useMemo(() => {

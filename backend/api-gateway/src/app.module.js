@@ -17,6 +17,7 @@ const core_1 = require("@nestjs/core");
 const jwt_1 = require("@nestjs/jwt");
 const throttler_1 = require("@nestjs/throttler");
 const associations_module_1 = require("./associations/associations.module");
+const sharad_samman_module_1 = require("./sharad-samman/sharad-samman.module");
 const atlas_module_1 = require("./atlas/atlas.module");
 const auth_module_1 = require("./auth/auth.module");
 const clients_module_1 = require("./clients/clients.module");
@@ -71,6 +72,7 @@ exports.AppModule = AppModule = __decorate([
             events_module_1.EventsModule,
             database_1.PrismaModule,
             associations_module_1.AssociationsModule,
+            sharad_samman_module_1.SharadSammanModule,
         ],
         controllers: [health_controller_1.HealthController],
         providers: [

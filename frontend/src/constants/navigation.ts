@@ -30,6 +30,8 @@ export interface NavSection {
    * views, which exist only for users without the equivalent admin grant.
    */
   hiddenWhen?: PermissionKey[];
+  /** Section requires the authenticated user to be linked to a Puja Committee. */
+  requiresCommittee?: boolean;
 }
 
 /**
@@ -127,6 +129,26 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Approved Committees', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.COMMITTEES}?status=APPROVED` },
       { label: 'Pending Approvals', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.COMMITTEES}?status=PENDING` },
       { label: 'Rejected Applications', icon: 'fa-circle-xmark', tone: 'danger', to: `${ROUTES.COMMITTEES}?status=REJECTED` },
+    ],
+  },
+
+  {
+    label: 'Sharad Samman',
+    permissions: [PERMISSIONS.VIEW_NOMINATIONS],
+    items: [
+      { label: 'Dashboard', icon: 'fa-trophy', to: ROUTES.SHARAD_SAMMAN_DASHBOARD, end: true },
+      { label: 'All Nominations', icon: 'fa-list-check', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
+      { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=UNDER_REVIEW` },
+      { label: 'Approved', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=APPROVED` },
+      { label: 'Rejected', icon: 'fa-circle-xmark', tone: 'danger', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=REJECTED` },
+      { label: 'Shortlisted', icon: 'fa-star', tone: 'info', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=SHORTLISTED` },
+      {
+        label: 'Add Nomination',
+        icon: 'fa-circle-plus',
+        permissions: [PERMISSIONS.MANAGE_NOMINATIONS],
+        to: ROUTES.SHARAD_SAMMAN_NOMINATION_NEW,
+        end: true,
+      },
     ],
   },
 
@@ -341,6 +363,16 @@ export const NAVIGATION: NavSection[] = [
     items: [
       { label: 'Albums', icon: 'fa-photo-film', to: ROUTES.MY_COMMITTEE_ALBUMS },
       { label: 'Create Album', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_ALBUM_NEW, end: true },
+    ],
+  },
+
+  {
+    label: 'My Sharad Samman',
+    requiresCommittee: true,
+    hiddenWhen: [PERMISSIONS.REVIEW_NOMINATIONS],
+    items: [
+      { label: 'My Nominations', icon: 'fa-trophy', to: ROUTES.MY_COMMITTEE_NOMINATIONS },
+      { label: 'Submit Nomination', icon: 'fa-circle-plus', to: ROUTES.MY_COMMITTEE_NOMINATION_NEW, end: true },
     ],
   },
 

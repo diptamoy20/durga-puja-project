@@ -96,6 +96,11 @@ exports.PERMISSIONS = {
     MANAGE_WEBINAR_RSVPS: 'manage_webinar_rsvps',
     // Settings
     MANAGE_SETTINGS: 'manage_settings',
+    // Sharad Samman
+    VIEW_NOMINATIONS: 'view_nominations',
+    MANAGE_NOMINATIONS: 'manage_nominations',
+    REVIEW_NOMINATIONS: 'review_nominations',
+    SHORTLIST_NOMINATIONS: 'shortlist_nominations',
 };
 /** Human-readable definitions used to populate the `permissions` table. */
 exports.PERMISSION_DEFINITIONS = [
@@ -171,5 +176,9 @@ exports.PERMISSION_DEFINITIONS = [
     { module: 'Webinars', permissionName: 'Delete Webinars', permissionKey: exports.PERMISSIONS.DELETE_WEBINARS },
     { module: 'Webinars', permissionName: 'Manage Webinar RSVPs', permissionKey: exports.PERMISSIONS.MANAGE_WEBINAR_RSVPS },
     { module: 'Settings', permissionName: 'Manage Settings', permissionKey: exports.PERMISSIONS.MANAGE_SETTINGS },
+    { module: 'Sharad Samman', permissionName: 'View Nominations', permissionKey: exports.PERMISSIONS.VIEW_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Manage Nominations', permissionKey: exports.PERMISSIONS.MANAGE_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Review Nominations', permissionKey: exports.PERMISSIONS.REVIEW_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Shortlist Nominations', permissionKey: exports.PERMISSIONS.SHORTLIST_NOMINATIONS },
 ];
 exports.ALL_PERMISSION_KEYS = exports.PERMISSION_DEFINITIONS.map((definition) => definition.permissionKey);

@@ -104,6 +104,12 @@ export const PERMISSIONS = {
 
   // Settings
   MANAGE_SETTINGS: 'manage_settings',
+
+  // Sharad Samman
+  VIEW_NOMINATIONS: 'view_nominations',
+  MANAGE_NOMINATIONS: 'manage_nominations',
+  REVIEW_NOMINATIONS: 'review_nominations',
+  SHORTLIST_NOMINATIONS: 'shortlist_nominations',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

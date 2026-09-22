@@ -47,6 +47,12 @@ export const ROUTES = {
   MY_COMMITTEE_ALBUM_DETAIL: (id: number | string = ':id') => `/committee/albums/${id}`,
   MY_COMMITTEE_ALBUM_EDIT: (id: number | string = ':id') => `/committee/albums/${id}/edit`,
 
+  // Committee Sharad Samman Nominations
+  MY_COMMITTEE_NOMINATIONS: '/committee/nominations',
+  MY_COMMITTEE_NOMINATION_NEW: '/committee/nominations/new',
+  MY_COMMITTEE_NOMINATION_DETAIL: (id: number | string = ':id') => `/committee/nominations/${id}`,
+  MY_COMMITTEE_NOMINATION_EDIT: (id: number | string = ':id') => `/committee/nominations/${id}/edit`,
+
   // Master / Categories
   CATEGORIES: '/categories',
   CATEGORY_NEW: '/categories/new',
@@ -96,6 +102,13 @@ export const ROUTES = {
   PODCASTS: '/podcasts',
   PODCAST_NEW: '/podcasts/new',
   PODCAST_EDIT: (id: number | string = ':id') => `/podcasts/${id}/edit`,
+
+  // Sharad Samman
+  SHARAD_SAMMAN_DASHBOARD: '/sharad-samman',
+  SHARAD_SAMMAN_NOMINATIONS: '/sharad-samman/nominations',
+  SHARAD_SAMMAN_NOMINATION_NEW: '/sharad-samman/nominations/new',
+  SHARAD_SAMMAN_NOMINATION_DETAIL: (id: number | string = ':id') => `/sharad-samman/nominations/${id}`,
+  SHARAD_SAMMAN_NOMINATION_EDIT: (id: number | string = ':id') => `/sharad-samman/nominations/${id}/edit`,
 
   // Public Facing Pages
   PUBLIC_CHOOSE_TYPE: '/register/choose',

@@ -166,6 +166,17 @@ const CommitteeAlbumListPage = lazy(() =>
   import('@/pages/committee-albums/CommitteeAlbumListPage').then((m) => ({ default: m.CommitteeAlbumListPage })),
 );
 
+// Committee Sharad Samman nomination pages
+const MyCommitteeNominationListPage = lazy(() =>
+  import('@/pages/committee-samman/MyCommitteeNominationListPage').then((m) => ({ default: m.MyCommitteeNominationListPage })),
+);
+const MyCommitteeNominationFormPage = lazy(() =>
+  import('@/pages/committee-samman/MyCommitteeNominationFormPage').then((m) => ({ default: m.MyCommitteeNominationFormPage })),
+);
+const MyCommitteeNominationDetailPage = lazy(() =>
+  import('@/pages/committee-samman/MyCommitteeNominationDetailPage').then((m) => ({ default: m.MyCommitteeNominationDetailPage })),
+);
+
 // Public Pages
 const ChooseAccountTypePage = lazy(() =>
   import('@/pages/public/ChooseAccountTypePage').then((m) => ({ default: m.ChooseAccountTypePage })),
@@ -228,6 +239,20 @@ const PodcastListPage = lazy(() =>
 );
 const PodcastFormPage = lazy(() =>
   import('@/pages/podcasts/PodcastFormPage').then((m) => ({ default: m.PodcastFormPage })),
+);
+
+// Sharad Samman Admin Pages
+const SharadSammanDashboardPage = lazy(() =>
+  import('@/pages/sharad-samman/SharadSammanDashboardPage').then((m) => ({ default: m.SharadSammanDashboardPage })),
+);
+const NominationListPage = lazy(() =>
+  import('@/pages/sharad-samman/NominationListPage').then((m) => ({ default: m.NominationListPage })),
+);
+const NominationDetailPage = lazy(() =>
+  import('@/pages/sharad-samman/NominationDetailPage').then((m) => ({ default: m.NominationDetailPage })),
+);
+const NominationFormPage = lazy(() =>
+  import('@/pages/sharad-samman/NominationFormPage').then((m) => ({ default: m.NominationFormPage })),
 );
 
 
@@ -450,6 +475,48 @@ export function AppRoutes() {
           }
         />
 
+        {/* Sharad Samman Admin */}
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_DASHBOARD}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <SharadSammanDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <NominationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <NominationDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Committee member media & albums */}
         <Route
           path={ROUTES.MY_COMMITTEE_MEDIA}
@@ -512,6 +579,40 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ALBUMS]}>
               <AlbumFormPage mode="committee" />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Committee Sharad Samman */}
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATIONS}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATION_NEW}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATION_DETAIL()}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATION_EDIT()}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationFormPage />
             </ProtectedRoute>
           }
         />
