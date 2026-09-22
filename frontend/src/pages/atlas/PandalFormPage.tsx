@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { CoordinatePickerMap } from '@/components/atlas/CoordinatePickerMap';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -11,7 +12,7 @@ import { ROUTES } from '@/constants/routes';
 import { adminAtlasService } from '@/services/atlasService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { atlasFileUrl } from '@/utils/atlasHelpers';
+import { atlasFileUrl, ATLAS_LIST_LABEL } from '@/utils/atlasHelpers';
 import type { AtlasFormCommitteeOption, PandalFormValues } from '@/types/atlas';
 
 export function PandalFormPage() {
@@ -173,17 +174,15 @@ export function PandalFormPage() {
 
   return (
     <div className="page">
-      <header className="page__header">
-        <div style={{ marginBottom: 'var(--space-100)' }}>
-          <Link to={ROUTES.PANDAL_ATLAS} className="btn btn--secondary btn--sm">
-            ← Back to Directory
-          </Link>
-        </div>
-        <h1 className="page__title">{isEdit ? 'Edit Pandal Entry' : 'Pandal Entry Form'}</h1>
-        <p className="page__subtitle">
-          Create a pandal entry with location coordinates, photos, ritual schedule, and digital experience links.
-        </p>
-      </header>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: ATLAS_LIST_LABEL, to: ROUTES.PANDAL_ATLAS },
+          { label: isEdit ? 'Edit Pandal' : 'Add New Pandal' },
+        ]}
+        title={isEdit ? 'Edit Pandal Entry' : 'Add New Pandal'}
+        subtitle="Create a pandal entry with location coordinates, photos, ritual schedule, and digital experience links."
+      />
 
       {rejectionRemarks && status === 'REJECTED' && (
         <Alert tone="danger">

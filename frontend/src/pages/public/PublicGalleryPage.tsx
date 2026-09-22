@@ -190,14 +190,16 @@ export function PublicGalleryPage() {
       )}
 
       {pagination && pagination.lastPage > 1 && (
-        <Pagination
-          meta={pagination}
-          onPageChange={(nextPage) => {
-            const params = Object.fromEntries(searchParams.entries());
-            params.page = String(nextPage);
-            setSearchParams(params);
-          }}
-        />
+        <div className="public-gallery__pagination">
+          <Pagination
+            meta={pagination}
+            onPageChange={(nextPage) => {
+              const params = Object.fromEntries(searchParams.entries());
+              params.page = String(nextPage);
+              setSearchParams(params);
+            }}
+          />
+        </div>
       )}
     </div>
   );

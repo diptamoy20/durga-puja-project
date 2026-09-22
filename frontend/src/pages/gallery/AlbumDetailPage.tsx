@@ -4,12 +4,18 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/Modal';
+import { MediaPreviewModal } from '@/components/gallery/MediaPreviewModal';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
+import { MediaPreviewThumb } from '@/components/gallery/MediaPreviewThumb';
 import { PageLoader } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/ui/Badge';
 import { ROUTES } from '@/constants/routes';
 import { albumService, committeeAlbumService } from '@/services/galleryService';
-import { mediaStreamUrl, mediaThumbnailUrl } from '@/utils/galleryHelpers';
-import type { Album } from '@/types/gallery';
+import { formatMediaType } from '@/utils/galleryHelpers';
+import type { Album, CommitteeMedia } from '@/types/gallery';
+
+import '@/styles/gallery-admin.css';
 
 interface AlbumDetailPageProps {
   mode: 'admin' | 'committee';
@@ -22,11 +28,15 @@ export function AlbumDetailPage({ mode }: AlbumDetailPageProps) {
   const service = isAdmin ? albumService : committeeAlbumService;
   const listRoute = isAdmin ? ROUTES.GALLERY_ALBUMS : ROUTES.MY_COMMITTEE_ALBUMS;
   const editRoute = isAdmin ? ROUTES.GALLERY_ALBUM_EDIT : ROUTES.MY_COMMITTEE_ALBUM_EDIT;
+  const mediaDetailRoute = isAdmin ? ROUTES.GALLERY_DETAIL : ROUTES.MY_COMMITTEE_MEDIA_DETAIL;
+  const listLabel = isAdmin ? 'Albums' : 'My Albums';
 
   const [album, setAlbum] = useState<Album | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [previewItem, setPreviewItem] = useState<CommitteeMedia | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -39,96 +49,181 @@ export function AlbumDetailPage({ mode }: AlbumDetailPageProps) {
   }, [id, service]);
 
   const handleDelete = async () => {
-    if (!album || !window.confirm('Delete this album?')) return;
+    if (!album) return;
     setDeleting(true);
     try {
       await service.remove(album.id);
       navigate(listRoute);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Delete failed.');
+      setDeleteOpen(false);
     } finally {
       setDeleting(false);
     }
   };
 
   if (loading) return <PageLoader />;
+
   if (error || !album) {
     return (
       <div className="page">
         <Alert tone="danger">{error ?? 'Album not found.'}</Alert>
-        <Link to={listRoute} className="btn btn--secondary btn--md">Back to albums</Link>
+        <div className="media-page-footer">
+          <Link to={listRoute} className="btn btn--secondary btn--md">
+            <i className="fas fa-arrow-left" aria-hidden="true" /> Back to {listLabel}
+          </Link>
+        </div>
       </div>
     );
   }
 
+  const mediaItems = album.media ?? [];
+  const photoCount = mediaItems.filter((item) => item.mediaType === 'PHOTO').length;
+  const videoCount = mediaItems.filter((item) => item.mediaType === 'VIDEO').length;
+  const pageTitle = album.title.length > 60 ? `${album.title.slice(0, 60)}…` : album.title;
+
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
-        <div>
-          <Link to={listRoute} className="btn btn--secondary btn--sm" style={{ marginBottom: 'var(--space-200)' }}>
-            ← Back to albums
-          </Link>
-          <h1 className="page__title">{album.title}</h1>
-          <p className="page__subtitle">{album.description || 'No description provided.'}</p>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--space-200)' }}>
-          <Link to={editRoute(album.id)} className="btn btn--primary btn--md">Edit Album</Link>
-          <Button variant="danger" size="md" disabled={deleting} onClick={handleDelete}>
-            Delete
-          </Button>
-        </div>
-      </header>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: listLabel, to: listRoute },
+          { label: pageTitle },
+        ]}
+        title={album.title}
+        subtitle={`${album.description || 'No description provided.'}${
+          isAdmin && album.committee?.committeeName ? ` · ${album.committee.committeeName}` : ''
+        }`}
+        meta={
+          <div className="media-detail-header__meta" style={{ marginBottom: 'var(--space-2)' }}>
+            <StatusBadge tone={album.status === 'ACTIVE' ? 'success' : 'default'}>
+              {album.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+            </StatusBadge>
+            <span className="media-detail-header__type">
+              {album.isPublic ? 'Public' : 'Private'}
+            </span>
+            <span className="media-detail-header__type">
+              {mediaItems.length} item{mediaItems.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        }
+        actions={
+          <>
+            <Link to={editRoute(album.id)} className="btn btn--outline-secondary btn--md">
+              <i className="fas fa-pencil" aria-hidden="true" /> Edit Album
+            </Link>
+            <Button variant="danger" size="md" onClick={() => setDeleteOpen(true)}>
+              <i className="fas fa-trash" aria-hidden="true" /> Delete
+            </Button>
+          </>
+        }
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) minmax(0, 2fr)', gap: 'var(--space-400)' }}>
-        <Card title="Album Details">
-          <dl className="detail-list">
-            <dt>Category</dt>
-            <dd>{album.category?.name ?? '—'}{album.subcategory ? ` / ${album.subcategory.name}` : ''}</dd>
+      <div className="album-detail__grid">
+        <Card className="media-detail-card" title="Album Details">
+          <dl className="media-detail-list">
+            <div className="media-detail-list__row">
+              <dt>Category</dt>
+              <dd>
+                {album.category?.name ?? '—'}
+                {album.subcategory ? ` / ${album.subcategory.name}` : ''}
+              </dd>
+            </div>
             {isAdmin && (
-              <>
+              <div className="media-detail-list__row">
                 <dt>Committee</dt>
                 <dd>{album.committee?.committeeName ?? '—'}</dd>
-              </>
+              </div>
             )}
-            <dt>Visibility</dt>
-            <dd>{album.isPublic ? 'Public' : 'Private'}</dd>
-            <dt>Status</dt>
-            <dd>
-              <StatusBadge tone={album.status === 'ACTIVE' ? 'success' : 'default'}>
-                {album.status === 'ACTIVE' ? 'Active' : 'Inactive'}
-              </StatusBadge>
-            </dd>
-            <dt>Media items</dt>
-            <dd>{album._count?.media ?? album.media?.length ?? 0}</dd>
+            <div className="media-detail-list__row">
+              <dt>Visibility</dt>
+              <dd>{album.isPublic ? 'Public' : 'Private'}</dd>
+            </div>
+            <div className="media-detail-list__row">
+              <dt>Status</dt>
+              <dd>
+                <StatusBadge tone={album.status === 'ACTIVE' ? 'success' : 'default'}>
+                  {album.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                </StatusBadge>
+              </dd>
+            </div>
+            <div className="media-detail-list__row">
+              <dt>Media items</dt>
+              <dd>
+                {photoCount} photo{photoCount === 1 ? '' : 's'}, {videoCount} video
+                {videoCount === 1 ? '' : 's'}
+              </dd>
+            </div>
           </dl>
         </Card>
 
-        <Card title="Album Media">
-          {!album.media?.length ? (
-            <p style={{ color: 'var(--color-text-muted)' }}>No media assigned to this album yet.</p>
+        <Card className="media-detail-card album-detail__media-card" title="Album Media">
+          {mediaItems.length === 0 ? (
+            <p className="album-detail__empty">No media assigned to this album yet.</p>
           ) : (
-            <div className="public-gallery__grid">
-              {album.media.map((item) => (
-                <div key={item.id} className="public-gallery-card" style={{ pointerEvents: 'none' }}>
-                  <div className="public-gallery-card__media">
-                    {item.mediaType === 'PHOTO' ? (
-                      <img src={mediaThumbnailUrl(item)} alt={item.title || item.originalFilename} className="public-gallery-card__thumb" />
-                    ) : (
-                      <div className="public-gallery-card__video-placeholder"><span>▶</span></div>
-                    )}
-                  </div>
-                  <div className="public-gallery-card__body">
-                    <h2 className="public-gallery-card__title">{item.title || item.originalFilename}</h2>
-                    {item.mediaType === 'VIDEO' && (
-                      <video controls style={{ width: '100%', marginTop: 'var(--space-150)' }} src={mediaStreamUrl(item)} />
-                    )}
-                  </div>
+            <>
+              <div className="album-form__media-toolbar album-detail__media-toolbar">
+                <div className="album-form__media-counts">
+                  <strong>{photoCount}</strong> image{photoCount === 1 ? '' : 's'},{' '}
+                  <strong>{videoCount}</strong> video{videoCount === 1 ? '' : 's'}
                 </div>
-              ))}
-            </div>
+              </div>
+              <div className="album-form__selected-grid">
+                {mediaItems.map((item) => (
+                  <div key={item.id} className="album-form__selected-card">
+                    <MediaPreviewThumb item={item} size="md" onClick={() => setPreviewItem(item)} />
+                    <div className="album-form__selected-body">
+                      <div className="album-form__selected-title">
+                        {item.title || item.originalFilename}
+                      </div>
+                      <div className="album-form__selected-type">{formatMediaType(item.mediaType)}</div>
+                      <div className="album-form__selected-actions">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setPreviewItem(item)}
+                        >
+                          Preview
+                        </Button>
+                        <Link
+                          to={mediaDetailRoute(item.id)}
+                          className="btn btn--outline-secondary btn--sm"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </Card>
       </div>
+
+      <div className="media-page-footer">
+        <Link to={listRoute} className="btn btn--secondary btn--sm">
+          <i className="fas fa-arrow-left" aria-hidden="true" /> Back to {listLabel}
+        </Link>
+      </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete Album"
+        message="Are you sure you want to delete this album? This action cannot be undone."
+        confirmLabel="Delete Album"
+        destructive
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteOpen(false)}
+      />
+
+      <MediaPreviewModal
+        item={previewItem}
+        open={previewItem !== null}
+        onClose={() => setPreviewItem(null)}
+      />
     </div>
   );
 }

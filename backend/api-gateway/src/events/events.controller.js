@@ -17,9 +17,14 @@ exports.AdminWebinarsController = exports.PublicWebinarsController = void 0;
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const platform_express_1 = require("@nestjs/platform-express");
+const node_fs_1 = require("node:fs");
+const node_path_1 = require("node:path");
 const microservice_client_1 = require("../clients/microservice.client");
 const response_interceptor_1 = require("../interceptors/response.interceptor");
 const events_dto_1 = require("./dto/events.dto");
+const events_upload_util_1 = require("./events-upload.util");
+const WEBINAR_UPLOAD_DIR = process.env.UPLOAD_DIR ?? './storage/uploads';
 // ============================================================================
 // Public Webinars
 // ============================================================================
@@ -49,6 +54,29 @@ let PublicWebinarsController = class PublicWebinarsController {
             subscribableId: 0,
             ...dto,
         });
+    }
+    async bannerFile(relativePath, res) {
+        const safePath = decodeURIComponent(relativePath).replace(/\\/g, '/');
+        if (!safePath.startsWith('webinar-banners/') || safePath.includes('..')) {
+            throw new common_1.NotFoundException('File not found.');
+        }
+        const absolutePath = (0, node_path_1.resolve)(WEBINAR_UPLOAD_DIR, safePath);
+        if (!(0, node_fs_1.existsSync)(absolutePath)) {
+            throw new common_1.NotFoundException('File not found.');
+        }
+        const ext = (0, node_path_1.extname)(absolutePath).toLowerCase();
+        const mimeByExt = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+        };
+        const contentType = mimeByExt[ext];
+        if (contentType) {
+            res.setHeader('Content-Type', contentType);
+        }
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.sendFile(absolutePath);
     }
 };
 exports.PublicWebinarsController = PublicWebinarsController;
@@ -106,6 +134,16 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_c = typeof events_dto_1.PushSubscribeDto !== "undefined" && events_dto_1.PushSubscribeDto) === "function" ? _c : Object]),
     __metadata("design:returntype", void 0)
 ], PublicWebinarsController.prototype, "pushSubscribe", null);
+__decorate([
+    (0, shared_1.Public)(),
+    (0, common_1.Get)('files/*'),
+    (0, swagger_1.ApiOperation)({ summary: 'Serve webinar banner images' }),
+    __param(0, (0, common_1.Param)('0')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], PublicWebinarsController.prototype, "bannerFile", null);
 exports.PublicWebinarsController = PublicWebinarsController = __decorate([
     (0, swagger_1.ApiTags)('Public Webinars'),
     (0, common_1.Controller)('webinars'),
@@ -187,6 +225,24 @@ let AdminWebinarsController = class AdminWebinarsController {
             content: [header, ...lines].join('\n'),
         };
     }
+    uploadBanner(file) {
+        if (!file) {
+            throw new common_1.BadRequestException('Banner image file is required.');
+        }
+        const storedPath = (0, node_path_1.join)('webinar-banners', file.filename).replace(/\\/g, '/');
+        return { bannerImage: storedPath, url: `/api/v1/webinars/files/${storedPath}` };
+    }
+    updateReplay(id, dto, actor) {
+        return this.client.send(shared_1.SERVICE_TOKENS.EVENTS, shared_1.EVENTS_PATTERNS.WEBINAR_UPDATE, {
+            id,
+            data: {
+                replayVideoUrl: dto.replayVideoUrl,
+                replayEmbedCode: dto.replayEmbedCode,
+                replayDurationMinutes: dto.replayDurationMinutes,
+            },
+            actorId: actor.id,
+        });
+    }
 };
 exports.AdminWebinarsController = AdminWebinarsController;
 __decorate([
@@ -223,7 +279,7 @@ __decorate([
 ], AdminWebinarsController.prototype, "create", null);
 __decorate([
     (0, common_1.Put)(':id'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.CREATE_WEBINARS),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_WEBINARS),
     (0, response_interceptor_1.ResponseMessage)('Webinar updated successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Update a webinar' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -248,7 +304,7 @@ __decorate([
 ], AdminWebinarsController.prototype, "toggleStatus", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.CREATE_WEBINARS),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.DELETE_WEBINARS),
     (0, response_interceptor_1.ResponseMessage)('Webinar deleted successfully'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, shared_1.CurrentUser)()),
@@ -289,6 +345,30 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminWebinarsController.prototype, "exportRsvps", null);
+__decorate([
+    (0, common_1.Post)('upload-banner'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.CREATE_WEBINARS, shared_1.PERMISSIONS.EDIT_WEBINARS),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('banner_image', (0, events_upload_util_1.webinarBannerUploadOptions)(WEBINAR_UPLOAD_DIR))),
+    (0, response_interceptor_1.ResponseMessage)('Banner uploaded successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload a webinar banner image' }),
+    __param(0, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Object)
+], AdminWebinarsController.prototype, "uploadBanner", null);
+__decorate([
+    (0, common_1.Post)(':id/update-replay'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.EDIT_WEBINARS),
+    (0, response_interceptor_1.ResponseMessage)('Replay settings updated successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update replay video settings for a completed webinar' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, shared_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, typeof (_p = typeof shared_1.AuthenticatedUser !== "undefined" && shared_1.AuthenticatedUser) === "function" ? _p : Object]),
+    __metadata("design:returntype", void 0)
+], AdminWebinarsController.prototype, "updateReplay", null);
 exports.AdminWebinarsController = AdminWebinarsController = __decorate([
     (0, swagger_1.ApiTags)('Admin Webinars'),
     (0, swagger_1.ApiBearerAuth)(),

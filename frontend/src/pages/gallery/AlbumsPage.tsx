@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
+import { GalleryModuleHeader } from '@/components/gallery/GalleryModuleHeader';
 import { StatusBadge } from '@/components/ui/Badge';
 import { ROUTES } from '@/constants/routes';
 import { albumService } from '@/services/galleryService';
@@ -16,6 +17,8 @@ import type { Album, MediaListQuery } from '@/types/gallery';
 import type { Category, Subcategory } from '@/types/content';
 import type { AtlasFormCommitteeOption } from '@/types/atlas';
 import type { PaginationMeta } from '@/types';
+
+import '@/styles/gallery-admin.css';
 
 export function AlbumsPage() {
   const toast = useToast();
@@ -43,13 +46,26 @@ export function AlbumsPage() {
     () => ({
       ...query,
       search: searchParams.get('search') || undefined,
-      pujaCommitteeId: searchParams.get('puja_committee_id') ? Number(searchParams.get('puja_committee_id')) : undefined,
+      pujaCommitteeId: searchParams.get('puja_committee_id')
+        ? Number(searchParams.get('puja_committee_id'))
+        : undefined,
       categoryId: searchParams.get('category_id') ? Number(searchParams.get('category_id')) : undefined,
-      subcategoryId: searchParams.get('subcategory_id') ? Number(searchParams.get('subcategory_id')) : undefined,
+      subcategoryId: searchParams.get('subcategory_id')
+        ? Number(searchParams.get('subcategory_id'))
+        : undefined,
       albumStatus: (searchParams.get('status') as 'ACTIVE' | 'INACTIVE' | null) || undefined,
       visibility: (searchParams.get('visibility') as 'public' | 'private' | null) || undefined,
     }),
     [query, searchParams],
+  );
+
+  const hasActiveFilters = Boolean(
+    searchParams.get('search') ||
+      searchParams.get('puja_committee_id') ||
+      searchParams.get('category_id') ||
+      searchParams.get('subcategory_id') ||
+      searchParams.get('status') ||
+      searchParams.get('visibility'),
   );
 
   useEffect(() => {
@@ -62,9 +78,10 @@ export function AlbumsPage() {
       subcategoryService
         .list({ categoryId: Number(draftCategoryId), perPage: 100, sortDir: 'asc' })
         .then((res) => setSubcategories(res.items))
-        .catch(() => {});
+        .catch(() => setDraftSubcategoryId(''));
     } else {
       setSubcategories([]);
+      setDraftSubcategoryId('');
     }
   }, [draftCategoryId]);
 
@@ -127,57 +144,153 @@ export function AlbumsPage() {
 
   return (
     <div className="page">
-      <header className="page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-300)' }}>
-        <div>
-          <h1 className="page__title">Albums</h1>
-          <p className="page__subtitle">Organize approved committee media into albums.</p>
-        </div>
-        <Link to={ROUTES.GALLERY_ALBUM_NEW} className="btn btn--primary btn--md">
-          + Create Album
-        </Link>
-      </header>
+      <GalleryModuleHeader
+        breadcrumbs={[
+          { label: 'Dashboard', to: ROUTES.DASHBOARD },
+          { label: 'Albums' },
+        ]}
+        title="Albums"
+        subtitle="Organize approved committee media into curated albums for public galleries."
+        actions={
+          <Link to={ROUTES.GALLERY_ALBUM_NEW} className="btn btn--primary btn--md">
+            <i className="fas fa-circle-plus" aria-hidden="true" /> Create Album
+          </Link>
+        }
+      />
 
       {error && <Alert tone="danger">{error}</Alert>}
 
-      <Card>
-        <div className="filter-bar">
-          <form className="filter-bar__search" onSubmit={applyFilters}>
-            <input
-              type="search"
+      <Card className="media-list-card">
+        <form className="media-filters media-filters--albums" onSubmit={applyFilters}>
+          <div className="media-filters__field media-filters__field--search">
+            <label className="media-filters__label" htmlFor="album-search">
+              Search
+            </label>
+            <div className="media-filters__search-group">
+              <span className="media-filters__search-icon" aria-hidden="true">
+                <i className="fas fa-search" />
+              </span>
+              <input
+                id="album-search"
+                type="search"
+                className="field__control media-filters__search-input"
+                placeholder="Search title or description…"
+                value={draftSearch}
+                onChange={(e) => setDraftSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="media-filters__field">
+            <label className="media-filters__label" htmlFor="album-committee">
+              Committee
+            </label>
+            <select
+              id="album-committee"
               className="field__control"
-              placeholder="Search title or description"
-              value={draftSearch}
-              onChange={(e) => setDraftSearch(e.target.value)}
-            />
-            <select className="field__control" value={draftCommitteeId} onChange={(e) => setDraftCommitteeId(e.target.value)}>
-              <option value="">All committees</option>
-              {committees.map((c) => <option key={c.id} value={c.id}>{c.committeeName}</option>)}
+              value={draftCommitteeId}
+              onChange={(e) => setDraftCommitteeId(e.target.value)}
+            >
+              <option value="">All Committees</option>
+              {committees.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.committeeName}
+                </option>
+              ))}
             </select>
-            <select className="field__control" value={draftCategoryId} onChange={(e) => setDraftCategoryId(e.target.value)}>
-              <option value="">All categories</option>
-              {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+          </div>
+
+          <div className="media-filters__field">
+            <label className="media-filters__label" htmlFor="album-category">
+              Category
+            </label>
+            <select
+              id="album-category"
+              className="field__control"
+              value={draftCategoryId}
+              onChange={(e) => setDraftCategoryId(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
-            <select className="field__control" value={draftSubcategoryId} onChange={(e) => setDraftSubcategoryId(e.target.value)}>
-              <option value="">All subcategories</option>
-              {subcategories.map((sub) => <option key={sub.id} value={sub.id}>{sub.name}</option>)}
-            </select>
-            <select className="field__control" value={draftStatus} onChange={(e) => setDraftStatus(e.target.value)}>
-              <option value="">All statuses</option>
+          </div>
+
+          {subcategories.length > 0 && (
+            <div className="media-filters__field">
+              <label className="media-filters__label" htmlFor="album-subcategory">
+                Subcategory
+              </label>
+              <select
+                id="album-subcategory"
+                className="field__control"
+                value={draftSubcategoryId}
+                onChange={(e) => setDraftSubcategoryId(e.target.value)}
+              >
+                <option value="">All Subcategories</option>
+                {subcategories.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="media-filters__field">
+            <label className="media-filters__label" htmlFor="album-status">
+              Status
+            </label>
+            <select
+              id="album-status"
+              className="field__control"
+              value={draftStatus}
+              onChange={(e) => setDraftStatus(e.target.value)}
+            >
+              <option value="">All Statuses</option>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </select>
-            <select className="field__control" value={draftVisibility} onChange={(e) => setDraftVisibility(e.target.value)}>
-              <option value="">All visibility</option>
+          </div>
+
+          <div className="media-filters__field">
+            <label className="media-filters__label" htmlFor="album-visibility">
+              Visibility
+            </label>
+            <select
+              id="album-visibility"
+              className="field__control"
+              value={draftVisibility}
+              onChange={(e) => setDraftVisibility(e.target.value)}
+            >
+              <option value="">All Visibility</option>
               <option value="public">Public</option>
               <option value="private">Private</option>
             </select>
-            <Button type="submit" variant="secondary" size="md">Filter</Button>
-            <Button type="button" variant="secondary" size="md" onClick={resetFilters}>Reset</Button>
-          </form>
-        </div>
+          </div>
 
-        <div className="table-wrapper">
-          <table className="table">
+          <div className="media-filters__actions">
+            <Button type="submit" variant="primary" size="md">
+              <i className="fas fa-filter" aria-hidden="true" /> Filter
+            </Button>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className="btn btn--secondary btn--md"
+                onClick={resetFilters}
+                title="Reset filters"
+              >
+                <i className="fas fa-rotate-left" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </form>
+
+        <div className="table-wrapper media-table-wrapper">
+          <table className="table media-table">
             <thead>
               <tr>
                 <th>Title</th>
@@ -186,40 +299,79 @@ export function AlbumsPage() {
                 <th>Media</th>
                 <th>Visibility</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th className="table__actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>Loading albums…</td></tr>
+                <tr>
+                  <td colSpan={7} className="table__placeholder">
+                    Loading albums…
+                  </td>
+                </tr>
               ) : albums.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-600)' }}>No albums found.</td></tr>
+                <tr>
+                  <td colSpan={7} className="table__placeholder">
+                    No albums found matching current filters.
+                  </td>
+                </tr>
               ) : (
                 albums.map((album) => (
                   <tr key={album.id}>
                     <td>
-                      <strong>{album.title}</strong>
+                      <span className="table__primary">{album.title}</span>
                       {album.description && (
-                        <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{album.description}</div>
+                        <span className="table__secondary media-table__description">
+                          {album.description}
+                        </span>
                       )}
                     </td>
                     <td>
-                      {album.category?.name ?? '—'}
-                      {album.subcategory && <div style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)' }}>{album.subcategory.name}</div>}
+                      <span className="table__primary">{album.category?.name ?? '—'}</span>
+                      {album.subcategory && (
+                        <span className="table__secondary">{album.subcategory.name}</span>
+                      )}
                     </td>
-                    <td>{album.committee?.committeeName ?? '—'}</td>
-                    <td>{album._count?.media ?? album.media?.length ?? 0}</td>
-                    <td>{album.isPublic ? 'Public' : 'Private'}</td>
+                    <td className="media-table__committee">{album.committee?.committeeName ?? '—'}</td>
+                    <td>
+                      <span className="album-media-count">{album._count?.media ?? album.media?.length ?? 0}</span>
+                    </td>
+                    <td>
+                      <StatusBadge tone={album.isPublic ? 'info' : 'default'}>
+                        {album.isPublic ? 'Public' : 'Private'}
+                      </StatusBadge>
+                    </td>
                     <td>
                       <StatusBadge tone={album.status === 'ACTIVE' ? 'success' : 'default'}>
                         {album.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                       </StatusBadge>
                     </td>
-                    <td>
-                      <div className="committee-row-actions">
-                        <Link to={ROUTES.GALLERY_ALBUM_DETAIL(album.id)} className="btn btn--secondary btn--sm">View</Link>
-                        <Link to={ROUTES.GALLERY_ALBUM_EDIT(album.id)} className="btn btn--secondary btn--sm">Edit</Link>
-                        <Button variant="danger" size="sm" onClick={() => setDeleteTarget(album)}>Delete</Button>
+                    <td className="table__actions">
+                      <div className="media-table__actions">
+                        <div className="media-action-group">
+                          <Link
+                            to={ROUTES.GALLERY_ALBUM_DETAIL(album.id)}
+                            className="media-action-btn"
+                            title="View album"
+                          >
+                            <i className="fas fa-eye" aria-hidden="true" />
+                          </Link>
+                          <Link
+                            to={ROUTES.GALLERY_ALBUM_EDIT(album.id)}
+                            className="media-action-btn"
+                            title="Edit album"
+                          >
+                            <i className="fas fa-pencil" aria-hidden="true" />
+                          </Link>
+                          <button
+                            type="button"
+                            className="media-action-btn media-action-btn--danger"
+                            title="Delete album"
+                            onClick={() => setDeleteTarget(album)}
+                          >
+                            <i className="fas fa-trash" aria-hidden="true" />
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -230,7 +382,9 @@ export function AlbumsPage() {
         </div>
 
         {pagination && pagination.lastPage > 1 && (
-          <Pagination meta={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
+          <div className="media-list-card__pagination">
+            <Pagination meta={pagination} onPageChange={(page) => setQuery((q) => ({ ...q, page }))} />
+          </div>
         )}
       </Card>
 
