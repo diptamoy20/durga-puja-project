@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d, _e, _f, _g;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SharadSammanController = void 0;
 const shared_1 = require("@dpgc/shared");
@@ -30,15 +30,36 @@ let SharadSammanController = class SharadSammanController {
     /**
      * Dashboard statistics
      */
-    dashboard() {
-        return this.service.getDashboardStats();
+    dashboard(contestId) {
+        return this.service.getDashboardStats(contestId);
     }
 
     /**
-     * Available contests for dropdowns
+     * Available contests for dropdowns and management
      */
     contests() {
         return this.service.listContests();
+    }
+
+    /**
+     * Get single contest details
+     */
+    getContest(id) {
+        return this.service.getContest(id);
+    }
+
+    /**
+     * Create contest
+     */
+    createContest(dto) {
+        return this.service.createContest(dto);
+    }
+
+    /**
+     * Edit contest
+     */
+    updateContest(id, dto) {
+        return this.service.updateContest(id, dto);
     }
 
     /**
@@ -123,20 +144,55 @@ __decorate([
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_NOMINATIONS),
     (0, response_interceptor_1.ResponseMessage)('Sharad Samman dashboard stats retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get Sharad Samman admin dashboard statistics' }),
+    __param(0, (0, common_1.Query)('contestId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], SharadSammanController.prototype, "dashboard", null);
 
 __decorate([
     (0, common_1.Get)('contests'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_NOMINATIONS),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_NOMINATIONS, shared_1.PERMISSIONS.MANAGE_CONTESTS),
     (0, response_interceptor_1.ResponseMessage)('Contests retrieved successfully'),
-    (0, swagger_1.ApiOperation)({ summary: 'List contests for selection' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List contests for selection and management' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], SharadSammanController.prototype, "contests", null);
+
+__decorate([
+    (0, common_1.Get)('contests/:id'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_NOMINATIONS, shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Contest details retrieved successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get single contest details' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "getContest", null);
+
+__decorate([
+    (0, common_1.Post)('contests'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Contest created successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new Sharad Samman contest' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_f = typeof sharad_samman_dto_1.CreateContestDto !== "undefined" && sharad_samman_dto_1.CreateContestDto) === "function" ? _f : Object]),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "createContest", null);
+
+__decorate([
+    (0, common_1.Put)('contests/:id'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Contest updated successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update an existing contest in-place' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, typeof (_g = typeof sharad_samman_dto_1.UpdateContestDto !== "undefined" && sharad_samman_dto_1.UpdateContestDto) === "function" ? _g : Object]),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "updateContest", null);
 
 __decorate([
     (0, common_1.Get)('committees'),

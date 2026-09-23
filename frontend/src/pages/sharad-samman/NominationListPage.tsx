@@ -65,39 +65,80 @@ export function NominationListPage() {
   const canReview = can(PERMISSIONS.REVIEW_NOMINATIONS);
   const canShortlist = can(PERMISSIONS.SHORTLIST_NOMINATIONS) || user?.isSuperAdmin;
 
-  // Load contest sessions once
+  const currentContest = contests.find((c) => String(c.id) === contestParam) || statsData?.activeContest;
+  const isCurrentContestActive = currentContest ? currentContest.status === 'ACTIVE' : false;
+
+  // Load contest sessions once and default to active/latest contest if not in URL
   useEffect(() => {
     sammanService
       .getContests()
-      .then(setContests)
+      .then((data) => {
+        setContests(data);
+        const urlContestId = searchParams.get('contestId');
+        if (!urlContestId && data.length > 0) {
+          const defaultContest = data.find((c) => c.status === 'ACTIVE') || data[0];
+          if (defaultContest) {
+            const nextParams = new URLSearchParams(searchParams);
+            nextParams.set('contestId', String(defaultContest.id));
+            setSearchParams(nextParams, { replace: true });
+          }
+        }
+      })
       .catch(() => undefined);
   }, []);
 
-  // Fetch nominations and dashboard stats
+  // Fetch nominations and dashboard stats using the exact same contest scope
   const loadData = useCallback(() => {
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      sammanService.list({
-        page: pageParam,
-        perPage: 12,
-        search: searchParam || undefined,
-        status: statusParam || undefined,
-        contestId: contestParam ? Number(contestParam) : undefined,
-        sortDir: 'desc',
-      }),
-      sammanService.getDashboard(),
-    ])
-      .then(([listRes, dashRes]) => {
-        setItems(listRes.items);
-        setPagination(listRes.pagination);
-        setStatsData(dashRes);
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load nominations.');
-      })
-      .finally(() => setLoading(false));
+    const cId = contestParam ? Number(contestParam) : undefined;
+
+    if (cId) {
+      Promise.all([
+        sammanService.list({
+          page: pageParam,
+          perPage: 12,
+          search: searchParam || undefined,
+          status: statusParam || undefined,
+          contestId: cId,
+          sortDir: 'desc',
+        }),
+        sammanService.getDashboard(cId),
+      ])
+        .then(([listRes, dashRes]) => {
+          setItems(listRes.items);
+          setPagination(listRes.pagination);
+          setStatsData(dashRes);
+        })
+        .catch((err: unknown) => {
+          setError(err instanceof Error ? err.message : 'Failed to load nominations.');
+        })
+        .finally(() => setLoading(false));
+    } else {
+      sammanService
+        .getDashboard()
+        .then((dashRes) => {
+          setStatsData(dashRes);
+          const resolvedContestId = dashRes.activeContest?.id;
+          return sammanService.list({
+            page: pageParam,
+            perPage: 12,
+            search: searchParam || undefined,
+            status: statusParam || undefined,
+            contestId: resolvedContestId,
+            sortDir: 'desc',
+          });
+        })
+        .then((listRes) => {
+          setItems(listRes.items);
+          setPagination(listRes.pagination);
+        })
+        .catch((err: unknown) => {
+          setError(err instanceof Error ? err.message : 'Failed to load nominations.');
+        })
+        .finally(() => setLoading(false));
+    }
   }, [pageParam, searchParam, statusParam, contestParam]);
 
   useEffect(() => {
@@ -210,7 +251,19 @@ export function NominationListPage() {
             <Button
               variant="primary"
               size="md"
-              onClick={() => navigate(ROUTES.SHARAD_SAMMAN_NOMINATION_NEW)}
+              disabled={!isCurrentContestActive}
+              title={
+                !isCurrentContestActive && currentContest
+                  ? `Contest "${currentContest.name}" is ${currentContest.status}. Only ACTIVE contests accept new nominations.`
+                  : undefined
+              }
+              onClick={() =>
+                navigate(
+                  contestParam
+                    ? `${ROUTES.SHARAD_SAMMAN_NOMINATION_NEW}?contestId=${contestParam}`
+                    : ROUTES.SHARAD_SAMMAN_NOMINATION_NEW,
+                )
+              }
             >
               <i className="fas fa-plus" aria-hidden="true" style={{ marginRight: '6px' }} />
               Add Nomination
@@ -287,13 +340,12 @@ export function NominationListPage() {
             <select
               id="contest-filter"
               className="field__control"
-              value={contestParam}
+              value={contestParam || (statsData?.activeContest?.id ? String(statsData.activeContest.id) : '')}
               onChange={(e) => handleContestChange(e.target.value)}
             >
-              <option value="">All Contest Sessions</option>
               {contests.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} ({c.year})
+                  {c.name} ({c.year}) — {c.status}
                 </option>
               ))}
             </select>

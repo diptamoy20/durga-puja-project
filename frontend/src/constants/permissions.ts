@@ -110,6 +110,7 @@ export const PERMISSIONS = {
   MANAGE_NOMINATIONS: 'manage_nominations',
   REVIEW_NOMINATIONS: 'review_nominations',
   SHORTLIST_NOMINATIONS: 'shortlist_nominations',
+  MANAGE_CONTESTS: 'manage_contests',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

@@ -7,22 +7,13 @@ import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { PageLoader } from '@/components/ui/Spinner';
 import { ROUTES } from '@/constants/routes';
+import { subcategoryService } from '@/services/contentService';
 import { sammanService } from '@/services/sammanService';
+import { errorMessage } from '@/services/api';
 import { useToast } from '@/hooks/useToast';
 import type { CommitteeOption, Contest, SharadSammanNomination } from '@/types/samman';
 
 import '@/styles/sharad-samman-admin.css';
-
-const SUGGESTED_CATEGORIES = [
-  'Best Traditional Pandal',
-  'Best Contemporary Pandal',
-  'Best Idol Artistry',
-  'Best Illumination & Lighting',
-  'Eco-Friendly / Green Puja',
-  'Social Impact & Inclusion',
-  'Best Crowd Management',
-  'Heritage & Culture Preservation',
-];
 
 export function NominationFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +36,7 @@ export function NominationFormPage() {
   // Form State
   const [contestId, setContestId] = useState<number | ''>('');
   const [pujaCommitteeId, setPujaCommitteeId] = useState<number | ''>('');
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [category, setCategory] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -55,8 +47,16 @@ export function NominationFormPage() {
     selectedCommittee?.committeeName ||
     (isEdit ? existingNomination?.committee?.committeeName : undefined);
 
-  // Load Contests & Initial Committees
+  const selectedContest = contests.find((c) => Number(c.id) === Number(contestId));
+  const isContestActive = isEdit || (selectedContest ? selectedContest.status === 'ACTIVE' : true);
+
+  // Load Contests, Categories & Initial Committees
   useEffect(() => {
+    subcategoryService
+      .listNominationCategories()
+      .then(setAvailableCategories)
+      .catch(() => undefined);
+
     sammanService
       .getContests()
       .then((data) => {
@@ -82,18 +82,24 @@ export function NominationFormPage() {
   useEffect(() => {
     if (!isEdit || !id) return;
     setLoading(true);
-    sammanService
-      .get(Number(id))
-      .then((nom) => {
+    Promise.all([
+      sammanService.get(Number(id)),
+      subcategoryService.listNominationCategories().catch((): string[] => []),
+    ])
+      .then(([nom, cats]) => {
         setExistingNomination(nom);
         setContestId(nom.contestId);
         setPujaCommitteeId(nom.pujaCommitteeId);
-        setCategory(nom.category || '');
+        setAvailableCategories(cats);
         setTitle(nom.title || '');
         setDescription(nom.description || '');
+        setCategory(nom.category || '');
+        if (nom.category && !cats.includes(nom.category)) {
+          setAvailableCategories((prev) => [nom.category, ...prev]);
+        }
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load nomination details.');
+        setError(errorMessage(err, 'Failed to load nomination details.'));
       })
       .finally(() => setLoading(false));
   }, [isEdit, id]);
@@ -117,14 +123,22 @@ export function NominationFormPage() {
         toast.warning('Please select a contest session.');
         return false;
       }
+      if (selectedContest && selectedContest.status !== 'ACTIVE') {
+        const msg = `Nominations can only be created for ACTIVE contests. Contest "${selectedContest.name}" is currently ${selectedContest.status}.`;
+        setError(msg);
+        toast.error(msg);
+        return false;
+      }
       if (!pujaCommitteeId) {
         toast.warning('Please select a Puja Committee.');
         return false;
       }
     }
 
-    if (!category.trim()) {
-      toast.warning('Please specify an award category.');
+    const trimmedCategory = category.trim();
+
+    if (!trimmedCategory) {
+      toast.warning('Please select an award category.');
       return false;
     }
 
@@ -136,10 +150,12 @@ export function NominationFormPage() {
     setSubmitting(true);
     setSubmitAction(directSubmit ? 'submit' : 'draft');
 
+    const trimmedCategory = category.trim();
+
     try {
       if (isEdit && id) {
         await sammanService.update(Number(id), {
-          category: category.trim(),
+          category: trimmedCategory,
           title: title.trim() || undefined,
           description: description.trim() || undefined,
         });
@@ -149,7 +165,7 @@ export function NominationFormPage() {
         const created = await sammanService.create({
           contestId: Number(contestId),
           pujaCommitteeId: Number(pujaCommitteeId),
-          category: category.trim(),
+          category: trimmedCategory,
           title: title.trim() || undefined,
           description: description.trim() || undefined,
         });
@@ -162,9 +178,10 @@ export function NominationFormPage() {
             toast.success('Nomination created and submitted for review successfully.');
           } catch (statusErr: unknown) {
             toast.error(
-              statusErr instanceof Error
-                ? `Nomination saved as Draft, but direct submission failed: ${statusErr.message}`
-                : 'Nomination saved as Draft, but failed to submit.',
+              errorMessage(
+                statusErr,
+                'Nomination saved as Draft, but direct submission failed.',
+              ),
             );
           }
         } else {
@@ -175,7 +192,7 @@ export function NominationFormPage() {
         navigate(ROUTES.SHARAD_SAMMAN_NOMINATION_DETAIL(created.id));
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save nomination.';
+      const message = errorMessage(err, 'Failed to save nomination.');
       setError(message);
       toast.error(message);
       setShowSubmitModal(false);
@@ -323,14 +340,19 @@ export function NominationFormPage() {
                     >
                       <option value="">Select Contest Session...</option>
                       {contests.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} ({c.year}) — Status: {c.status}
+                        <option key={c.id} value={c.id} disabled={c.status !== 'ACTIVE'}>
+                          {c.name} ({c.year}) — Status: {c.status} {c.status !== 'ACTIVE' ? '(Inactive - Nominations Closed)' : ''}
                         </option>
                       ))}
                     </select>
                     <p className="field__hint">
-                      The festival award contest session this nomination belongs to.
+                      The festival award contest session this nomination belongs to. Only ACTIVE contests accept new nominations.
                     </p>
+                    {selectedContest && selectedContest.status !== 'ACTIVE' && (
+                      <Alert variant="warning" style={{ marginTop: 'var(--space-2)' }}>
+                        Nominations cannot be created for this contest because it is currently <strong>{selectedContest.status}</strong>. Only ACTIVE contests accept new nominations.
+                      </Alert>
+                    )}
                   </div>
 
                   <div className="form-grid form-grid--2">
@@ -394,24 +416,22 @@ export function NominationFormPage() {
                 <label className="field__label" htmlFor="form-category">
                   Award Category <span className="field__required">*</span>
                 </label>
-                <input
+                <select
                   id="form-category"
-                  type="text"
-                  list="category-suggestions"
                   className="field__control"
-                  placeholder="Select standard category or type a custom one (e.g. Best Traditional Pandal)"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  maxLength={100}
                   required
-                />
-                <datalist id="category-suggestions">
-                  {SUGGESTED_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat} />
+                >
+                  <option value="">Select award category...</option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
-                </datalist>
+                </select>
                 <p className="field__hint">
-                  The committee may have only one nomination per category in this contest. Choose or type an award category.
+                  The committee may have only one nomination per category in this contest. Choose an award category.
                 </p>
               </div>
 
@@ -469,7 +489,8 @@ export function NominationFormPage() {
                       type="button"
                       variant="secondary"
                       onClick={handleSaveDraft}
-                      disabled={submitting}
+                      disabled={submitting || !isContestActive}
+                      title={!isContestActive ? 'Nominations can only be created for ACTIVE contests.' : undefined}
                     >
                       <i
                         className={`fas ${submitting && submitAction === 'draft' ? 'fa-spinner fa-spin' : 'fa-save'}`}
@@ -483,7 +504,8 @@ export function NominationFormPage() {
                       type="button"
                       variant="primary"
                       onClick={handleDirectSubmitClick}
-                      disabled={submitting}
+                      disabled={submitting || !isContestActive}
+                      title={!isContestActive ? 'Nominations can only be created for ACTIVE contests.' : undefined}
                     >
                       <i
                         className={`fas ${submitting && submitAction === 'submit' ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}

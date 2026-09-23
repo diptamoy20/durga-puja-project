@@ -101,6 +101,7 @@ exports.PERMISSIONS = {
     MANAGE_NOMINATIONS: 'manage_nominations',
     REVIEW_NOMINATIONS: 'review_nominations',
     SHORTLIST_NOMINATIONS: 'shortlist_nominations',
+    MANAGE_CONTESTS: 'manage_contests',
 };
 /** Human-readable definitions used to populate the `permissions` table. */
 exports.PERMISSION_DEFINITIONS = [
@@ -180,5 +181,6 @@ exports.PERMISSION_DEFINITIONS = [
     { module: 'Sharad Samman', permissionName: 'Manage Nominations', permissionKey: exports.PERMISSIONS.MANAGE_NOMINATIONS },
     { module: 'Sharad Samman', permissionName: 'Review Nominations', permissionKey: exports.PERMISSIONS.REVIEW_NOMINATIONS },
     { module: 'Sharad Samman', permissionName: 'Shortlist Nominations', permissionKey: exports.PERMISSIONS.SHORTLIST_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Manage Contests', permissionKey: exports.PERMISSIONS.MANAGE_CONTESTS },
 ];
 exports.ALL_PERMISSION_KEYS = exports.PERMISSION_DEFINITIONS.map((definition) => definition.permissionKey);

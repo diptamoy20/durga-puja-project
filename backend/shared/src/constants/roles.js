@@ -57,6 +57,7 @@ exports.ROLE_DEFINITIONS = [
             permissions_1.PERMISSIONS.MANAGE_SETTINGS,
             permissions_1.PERMISSIONS.VIEW_NOMINATIONS, permissions_1.PERMISSIONS.MANAGE_NOMINATIONS,
             permissions_1.PERMISSIONS.REVIEW_NOMINATIONS, permissions_1.PERMISSIONS.SHORTLIST_NOMINATIONS,
+            permissions_1.PERMISSIONS.MANAGE_CONTESTS,
         ],
     },
     {

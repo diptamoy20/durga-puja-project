@@ -45,7 +45,8 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
     item.to === ROUTES.PANDAL_ATLAS ||
     item.to === ROUTES.COMMITTEES ||
     item.to === ROUTES.ARTICLES ||
-    item.to === ROUTES.SHARAD_SAMMAN_NOMINATIONS
+    item.to === ROUTES.SHARAD_SAMMAN_NOMINATIONS ||
+    item.to === ROUTES.SHARAD_SAMMAN_CONTESTS
   ) {
     return !currentParams.get('status');
   }
@@ -150,14 +151,24 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
 
             <ul className="menu-section-body">
               {section.items.map((item) => (
-                <li key={`${section.label}:${item.label}`}>
+                <li
+                  key={`${section.label}:${item.label}`}
+                  className={item.subsectionHeader ? 'sidebar__subsection-wrapper' : undefined}
+                >
+                  {item.subsectionHeader && (
+                    <div className="sidebar__subsection-header" role="presentation">
+                      <span className="sidebar__subsection-title">{item.subsectionHeader}</span>
+                    </div>
+                  )}
                   {item.to ? (
                     <NavLink
                       to={item.to}
                       end={item.end}
                       onClick={onNavigate}
                       className={() =>
-                        `sidebar__link ${navItemIsActive(item, pathname, search) ? 'is-active' : ''}`
+                        `sidebar__link ${item.isSubItem ? 'sidebar__link--sub' : ''} ${
+                          navItemIsActive(item, pathname, search) ? 'is-active' : ''
+                        }`
                       }
                     >
                       <i
@@ -169,7 +180,10 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
                       <span className="sidebar__text">{item.label}</span>
                     </NavLink>
                   ) : (
-                    <span className="sidebar__link is-pending" aria-disabled="true">
+                    <span
+                      className={`sidebar__link is-pending ${item.isSubItem ? 'sidebar__link--sub' : ''}`}
+                      aria-disabled="true"
+                    >
                       <i className={`fas ${item.icon} sidebar__icon`} aria-hidden="true" />
                       <span className="sidebar__text">{item.label}</span>
                       <span className="sidebar__soon">Soon</span>

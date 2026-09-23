@@ -16,6 +16,10 @@ export interface NavItem {
   permissions?: PermissionKey[];
   /** Tints the icon, as the original menu did for queue and status links. */
   tone?: 'info' | 'warning' | 'success' | 'danger';
+  /** Renders a visual subsection divider and header before this item inside a section. */
+  subsectionHeader?: string;
+  /** Renders the item with subsection indentation. */
+  isSubItem?: boolean;
 }
 
 export interface NavSection {
@@ -137,6 +141,12 @@ export const NAVIGATION: NavSection[] = [
     permissions: [PERMISSIONS.VIEW_NOMINATIONS],
     items: [
       { label: 'Dashboard', icon: 'fa-trophy', to: ROUTES.SHARAD_SAMMAN_DASHBOARD, end: true },
+      {
+        label: 'Contest Session',
+        icon: 'fa-calendar-check',
+        permissions: [PERMISSIONS.MANAGE_CONTESTS],
+        to: ROUTES.SHARAD_SAMMAN_CONTESTS,
+      },
       { label: 'All Nominations', icon: 'fa-list-check', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
       { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=UNDER_REVIEW` },
       { label: 'Approved', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=APPROVED` },

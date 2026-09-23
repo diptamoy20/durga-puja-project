@@ -340,7 +340,7 @@ let CategoriesController = class CategoriesController {
 exports.CategoriesController = CategoriesController;
 __decorate([
     (0, common_1.Get)(),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES, shared_1.PERMISSIONS.VIEW_DASHBOARD),
     (0, response_interceptor_1.ResponseMessage)('Categories retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'List categories with pagination' }),
     __param(0, (0, common_1.Query)()),
@@ -350,7 +350,7 @@ __decorate([
 ], CategoriesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES, shared_1.PERMISSIONS.VIEW_DASHBOARD),
     (0, response_interceptor_1.ResponseMessage)('Category retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get a category with its subcategories' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -425,7 +425,7 @@ let SubcategoriesController = class SubcategoriesController {
 exports.SubcategoriesController = SubcategoriesController;
 __decorate([
     (0, common_1.Get)(),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES, shared_1.PERMISSIONS.VIEW_DASHBOARD),
     (0, response_interceptor_1.ResponseMessage)('Subcategories retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'List subcategories with pagination and filters' }),
     __param(0, (0, common_1.Query)()),
@@ -435,7 +435,7 @@ __decorate([
 ], SubcategoriesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_CATEGORIES, shared_1.PERMISSIONS.VIEW_DASHBOARD),
     (0, response_interceptor_1.ResponseMessage)('Subcategory retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get a single subcategory' }),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

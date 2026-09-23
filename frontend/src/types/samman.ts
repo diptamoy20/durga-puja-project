@@ -18,6 +18,27 @@ export interface Contest {
   endDate?: string | null;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    nominations: number;
+  };
+}
+
+export interface CreateContestPayload {
+  name: string;
+  year: number;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  status?: ContestStatus;
+}
+
+export interface UpdateContestPayload {
+  name?: string;
+  year?: number;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: ContestStatus;
 }
 
 export interface CandidateSnapshot {
