@@ -37,7 +37,14 @@ const EXCEL_FIELD_ALIASES = {
     logoImage: ['logoimage', 'logo image'],
     coverImage: ['coverimage', 'cover image'],
 };
-const DIRECTORY_STATUS = database_1.AssociationStatus.APPROVED;
+const AssociationStatus = database_1.AssociationStatus || {
+    PENDING: 'PENDING',
+    UNDER_REVIEW: 'UNDER_REVIEW',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+    INACTIVE: 'INACTIVE',
+};
+const DIRECTORY_STATUS = AssociationStatus.APPROVED || 'APPROVED';
 const LIST_SELECT = {
     id: true,
     registrationNo: true,
