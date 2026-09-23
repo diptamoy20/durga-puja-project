@@ -9,6 +9,7 @@ import { PageLoader } from '@/components/ui/Spinner';
 import { ROUTES } from '@/constants/routes';
 import { formatContestDate, SUGGESTED_CATEGORIES } from '@/constants/samman';
 import { committeeSammanService } from '@/services/sammanService';
+import { errorMessage } from '@/services/api';
 import { useToast } from '@/hooks/useToast';
 import type { Contest } from '@/types/samman';
 
@@ -168,7 +169,9 @@ export function MyCommitteeNominationFormPage() {
 
       navigate(ROUTES.MY_COMMITTEE_NOMINATIONS);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to save nomination.');
+      const msg = errorMessage(err, 'Failed to save nomination.');
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }

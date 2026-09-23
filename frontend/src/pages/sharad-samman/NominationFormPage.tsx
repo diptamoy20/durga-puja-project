@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { PageLoader } from '@/components/ui/Spinner';
 import { ROUTES } from '@/constants/routes';
 import { sammanService } from '@/services/sammanService';
+import { errorMessage } from '@/services/api';
 import { useToast } from '@/hooks/useToast';
 import type { CommitteeOption, Contest, SharadSammanNomination } from '@/types/samman';
 
@@ -93,7 +94,7 @@ export function NominationFormPage() {
         setDescription(nom.description || '');
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load nomination details.');
+        setError(errorMessage(err, 'Failed to load nomination details.'));
       })
       .finally(() => setLoading(false));
   }, [isEdit, id]);
@@ -162,9 +163,7 @@ export function NominationFormPage() {
             toast.success('Nomination created and submitted for review successfully.');
           } catch (statusErr: unknown) {
             toast.error(
-              statusErr instanceof Error
-                ? `Nomination saved as Draft, but direct submission failed: ${statusErr.message}`
-                : 'Nomination saved as Draft, but failed to submit.',
+              `Nomination saved as Draft, but direct submission failed: ${errorMessage(statusErr, 'Failed to submit.')}`
             );
           }
         } else {
@@ -175,7 +174,7 @@ export function NominationFormPage() {
         navigate(ROUTES.SHARAD_SAMMAN_NOMINATION_DETAIL(created.id));
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save nomination.';
+      const message = errorMessage(err, 'Failed to save nomination.');
       setError(message);
       toast.error(message);
       setShowSubmitModal(false);
