@@ -49,6 +49,7 @@ const database_1 = require("@dpgc/database");
 const shared_1 = require("@dpgc/shared");
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const schedule_1 = require("@nestjs/schedule");
 const nodemailer = __importStar(require("nodemailer"));
 /** Subject lines and bodies, ported from the Laravel Mailable classes. */
 const TEMPLATES = {
@@ -102,6 +103,20 @@ const TEMPLATES = {
             `Registration code: ${String(d.registrationCode ?? '')}\n` +
             (d.joinUrl ? `Join link: ${String(d.joinUrl)}\n` : ''),
     },
+    association_approved: {
+        subject: 'An association you follow is now verified',
+        render: (d) => `Hello ${String(d.name ?? 'there')},\n\n` +
+            `"${String(d.associationName ?? '')}" (${String(d.registrationNo ?? 'N/A')}) has been verified ` +
+            `and is now listed in the public association directory.\n\n` +
+            (d.directoryUrl ? `View it here: ${String(d.directoryUrl)}\n` : ''),
+    },
+    association_updated: {
+        subject: 'An association you follow has been updated',
+        render: (d) => `Hello ${String(d.name ?? 'there')},\n\n` +
+            `"${String(d.associationName ?? '')}" (${String(d.registrationNo ?? 'N/A')}) has been updated ` +
+            `in the association directory.\n\n` +
+            (d.directoryUrl ? `View it here: ${String(d.directoryUrl)}\n` : ''),
+    },
 };
 /**
  * Email and push delivery.
@@ -148,16 +163,29 @@ let NotificationService = NotificationService_1 = class NotificationService {
             return { queued: true, id: record.id };
         }
         const subject = payload.subject ?? template.subject;
-        const body = template.render(payload.data ?? {});
         const record = await this.log(payload, database_1.NotificationStatus.QUEUED, null, subject);
+        await this.deliver(record, template, subject);
+        return { queued: true, id: record.id };
+    }
+    /** Delivers one outbox record over the configured transport and records the outcome. */
+    async deliver(record, template, subject) {
+        const body = template.render(record.payload ?? {});
+        const markFailed = (message) => this.prisma.notificationLog.update({
+            where: { id: record.id },
+            data: {
+                status: database_1.NotificationStatus.FAILED,
+                lastError: message,
+                attempts: { increment: 1 },
+            },
+        });
         try {
             if (!this.transporter) {
-                this.logger.log(`[mail:log] to=${payload.to} subject="${subject}"\n${body}`);
+                this.logger.log(`[mail:log] to=${record.recipient} subject="${subject}"\n${body}`);
             }
             else {
                 await this.transporter.sendMail({
                     from: `"${this.config.get('notification.mail.fromName')}" <${this.config.get('notification.mail.fromAddress')}>`,
-                    to: payload.to,
+                    to: record.recipient,
                     subject,
                     text: body,
                 });
@@ -169,17 +197,51 @@ let NotificationService = NotificationService_1 = class NotificationService {
         }
         catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            this.logger.error(`Failed to send "${payload.template}" to ${payload.to}: ${message}`);
-            await this.prisma.notificationLog.update({
-                where: { id: record.id },
-                data: {
-                    status: database_1.NotificationStatus.FAILED,
-                    lastError: message,
-                    attempts: { increment: 1 },
-                },
-            });
+            this.logger.error(`Failed to send "${record.template}" to ${record.recipient}: ${message}`);
+            await markFailed(message);
         }
-        return { queued: true, id: record.id };
+    }
+    /**
+     * Drains queued outbox rows written by other services (e.g. the gateway's
+     * `association_approved` / `association_updated` rows) on a schedule.
+     */
+    async flushOutbox(batchSize = 50) {
+        const queued = await this.prisma.notificationLog.findMany({
+            where: { status: database_1.NotificationStatus.QUEUED },
+            orderBy: { createdAt: 'asc' },
+            take: batchSize,
+        });
+        let sent = 0;
+        let failed = 0;
+        for (const record of queued) {
+            const template = TEMPLATES[record.template];
+            if (!template) {
+                this.logger.error(`Unknown email template "${record.template}"`);
+                await this.prisma.notificationLog.update({
+                    where: { id: record.id },
+                    data: {
+                        status: database_1.NotificationStatus.FAILED,
+                        lastError: 'Unknown template',
+                        attempts: { increment: 1 },
+                    },
+                });
+                failed += 1;
+                continue;
+            }
+            const subject = record.subject ?? template.subject;
+            await this.deliver(record, template, subject);
+            const latest = await this.prisma.notificationLog.findUnique({ where: { id: record.id } });
+            if (latest?.status === database_1.NotificationStatus.SENT) {
+                sent += 1;
+            }
+            else {
+                failed += 1;
+            }
+        }
+        if (queued.length > 0) {
+            this.logger.log(`Flushed ${queued.length} queued notification(s): ${sent} sent, ${failed} failed.`);
+        }
+        return { processed: queued.length, sent, failed };
     }
     log(payload, status, error = null, subject) {
         return this.prisma.notificationLog.create({
@@ -249,6 +311,12 @@ let NotificationService = NotificationService_1 = class NotificationService {
     }
 };
 exports.NotificationService = NotificationService;
+__decorate([
+    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_5_MINUTES),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Object)
+], NotificationService.prototype, "flushOutbox", null);
 exports.NotificationService = NotificationService = NotificationService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeof (_a = typeof database_1.PrismaService !== "undefined" && database_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])

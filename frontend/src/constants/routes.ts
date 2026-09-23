@@ -29,6 +29,14 @@ export const ROUTES = {
   COMMITTEE_DETAIL: (id: number | string = ':id') => `/committees/${id}`,
   COMMITTEE_EDIT: (id: number | string = ':id') => `/committees/${id}/edit`,
 
+  // Association Management (separate module)
+  ASSOCIATIONS: '/associations',
+  ASSOCIATIONS_PENDING: '/associations/pending',
+  ASSOCIATION_CREATE: '/associations/create',
+  ASSOCIATION_IMPORT: '/associations/import',
+  ASSOCIATION_DETAIL: (id: number | string = ':id') => `/associations/${id}`,
+  ASSOCIATION_EDIT: (id: number | string = ':id') => `/associations/${id}/edit`,
+
   // Committee member media & albums
   MY_COMMITTEE_MEDIA: '/committee/media',
   MY_COMMITTEE_MEDIA_CREATE: '/committee/media/create',
@@ -38,6 +46,12 @@ export const ROUTES = {
   MY_COMMITTEE_ALBUM_NEW: '/committee/albums/new',
   MY_COMMITTEE_ALBUM_DETAIL: (id: number | string = ':id') => `/committee/albums/${id}`,
   MY_COMMITTEE_ALBUM_EDIT: (id: number | string = ':id') => `/committee/albums/${id}/edit`,
+
+  // Committee Sharad Samman Nominations
+  MY_COMMITTEE_NOMINATIONS: '/committee/nominations',
+  MY_COMMITTEE_NOMINATION_NEW: '/committee/nominations/new',
+  MY_COMMITTEE_NOMINATION_DETAIL: (id: number | string = ':id') => `/committee/nominations/${id}`,
+  MY_COMMITTEE_NOMINATION_EDIT: (id: number | string = ':id') => `/committee/nominations/${id}/edit`,
 
   // Master / Categories
   CATEGORIES: '/categories',
@@ -89,6 +103,13 @@ export const ROUTES = {
   PODCAST_NEW: '/podcasts/new',
   PODCAST_EDIT: (id: number | string = ':id') => `/podcasts/${id}/edit`,
 
+  // Sharad Samman
+  SHARAD_SAMMAN_DASHBOARD: '/sharad-samman',
+  SHARAD_SAMMAN_NOMINATIONS: '/sharad-samman/nominations',
+  SHARAD_SAMMAN_NOMINATION_NEW: '/sharad-samman/nominations/new',
+  SHARAD_SAMMAN_NOMINATION_DETAIL: (id: number | string = ':id') => `/sharad-samman/nominations/${id}`,
+  SHARAD_SAMMAN_NOMINATION_EDIT: (id: number | string = ':id') => `/sharad-samman/nominations/${id}/edit`,
+
   // Public Facing Pages
   PUBLIC_CHOOSE_TYPE: '/register/choose',
   PUBLIC_REGISTER_DIASPORA: '/register/diaspora',
@@ -105,6 +126,8 @@ export const ROUTES = {
   PUBLIC_WEBINAR_LIVE: (slug: string = ':slug') => `/public/webinars/${slug}/live`,
   PUBLIC_PODCASTS: '/public/podcasts',
   PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
+  PUBLIC_ASSOCIATIONS: '/public/associations',
+  PUBLIC_ASSOCIATION_DETAIL: (id: number | string = ':id') => `/public/associations/${id}`,
 
   // Public Tourism Concierge
   PUBLIC_TOURISM_CONCIERGE: '/public/tourism',

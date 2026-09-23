@@ -59,6 +59,14 @@ enum CommitteeStatus {
   INACTIVE
 }
 
+enum AssociationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  INACTIVE
+}
+
 enum ArticleStatus {
   DRAFT
   PENDING_REVIEW
@@ -274,6 +282,20 @@ model User {
   investmentHistories  InvestmentOpportunityHistory[]
   assignedInvestmentEnquiries InvestmentEnquiry[] @relation("InvestmentEnquiryAssignedTo")
   investmentEnquiryHistories  InvestmentEnquiryHistory[]
+
+  // Association domain
+  association         Association? @relation("AssociationAccount")
+  approvedAssociations Association[] @relation("AssociationApprovedBy")
+  rejectedAssociations Association[] @relation("AssociationRejectedBy")
+  reviewedAssociations Association[] @relation("AssociationReviewedBy")
+  associationHistories AssociationStatusHistory[] @relation("AssociationHistoryChangedBy")
+
+  // Sharad Samman domain
+  reviewedNominations    SharadSammanNomination[] @relation("NominationReviewedBy")
+  approvedNominations    SharadSammanNomination[] @relation("NominationApprovedBy")
+  rejectedNominations    SharadSammanNomination[] @relation("NominationRejectedBy")
+  shortlistedNominations SharadSammanNomination[] @relation("NominationShortlistedBy")
+  createdNominations     SharadSammanNomination[] @relation("NominationCreatedBy")
 
   @@index([status])
   @@index([createdAt])
@@ -588,6 +610,7 @@ model PujaCommittee {
   committeeMedia CommitteeMedia[]
   albums         Album[]
   pandals        PandalAtlas[]
+  nominations    SharadSammanNomination[]
 
   @@index([status, createdAt])
   @@index([city])
@@ -608,6 +631,89 @@ model PujaCommitteeStatusHistory {
 
   @@index([pujaCommitteeId, createdAt])
   @@map("puja_committee_status_histories")
+}
+
+model Association {
+  id          Int    @id @default(autoincrement())
+  userId      Int?   @unique @map("user_id")
+  registrationNo String @unique @map("registration_no") @db.VarChar(50)
+  associationId String? @unique @map("association_id") @db.VarChar(30)
+
+  name        String @db.VarChar(200)
+  description String @db.Text
+  establishedYear Int? @map("established_year") @db.SmallInt
+
+  contactPersonName String @map("contact_person_name") @db.VarChar(200)
+  designation       String @db.VarChar(100)
+  email             String @db.VarChar(180)
+  mobile            String @db.VarChar(25)
+  website           String? @db.VarChar(500)
+  socialLinks       Json?
+
+  country    String @db.VarChar(100)
+  state      String @db.VarChar(100)
+  city       String @db.VarChar(100)
+  postalCode String @map("postal_code") @db.VarChar(20)
+  address    String @db.Text
+
+  logoImage  String? @map("logo_image") @db.VarChar(500)
+  coverImage String? @map("cover_image") @db.VarChar(500)
+
+  status          AssociationStatus @default(PENDING)
+  approvedById    Int?            @map("approved_by")
+  approvedAt      DateTime?       @map("approved_at")
+  rejectedById    Int?            @map("rejected_by")
+  rejectedAt      DateTime?       @map("rejected_at")
+  rejectionReason String?         @map("rejection_reason") @db.Text
+  reviewedById    Int?            @map("reviewed_by")
+  reviewedAt      DateTime?       @map("reviewed_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user       User? @relation("AssociationAccount", fields: [userId], references: [id], onDelete: SetNull)
+  approvedBy User? @relation("AssociationApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectedBy User? @relation("AssociationRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
+  reviewedBy User? @relation("AssociationReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  histories AssociationStatusHistory[]
+  subscribers AssociationSubscriber[]
+
+  @@index([status, createdAt])
+  @@index([city])
+  @@map("associations")
+}
+
+model AssociationStatusHistory {
+  id             Int      @id @default(autoincrement())
+  associationId  Int      @map("association_id")
+  previousStatus String?  @map("previous_status") @db.VarChar(30)
+  newStatus      String   @map("new_status") @db.VarChar(30)
+  reason         String?  @db.Text
+  changedById    Int?     @map("changed_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  changedBy   User?         @relation("AssociationHistoryChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([associationId, createdAt])
+  @@map("association_status_histories")
+}
+
+model AssociationSubscriber {
+  id            Int      @id @default(autoincrement())
+  associationId Int      @map("association_id")
+  email         String   @db.VarChar(180)
+  name          String?  @db.VarChar(150)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  association Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+
+  @@unique([associationId, email])
+  @@index([associationId])
+  @@map("association_subscribers")
 }
 
 // ===========================================================================
@@ -1422,6 +1528,84 @@ model InvestmentEnquiryHistory {
 
   @@index([enquiryId, createdAt])
   @@map("investment_enquiry_histories")
+}
+
+// ============================================================================
+// Sharad Samman Domain
+// ============================================================================
+
+enum ContestStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum NominationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SHORTLISTED
+}
+
+model Contest {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(150)
+  year        Int           @db.SmallInt
+  description String?       @db.Text
+  status      ContestStatus @default(DRAFT)
+  startDate   DateTime?     @map("start_date")
+  endDate     DateTime?     @map("end_date")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  nominations SharadSammanNomination[]
+
+  @@unique([year, name])
+  @@index([status])
+  @@map("sharad_samman_contests")
+}
+
+model SharadSammanNomination {
+  id              Int              @id @default(autoincrement())
+  contestId       Int              @map("contest_id")
+  pujaCommitteeId Int              @map("puja_committee_id")
+  category        String           @db.VarChar(100)
+  title           String?          @db.VarChar(200)
+  description     String?          @db.Text
+  status          NominationStatus @default(DRAFT)
+  rejectionReason String?          @map("rejection_reason") @db.Text
+  reviewNotes     String?          @map("review_notes") @db.Text
+  snapshotData    Json?            @map("snapshot_data")
+
+  submittedAt     DateTime?        @map("submitted_at")
+  reviewedAt      DateTime?        @map("reviewed_at")
+  reviewedById    Int?             @map("reviewed_by")
+  approvedAt      DateTime?        @map("approved_at")
+  approvedById    Int?             @map("approved_by")
+  rejectedAt      DateTime?        @map("rejected_at")
+  rejectedById    Int?             @map("rejected_by")
+  shortlistedAt   DateTime?        @map("shortlisted_at")
+  shortlistedById Int?             @map("shortlisted_by")
+  createdById     Int?             @map("created_by")
+
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  contest       Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  committee     PujaCommittee @relation(fields: [pujaCommitteeId], references: [id], onDelete: Cascade)
+  reviewedBy    User?         @relation("NominationReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  approvedBy    User?         @relation("NominationApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectedBy    User?         @relation("NominationRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
+  shortlistedBy User?         @relation("NominationShortlistedBy", fields: [shortlistedById], references: [id], onDelete: SetNull)
+  createdBy     User?         @relation("NominationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([contestId, pujaCommitteeId, category])
+  @@index([status])
+  @@index([contestId, status])
+  @@index([pujaCommitteeId])
+  @@map("sharad_samman_nominations")
 }
 
 

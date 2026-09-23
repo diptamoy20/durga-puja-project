@@ -666,7 +666,71 @@ async function seedModuleData(prisma = new PrismaClient()) {
     opportunityCount += 1;
   }
 
-  console.log(`  Module data: ${diasporaCount} diaspora, ${committeeCount} committees, ${pandalCount} pandals, ${articleCount} articles, ${webinarCount} webinars, ${rsvpCount} RSVPs, ${associationCount} associations, ${opportunityCount} investment opportunities`);
+  // Sharad Samman Contest
+  const contest = await prisma.contest.upsert({
+    where: { year_name: { year: 2026, name: 'Sharad Samman 2026' } },
+    update: { status: 'ACTIVE' },
+    create: {
+      name: 'Sharad Samman 2026',
+      year: 2026,
+      description: 'Official West Bengal Durga Puja Sharad Samman 2026 Competition',
+      status: 'ACTIVE',
+      startDate: new Date('2026-09-01T00:00:00.000Z'),
+      endDate: new Date('2026-10-31T23:59:59.000Z'),
+    },
+  });
+
+  // Sample nominations for approved committees
+  const approvedCommittees = await prisma.pujaCommittee.findMany({
+    where: { status: 'APPROVED' },
+    take: 3,
+  });
+
+  let nominationCount = 0;
+  if (approvedCommittees.length > 0) {
+    const statuses = ['UNDER_REVIEW', 'APPROVED', 'SHORTLISTED'];
+    for (let i = 0; i < approvedCommittees.length; i++) {
+      const comm = approvedCommittees[i];
+      const nomStatus = statuses[i % statuses.length];
+      await prisma.sharadSammanNomination.upsert({
+        where: {
+          contestId_pujaCommitteeId_category: {
+            contestId: contest.id,
+            pujaCommitteeId: comm.id,
+            category: 'Best Traditional Pandal',
+          },
+        },
+        update: {},
+        create: {
+          contestId: contest.id,
+          pujaCommitteeId: comm.id,
+          category: 'Best Traditional Pandal',
+          title: `${comm.committeeName} Sharad Ananya 2026`,
+          description: `Grand cultural and heritage presentation by ${comm.committeeName} in ${comm.city}.`,
+          status: nomStatus,
+          submittedAt: new Date(),
+          createdById: adminId,
+          snapshotData: nomStatus === 'SHORTLISTED' ? {
+            committeeId: comm.id,
+            committeeName: comm.committeeName,
+            registrationNo: comm.registrationNo,
+            city: comm.city,
+            state: comm.state,
+            venueName: comm.venueName,
+            venueAddress: comm.venueAddress,
+            pandalImage: comm.pandalImage,
+            establishedYear: comm.establishedYear,
+            theme: `${comm.committeeName} Sharad Ananya 2026`,
+            description: `Grand cultural and heritage presentation by ${comm.committeeName} in ${comm.city}.`,
+            shortlistedAt: new Date().toISOString(),
+          } : null,
+        },
+      });
+      nominationCount += 1;
+    }
+  }
+
+  console.log(`  Module data: ${diasporaCount} diaspora, ${committeeCount} committees, ${pandalCount} pandals, ${articleCount} articles, ${webinarCount} webinars, ${rsvpCount} RSVPs, ${associationCount} associations, ${opportunityCount} investment opportunities, ${nominationCount} nominations`);
 }
 
 module.exports = { seedModuleData };

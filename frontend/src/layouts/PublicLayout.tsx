@@ -7,6 +7,7 @@ import '@/styles/public-layout.css';
 const NAV_LINKS = [
   { label: 'Pandal Map', to: ROUTES.PUBLIC_ATLAS },
   { label: 'Gallery', to: ROUTES.PUBLIC_GALLERY },
+  { label: 'Associations', to: ROUTES.PUBLIC_ASSOCIATIONS },
   { label: 'Webinars', to: ROUTES.PUBLIC_WEBINARS },
   { label: 'Podcasts', to: ROUTES.PUBLIC_PODCASTS },
   { label: 'News', to: ROUTES.PUBLIC_NEWS },
@@ -33,6 +34,8 @@ export function PublicLayout() {
                   ? location.pathname.startsWith('/public/tourism')
                   : link.to === ROUTES.PUBLIC_INVESTOR_SHOWCASE
                   ? location.pathname.startsWith('/public/investments')
+                  : link.to === ROUTES.PUBLIC_ASSOCIATIONS
+                  ? location.pathname.startsWith('/public/associations')
                   : location.pathname.startsWith(link.to);
 
               return (
@@ -81,3 +84,5 @@ export function PublicLayout() {
     </div>
   );
 }
+
+export default PublicLayout;

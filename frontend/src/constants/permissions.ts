@@ -87,6 +87,14 @@ export const PERMISSIONS = {
   EDIT_PODCASTS: 'edit_podcasts',
   DELETE_PODCASTS: 'delete_podcasts',
 
+  // Associations
+  VIEW_ASSOCIATIONS: 'view_associations',
+  EDIT_ASSOCIATIONS: 'edit_associations',
+  APPROVE_ASSOCIATIONS: 'approve_associations',
+  REJECT_ASSOCIATIONS: 'reject_associations',
+  DELETE_ASSOCIATIONS: 'delete_associations',
+  EXPORT_ASSOCIATIONS: 'export_associations',
+
   // Webinars / events
   VIEW_WEBINARS: 'view_webinars',
   CREATE_WEBINARS: 'create_webinars',
@@ -111,6 +119,12 @@ export const PERMISSIONS = {
   PUBLISH_INVESTMENTS: 'publish_investments',
   MANAGE_INVESTMENT_ENQUIRIES: 'manage_investment_enquiries',
   MANAGE_ASSOCIATIONS: 'manage_associations',
+
+  // Sharad Samman
+  VIEW_NOMINATIONS: 'view_nominations',
+  MANAGE_NOMINATIONS: 'manage_nominations',
+  REVIEW_NOMINATIONS: 'review_nominations',
+  SHORTLIST_NOMINATIONS: 'shortlist_nominations',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

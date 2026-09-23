@@ -46,6 +46,27 @@ const CommitteeEditPage = lazy(() =>
   import('@/pages/committees/CommitteeEditPage').then((m) => ({ default: m.CommitteeEditPage })),
 );
 
+// Association Management (separate module)
+const AssociationListPage = lazy(() =>
+  import('@/pages/associations/AssociationListPage').then((m) => ({ default: m.AssociationListPage })),
+);
+const AssociationPendingPage = lazy(() =>
+  import('@/pages/associations/AssociationPendingPage').then((m) => ({ default: m.AssociationPendingPage })),
+);
+const AssociationImportPage = lazy(() =>
+  import('@/pages/associations/AssociationImportPage').then((m) => ({ default: m.AssociationImportPage })),
+);
+
+const AssociationCreatePage = lazy(() =>
+  import('@/pages/associations/AssociationCreatePage').then((m) => ({ default: m.AssociationCreatePage })),
+);
+const AssociationDetailPage = lazy(() =>
+  import('@/pages/associations/AssociationDetailPage').then((m) => ({ default: m.AssociationDetailPage })),
+);
+const AssociationEditPage = lazy(() =>
+  import('@/pages/associations/AssociationEditPage').then((m) => ({ default: m.AssociationEditPage })),
+);
+
 // Categories & Subcategories
 const CategoriesPage = lazy(() =>
   import('@/pages/categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })),
@@ -145,6 +166,17 @@ const CommitteeAlbumListPage = lazy(() =>
   import('@/pages/committee-albums/CommitteeAlbumListPage').then((m) => ({ default: m.CommitteeAlbumListPage })),
 );
 
+// Committee Sharad Samman nomination pages
+const MyCommitteeNominationListPage = lazy(() =>
+  import('@/pages/committee-samman/MyCommitteeNominationListPage').then((m) => ({ default: m.MyCommitteeNominationListPage })),
+);
+const MyCommitteeNominationFormPage = lazy(() =>
+  import('@/pages/committee-samman/MyCommitteeNominationFormPage').then((m) => ({ default: m.MyCommitteeNominationFormPage })),
+);
+const MyCommitteeNominationDetailPage = lazy(() =>
+  import('@/pages/committee-samman/MyCommitteeNominationDetailPage').then((m) => ({ default: m.MyCommitteeNominationDetailPage })),
+);
+
 // Public Pages
 const ChooseAccountTypePage = lazy(() =>
   import('@/pages/public/ChooseAccountTypePage').then((m) => ({ default: m.ChooseAccountTypePage })),
@@ -188,6 +220,12 @@ const PublicPodcastsPage = lazy(() =>
 const PodcastDetailPage = lazy(() =>
   import('@/pages/public/PodcastDetailPage').then((m) => ({ default: m.PodcastDetailPage })),
 );
+const PublicAssociationsPage = lazy(() =>
+  import('@/pages/public/PublicAssociationsPage').then((m) => ({ default: m.PublicAssociationsPage })),
+);
+const PublicAssociationDetailPage = lazy(() =>
+  import('@/pages/public/PublicAssociationDetailPage').then((m) => ({ default: m.PublicAssociationDetailPage })
+));
 const PublicArticlesPage = lazy(() =>
   import('@/pages/public/PublicArticlesPage').then((m) => ({ default: m.PublicArticlesPage })),
 );
@@ -292,7 +330,19 @@ const InvestmentEnquiryDetailPage = lazy(() =>
   import('@/pages/investments/InvestmentEnquiryDetailPage').then((m) => ({ default: m.InvestmentEnquiryDetailPage })),
 );
 
-
+// Sharad Samman Admin Pages
+const SharadSammanDashboardPage = lazy(() =>
+  import('@/pages/sharad-samman/SharadSammanDashboardPage').then((m) => ({ default: m.SharadSammanDashboardPage })),
+);
+const NominationListPage = lazy(() =>
+  import('@/pages/sharad-samman/NominationListPage').then((m) => ({ default: m.NominationListPage })),
+);
+const NominationDetailPage = lazy(() =>
+  import('@/pages/sharad-samman/NominationDetailPage').then((m) => ({ default: m.NominationDetailPage })),
+);
+const NominationFormPage = lazy(() =>
+  import('@/pages/sharad-samman/NominationFormPage').then((m) => ({ default: m.NominationFormPage })),
+);
 
 export function AppRoutes() {
   return (
@@ -315,6 +365,9 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_THANK_YOU()} element={<RegistrationThankYouPage />} />
         <Route path={ROUTES.PUBLIC_GALLERY} element={<PublicGalleryPage />} />
         <Route path={ROUTES.PUBLIC_GALLERY_DETAIL()} element={<PublicGalleryDetailPage />} />
+        <Route path={ROUTES.PUBLIC_ASSOCIATIONS} element={<PublicAssociationsPage />} />
+        <Route path={ROUTES.PUBLIC_ASSOCIATION_DETAIL()} element={<PublicAssociationDetailPage />} />
+        <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
         <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
         <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
 
@@ -478,6 +531,96 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path={ROUTES.ASSOCIATIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ASSOCIATIONS]}>
+              <AssociationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATIONS_PENDING}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ASSOCIATIONS]}>
+              <AssociationPendingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_CREATE}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ASSOCIATIONS]}>
+              <AssociationCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_IMPORT}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ASSOCIATIONS, PERMISSIONS.APPROVE_ASSOCIATIONS]}>
+              <AssociationImportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_ASSOCIATIONS]}>
+              <AssociationDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ASSOCIATION_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_ASSOCIATIONS]}>
+              <AssociationEditPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Sharad Samman Admin */}
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_DASHBOARD}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <SharadSammanDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <NominationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <NominationDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Committee member media & albums */}
         <Route
@@ -541,6 +684,40 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ALBUMS]}>
               <AlbumFormPage mode="committee" />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Committee Sharad Samman */}
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATIONS}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATION_NEW}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATION_DETAIL()}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.MY_COMMITTEE_NOMINATION_EDIT()}
+          element={
+            <ProtectedRoute>
+              <MyCommitteeNominationFormPage />
             </ProtectedRoute>
           }
         />
