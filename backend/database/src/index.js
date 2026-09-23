@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContestStatus = exports.NominationStatus = exports.InvestmentOpportunityStatus = exports.InvestmentEnquiryStatus = exports.WebinarStatus = exports.VirusScanStatus = exports.UserStatus = exports.RsvpStatus = exports.RecordStatus = exports.ProcessingStatus = exports.Prisma = exports.NotificationStatus = exports.NotificationChannel = exports.MediaType = exports.MediaModerationStatus = exports.DiasporaStatus = exports.CommitteeStatus = exports.AssociationStatus = exports.AtlasStatus = exports.ArticleStatus = exports.AiModerationStatus = exports.PrismaModule = exports.PrismaService = void 0;
+exports.VoteStatus = exports.ContestStatus = exports.NominationStatus = exports.InvestmentOpportunityStatus = exports.InvestmentEnquiryStatus = exports.WebinarStatus = exports.VirusScanStatus = exports.UserStatus = exports.RsvpStatus = exports.RecordStatus = exports.ProcessingStatus = exports.Prisma = exports.NotificationStatus = exports.NotificationChannel = exports.MediaType = exports.MediaModerationStatus = exports.DiasporaStatus = exports.CommitteeStatus = exports.AssociationStatus = exports.AtlasStatus = exports.ArticleStatus = exports.AiModerationStatus = exports.PrismaModule = exports.PrismaService = void 0;
 var prisma_service_1 = require("../prisma.service");
 Object.defineProperty(exports, "PrismaService", { enumerable: true, get: function () { return prisma_service_1.PrismaService; } });
 var prisma_module_1 = require("./prisma.module");
@@ -30,6 +30,7 @@ const fallbackEnums = {
   InvestmentEnquiryStatus: { NEW: 'NEW', CONTACTED: 'CONTACTED', IN_DISCUSSION: 'IN_DISCUSSION', CLOSED_WON: 'CLOSED_WON', CLOSED_LOST: 'CLOSED_LOST' },
   ContestStatus: { DRAFT: 'DRAFT', ACTIVE: 'ACTIVE', CLOSED: 'CLOSED' },
   NominationStatus: { DRAFT: 'DRAFT', SUBMITTED: 'SUBMITTED', UNDER_REVIEW: 'UNDER_REVIEW', APPROVED: 'APPROVED', REJECTED: 'REJECTED', SHORTLISTED: 'SHORTLISTED' },
+  VoteStatus: { VALID: 'VALID', FLAGGED: 'FLAGGED', REJECTED: 'REJECTED' },
 };
 
 function getEnum(name) {
@@ -57,3 +58,4 @@ Object.defineProperty(exports, "InvestmentOpportunityStatus", { enumerable: true
 Object.defineProperty(exports, "InvestmentEnquiryStatus", { enumerable: true, get: function () { return getEnum("InvestmentEnquiryStatus"); } });
 Object.defineProperty(exports, "ContestStatus", { enumerable: true, get: function () { return getEnum("ContestStatus"); } });
 Object.defineProperty(exports, "NominationStatus", { enumerable: true, get: function () { return getEnum("NominationStatus"); } });
+Object.defineProperty(exports, "VoteStatus", { enumerable: true, get: function () { return getEnum("VoteStatus"); } });

@@ -296,6 +296,7 @@ model User {
   rejectedNominations    SharadSammanNomination[] @relation("NominationRejectedBy")
   shortlistedNominations SharadSammanNomination[] @relation("NominationShortlistedBy")
   createdNominations     SharadSammanNomination[] @relation("NominationCreatedBy")
+  reviewedVotes          SharadSammanVote[]       @relation("VoteReviewedBy")
 
   @@index([status])
   @@index([createdAt])
@@ -1549,18 +1550,30 @@ enum NominationStatus {
   SHORTLISTED
 }
 
-model Contest {
-  id          Int           @id @default(autoincrement())
-  name        String        @db.VarChar(150)
-  year        Int           @db.SmallInt
-  description String?       @db.Text
-  status      ContestStatus @default(DRAFT)
-  startDate   DateTime?     @map("start_date")
-  endDate     DateTime?     @map("end_date")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+enum VoteStatus {
+  VALID
+  FLAGGED
+  REJECTED
+}
 
-  nominations SharadSammanNomination[]
+model Contest {
+  id                 Int           @id @default(autoincrement())
+  name               String        @db.VarChar(150)
+  year               Int           @db.SmallInt
+  description        String?       @db.Text
+  status             ContestStatus @default(DRAFT)
+  startDate          DateTime?     @map("start_date")
+  endDate            DateTime?     @map("end_date")
+  isVotingOpen       Boolean       @default(false) @map("is_voting_open")
+  votingStartDate    DateTime?     @map("voting_start_date")
+  votingEndDate      DateTime?     @map("voting_end_date")
+  resultsPublished   Boolean       @default(false) @map("results_published")
+  resultsPublishedAt DateTime?     @map("results_published_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  nominations        SharadSammanNomination[]
+  votes              SharadSammanVote[]
 
   @@unique([year, name])
   @@index([status])
@@ -1600,12 +1613,63 @@ model SharadSammanNomination {
   rejectedBy    User?         @relation("NominationRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
   shortlistedBy User?         @relation("NominationShortlistedBy", fields: [shortlistedById], references: [id], onDelete: SetNull)
   createdBy     User?         @relation("NominationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  votes         SharadSammanVote[]
 
   @@unique([contestId, pujaCommitteeId, category])
   @@index([status])
   @@index([contestId, status])
   @@index([pujaCommitteeId])
   @@map("sharad_samman_nominations")
+}
+
+model SharadSammanVote {
+  id                Int                    @id @default(autoincrement())
+  contestId         Int                    @map("contest_id")
+  nominationId      Int                    @map("nomination_id")
+  voterEmail        String                 @map("voter_email") @db.VarChar(180)
+  voterName         String?                @map("voter_name") @db.VarChar(150)
+  voterPhone        String?                @map("voter_phone") @db.VarChar(50)
+  voterCountry      String?                @default("India") @map("voter_country") @db.VarChar(100)
+  voterCity         String?                @map("voter_city") @db.VarChar(100)
+
+  status            VoteStatus             @default(VALID)
+  riskScore         Float                  @default(0.0) @map("risk_score")
+  flagReason        String?                @map("flag_reason") @db.Text
+  reviewedById      Int?                   @map("reviewed_by")
+  reviewedAt        DateTime?              @map("reviewed_at")
+  reviewNotes       String?                @map("review_notes") @db.Text
+
+  ipAddress         String?                @map("ip_address") @db.VarChar(64)
+  userAgent         String?                @map("user_agent") @db.Text
+  deviceFingerprint String?                @map("device_fingerprint") @db.VarChar(128)
+
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+
+  contest           Contest                @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  nomination        SharadSammanNomination @relation(fields: [nominationId], references: [id], onDelete: Cascade)
+  reviewedBy        User?                  @relation("VoteReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@unique([contestId, voterEmail])
+  @@index([contestId, status])
+  @@index([nominationId, status])
+  @@index([ipAddress, createdAt])
+  @@map("sharad_samman_votes")
+}
+
+model VotingOtp {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(180)
+  otpCode   String   @map("otp_code") @db.VarChar(10)
+  contestId Int      @map("contest_id")
+  attempts  Int      @default(0)
+  isUsed    Boolean  @default(false) @map("is_used")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, contestId, isUsed])
+  @@index([expiresAt])
+  @@map("voting_otps")
 }
 
 

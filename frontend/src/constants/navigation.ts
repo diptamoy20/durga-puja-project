@@ -331,6 +331,23 @@ export const NAVIGATION: NavSection[] = [
   },
 
   {
+    label: 'Sharad Samman International',
+    permissions: [PERMISSIONS.VIEW_NOMINATIONS],
+    items: [
+      { label: 'Dashboard', icon: 'fa-trophy', to: ROUTES.SHARAD_SAMMAN_DASHBOARD },
+      { label: 'All Nominations', icon: 'fa-award', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
+      {
+        label: 'Voting Audit & Controls',
+        icon: 'fa-shield-halved',
+        permissions: [PERMISSIONS.MANAGE_NOMINATIONS],
+        to: ROUTES.SHARAD_SAMMAN_VOTING_AUDIT,
+      },
+      { label: 'Public Voting Portal', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE },
+      { label: 'Live Standings & Podium', icon: 'fa-ranking-star', to: ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS },
+    ],
+  },
+
+  {
     label: 'Content Management',
     permissions: [PERMISSIONS.VIEW_ARTICLES],
     items: [

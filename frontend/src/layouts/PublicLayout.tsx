@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { label: 'News', to: ROUTES.PUBLIC_NEWS },
   { label: 'Tourism Concierge', to: ROUTES.PUBLIC_TOURISM_CONCIERGE },
   { label: 'Investor Showcase', to: ROUTES.PUBLIC_INVESTOR_SHOWCASE },
+  { label: "People's Choice Voting", to: ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE },
 ];
 
 export function PublicLayout() {

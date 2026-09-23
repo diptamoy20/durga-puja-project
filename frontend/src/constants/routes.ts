@@ -109,6 +109,7 @@ export const ROUTES = {
   SHARAD_SAMMAN_NOMINATION_NEW: '/sharad-samman/nominations/new',
   SHARAD_SAMMAN_NOMINATION_DETAIL: (id: number | string = ':id') => `/sharad-samman/nominations/${id}`,
   SHARAD_SAMMAN_NOMINATION_EDIT: (id: number | string = ':id') => `/sharad-samman/nominations/${id}/edit`,
+  SHARAD_SAMMAN_VOTING_AUDIT: '/sharad-samman/voting-audit',
 
   // Public Facing Pages
   PUBLIC_CHOOSE_TYPE: '/register/choose',
@@ -128,6 +129,8 @@ export const ROUTES = {
   PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
   PUBLIC_ASSOCIATIONS: '/public/associations',
   PUBLIC_ASSOCIATION_DETAIL: (id: number | string = ':id') => `/public/associations/${id}`,
+  PUBLIC_SHARAD_SAMMAN_VOTE: '/public/sharad-samman/vote',
+  PUBLIC_SHARAD_SAMMAN_RESULTS: '/public/sharad-samman/results',
 
   // Public Tourism Concierge
   PUBLIC_TOURISM_CONCIERGE: '/public/tourism',

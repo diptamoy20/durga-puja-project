@@ -343,6 +343,17 @@ const NominationDetailPage = lazy(() =>
 const NominationFormPage = lazy(() =>
   import('@/pages/sharad-samman/NominationFormPage').then((m) => ({ default: m.NominationFormPage })),
 );
+const VotingAuditPage = lazy(() =>
+  import('@/pages/sharad-samman/VotingAuditPage').then((m) => ({ default: m.VotingAuditPage })),
+);
+
+// Public Sharad Samman Voting Pages
+const PublicVotingPage = lazy(() =>
+  import('@/pages/public/PublicVotingPage').then((m) => ({ default: m.PublicVotingPage })),
+);
+const PublicVotingResultsPage = lazy(() =>
+  import('@/pages/public/PublicVotingResultsPage').then((m) => ({ default: m.PublicVotingResultsPage })),
+);
 
 export function AppRoutes() {
   return (
@@ -389,6 +400,10 @@ export function AppRoutes() {
         {/* Public Investor Showcase */}
         <Route path={ROUTES.PUBLIC_INVESTOR_SHOWCASE} element={<PublicInvestorShowcasePage />} />
         <Route path={ROUTES.PUBLIC_INVESTOR_DETAIL()} element={<PublicInvestorDetailPage />} />
+
+        {/* Public Sharad Samman Voting & Results */}
+        <Route path={ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE} element={<PublicVotingPage />} />
+        <Route path={ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS} element={<PublicVotingResultsPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -1138,6 +1153,56 @@ export function AppRoutes() {
           }
         />
 
+
+        {/* Sharad Samman Admin */}
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_DASHBOARD}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <SharadSammanDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <NominationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+              <NominationDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_NOMINATION_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_VOTING_AUDIT}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <VotingAuditPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Account */}
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
