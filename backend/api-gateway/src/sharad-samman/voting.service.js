@@ -214,11 +214,9 @@ let VotingService = VotingService_1 = class VotingService {
                 year: true,
                 status: true,
                 votingStatus: true,
-                isVotingOpen: true,
                 votingStartDate: true,
                 votingEndDate: true,
                 votingExtendedUntil: true,
-                resultsPublished: true,
             },
         });
 
@@ -227,7 +225,7 @@ let VotingService = VotingService_1 = class VotingService {
         // If no explicit contestId provided, resolve the active voting session:
         if (!targetContestId) {
             const activeVoting = allContests.find((c) =>
-                c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED' || Boolean(c.isVotingOpen)
+                c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED'
             );
             if (activeVoting) {
                 targetContestId = activeVoting.id;
@@ -294,7 +292,7 @@ let VotingService = VotingService_1 = class VotingService {
 
         const now = new Date();
         const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate;
-        let isWindowOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED' || Boolean(contest.isVotingOpen);
+        let isWindowOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED';
         if (contest.votingStartDate && now < new Date(contest.votingStartDate)) {
             isWindowOpen = false;
         }
@@ -317,11 +315,11 @@ let VotingService = VotingService_1 = class VotingService {
                 votingStartDate: contest.votingStartDate,
                 votingEndDate: contest.votingEndDate,
                 votingExtendedUntil: contest.votingExtendedUntil,
-                resultsPublished: contest.resultsPublished,
+                resultsPublished: contest.votingStatus === 'CLOSED',
             },
             availableContests: allContests.map((c) => {
                 const effEnd = c.votingExtendedUntil || c.votingEndDate;
-                let cOpen = c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED' || Boolean(c.isVotingOpen);
+                let cOpen = c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED';
                 if (c.votingStartDate && now < new Date(c.votingStartDate)) cOpen = false;
                 if (effEnd && now > new Date(effEnd)) cOpen = false;
                 if (c.votingStatus === 'CLOSED' || c.status === 'CLOSED') cOpen = false;
@@ -576,7 +574,6 @@ let VotingService = VotingService_1 = class VotingService {
                 year: true,
                 status: true,
                 votingStatus: true,
-                isVotingOpen: true,
             },
         });
 
@@ -587,10 +584,7 @@ let VotingService = VotingService_1 = class VotingService {
             // Priority: Active voting contest, then active status, then latest
             contest = await this.prisma.contest.findFirst({
                 where: {
-                    OR: [
-                        { votingStatus: { in: ['ACTIVE', 'EXTENDED'] } },
-                        { isVotingOpen: true },
-                    ],
+                    votingStatus: { in: ['ACTIVE', 'EXTENDED'] },
                 },
                 orderBy: { year: 'desc' },
             });
@@ -822,7 +816,6 @@ let VotingService = VotingService_1 = class VotingService {
         const contestId = Number(dto.contestId);
         const data = { updatedAt: new Date() };
         if (dto.isVotingOpen !== undefined) {
-            data.isVotingOpen = dto.isVotingOpen;
             if (dto.isVotingOpen) {
                 data.votingStatus = database_1.VotingStatus.ACTIVE;
                 data.status = database_1.ContestStatus.ACTIVE;
@@ -882,13 +875,12 @@ let VotingService = VotingService_1 = class VotingService {
      */
     async publishResults(dto) {
         const contestId = Number(dto.contestId);
-        const now = new Date();
 
         return this.prisma.contest.update({
             where: { id: contestId },
             data: {
-                resultsPublished: dto.publish,
-                resultsPublishedAt: dto.publish ? now : null,
+                votingStatus: dto.publish ? database_1.VotingStatus.CLOSED : database_1.VotingStatus.ACTIVE,
+                updatedAt: new Date(),
             },
         });
     }

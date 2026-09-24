@@ -1205,8 +1205,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                 votingEndDate: endDate,
                 votingExtendedUntil: null, // Reset any previous extension on fresh configuration
                 votingStatus: targetStatus,
-                isVotingOpen: targetStatus === database_1.VotingStatus.ACTIVE || targetStatus === database_1.VotingStatus.EXTENDED,
-                status: contest.status === database_1.ContestStatus.DRAFT && (targetStatus === database_1.VotingStatus.ACTIVE || targetStatus === database_1.VotingStatus.SCHEDULED) ? database_1.ContestStatus.ACTIVE : contest.status,
+                status: (targetStatus === database_1.VotingStatus.ACTIVE || targetStatus === database_1.VotingStatus.SCHEDULED) ? database_1.ContestStatus.ACTIVE : contest.status,
                 updatedAt: new Date(),
             },
         });
@@ -1262,7 +1261,6 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             data: {
                 votingExtendedUntil: extendedUntil,
                 votingStatus: targetStatus,
-                isVotingOpen: targetStatus === database_1.VotingStatus.EXTENDED || targetStatus === database_1.VotingStatus.ACTIVE,
                 updatedAt: new Date(),
             },
         });
@@ -1291,7 +1289,6 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             where: { id },
             data: {
                 votingStatus: database_1.VotingStatus.CLOSED,
-                isVotingOpen: false,
                 updatedAt: new Date(),
             },
         });
