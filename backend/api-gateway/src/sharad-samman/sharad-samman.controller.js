@@ -63,6 +63,41 @@ let SharadSammanController = class SharadSammanController {
     }
 
     /**
+     * List all contests with voting details
+     */
+    listVotingContests() {
+        return this.service.listVotingContests();
+    }
+
+    /**
+     * Get single contest voting management details
+     */
+    getVotingContest(contestId) {
+        return this.service.getVotingContest(contestId);
+    }
+
+    /**
+     * Configure or start voting for contest
+     */
+    configureVoting(contestId, dto) {
+        return this.service.configureVoting(contestId, dto);
+    }
+
+    /**
+     * Extend voting for contest
+     */
+    extendVoting(contestId, dto) {
+        return this.service.extendVoting(contestId, dto);
+    }
+
+    /**
+     * Close voting for contest
+     */
+    closeVoting(contestId) {
+        return this.service.closeVoting(contestId);
+    }
+
+    /**
      * Search committees for nomination creation
      */
     committees(search) {
@@ -193,6 +228,62 @@ __decorate([
     __metadata("design:paramtypes", [Number, typeof (_g = typeof sharad_samman_dto_1.UpdateContestDto !== "undefined" && sharad_samman_dto_1.UpdateContestDto) === "function" ? _g : Object]),
     __metadata("design:returntype", void 0)
 ], SharadSammanController.prototype, "updateContest", null);
+
+__decorate([
+    (0, common_1.Get)('voting/contests'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_NOMINATIONS, shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Voting contest sessions retrieved successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'List all contests with voting details' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "listVotingContests", null);
+
+__decorate([
+    (0, common_1.Get)('voting/:contestId'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_NOMINATIONS, shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Contest voting details retrieved successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get single contest voting management details' }),
+    __param(0, (0, common_1.Param)('contestId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "getVotingContest", null);
+
+__decorate([
+    (0, common_1.Post)('voting/:contestId/configure'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Contest voting configured successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Configure or start voting for contest' }),
+    __param(0, (0, common_1.Param)('contestId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "configureVoting", null);
+
+__decorate([
+    (0, common_1.Post)('voting/:contestId/extend'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Contest voting extended successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Extend voting for contest' }),
+    __param(0, (0, common_1.Param)('contestId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "extendVoting", null);
+
+__decorate([
+    (0, common_1.Post)('voting/:contestId/close'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_CONTESTS),
+    (0, response_interceptor_1.ResponseMessage)('Contest voting closed successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Close voting for contest' }),
+    __param(0, (0, common_1.Param)('contestId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], SharadSammanController.prototype, "closeVoting", null);
 
 __decorate([
     (0, common_1.Get)('committees'),

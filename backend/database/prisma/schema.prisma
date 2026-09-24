@@ -1154,6 +1154,14 @@ enum ContestStatus {
   CLOSED
 }
 
+enum VotingStatus {
+  NOT_CONFIGURED
+  SCHEDULED
+  ACTIVE
+  EXTENDED
+  CLOSED
+}
+
 enum NominationStatus {
   DRAFT
   SUBMITTED
@@ -1164,20 +1172,25 @@ enum NominationStatus {
 }
 
 model Contest {
-  id          Int           @id @default(autoincrement())
-  name        String        @db.VarChar(150)
-  year        Int           @db.SmallInt
-  description String?       @db.Text
-  status      ContestStatus @default(DRAFT)
-  startDate   DateTime?     @map("start_date")
-  endDate     DateTime?     @map("end_date")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id                  Int           @id @default(autoincrement())
+  name                String        @db.VarChar(150)
+  year                Int           @db.SmallInt
+  description         String?       @db.Text
+  status              ContestStatus @default(DRAFT)
+  startDate           DateTime?     @map("start_date")
+  endDate             DateTime?     @map("end_date")
+  votingStatus        VotingStatus  @default(NOT_CONFIGURED) @map("voting_status")
+  votingStartDate     DateTime?     @map("voting_start_date")
+  votingEndDate       DateTime?     @map("voting_end_date")
+  votingExtendedUntil DateTime?     @map("voting_extended_until")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
 
   nominations SharadSammanNomination[]
 
   @@unique([year, name])
   @@index([status])
+  @@index([votingStatus])
   @@map("sharad_samman_contests")
 }
 

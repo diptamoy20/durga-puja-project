@@ -147,6 +147,12 @@ export const NAVIGATION: NavSection[] = [
         permissions: [PERMISSIONS.MANAGE_CONTESTS],
         to: ROUTES.SHARAD_SAMMAN_CONTESTS,
       },
+      {
+        label: 'Voting Management',
+        icon: 'fa-check-to-slot',
+        permissions: [PERMISSIONS.MANAGE_CONTESTS],
+        to: ROUTES.SHARAD_SAMMAN_VOTING,
+      },
       { label: 'All Nominations', icon: 'fa-list-check', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
       { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=UNDER_REVIEW` },
       { label: 'Approved', icon: 'fa-circle-check', tone: 'success', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=APPROVED` },

@@ -1,5 +1,7 @@
 export type ContestStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED';
 
+export type VotingStatus = 'NOT_CONFIGURED' | 'SCHEDULED' | 'ACTIVE' | 'EXTENDED' | 'CLOSED';
+
 export type NominationStatus =
   | 'DRAFT'
   | 'SUBMITTED'
@@ -16,6 +18,10 @@ export interface Contest {
   status: ContestStatus;
   startDate?: string | null;
   endDate?: string | null;
+  votingStatus?: VotingStatus;
+  votingStartDate?: string | null;
+  votingEndDate?: string | null;
+  votingExtendedUntil?: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -170,4 +176,55 @@ export interface CommitteeOption {
   city: string;
   state: string;
   pujaCategory?: string;
+}
+
+export interface VotingContestItem {
+  id: number;
+  name: string;
+  year: number;
+  description?: string | null;
+  contestStatus: ContestStatus;
+  votingStatus: VotingStatus;
+  storedVotingStatus: VotingStatus;
+  votingStartDate?: string | null;
+  votingEndDate?: string | null;
+  votingExtendedUntil?: string | null;
+  effectiveClosingDate?: string | null;
+  shortlistedCount: number;
+}
+
+export interface ShortlistedCandidatePreview {
+  id: number;
+  category: string;
+  title?: string | null;
+  committee: {
+    id: number;
+    committeeName: string;
+    city: string;
+    state: string;
+    venueName?: string | null;
+    pandalImage?: string | null;
+  };
+  shortlistedAt?: string | null;
+}
+
+export interface VotingContestDetail extends VotingContestItem {
+  categoryStats: {
+    category: string;
+    count: number;
+  }[];
+  shortlistedNominations: ShortlistedCandidatePreview[];
+  votingStatistics: {
+    totalVotes: number;
+    uniqueVoters: number;
+  };
+}
+
+export interface ConfigureVotingPayload {
+  votingStartDate: string;
+  votingEndDate: string;
+}
+
+export interface ExtendVotingPayload {
+  votingExtendedUntil: string;
 }

@@ -260,6 +260,12 @@ const ContestListPage = lazy(() =>
 const ContestFormPage = lazy(() =>
   import('@/pages/sharad-samman/ContestFormPage').then((m) => ({ default: m.ContestFormPage })),
 );
+const VotingManagementPage = lazy(() =>
+  import('@/pages/sharad-samman/VotingManagementPage').then((m) => ({ default: m.VotingManagementPage })),
+);
+const ContestVotingDetailPage = lazy(() =>
+  import('@/pages/sharad-samman/ContestVotingDetailPage').then((m) => ({ default: m.ContestVotingDetailPage })),
+);
 
 
 export function AppRoutes() {
@@ -511,6 +517,22 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
               <ContestFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_VOTING}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+              <VotingManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_VOTING_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+              <ContestVotingDetailPage />
             </ProtectedRoute>
           }
         />

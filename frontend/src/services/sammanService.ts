@@ -1,15 +1,19 @@
 import api, { unwrap, unwrapList } from './api';
 import type {
   CommitteeOption,
+  ConfigureVotingPayload,
   Contest,
   CreateContestPayload,
   CreateNominationPayload,
+  ExtendVotingPayload,
   NominationListQuery,
   SharadSammanDashboardData,
   SharadSammanNomination,
   TransitionStatusPayload,
   UpdateContestPayload,
   UpdateNominationPayload,
+  VotingContestDetail,
+  VotingContestItem,
 } from '@/types/samman';
 import type { PaginatedData } from '@/types';
 
@@ -51,6 +55,36 @@ export const sammanService = {
    */
   updateContest: (id: number, payload: UpdateContestPayload): Promise<Contest> =>
     unwrap(api.put(`/sharad-samman/contests/${id}`, payload)),
+
+  /**
+   * List voting contests sessions
+   */
+  listVotingContests: (): Promise<VotingContestItem[]> =>
+    unwrap(api.get('/sharad-samman/voting/contests')),
+
+  /**
+   * Get voting contest detail
+   */
+  getVotingContest: (contestId: number): Promise<VotingContestDetail> =>
+    unwrap(api.get(`/sharad-samman/voting/${contestId}`)),
+
+  /**
+   * Configure or start voting for contest
+   */
+  configureVoting: (contestId: number, payload: ConfigureVotingPayload): Promise<VotingContestDetail> =>
+    unwrap(api.post(`/sharad-samman/voting/${contestId}/configure`, payload)),
+
+  /**
+   * Extend voting for contest
+   */
+  extendVoting: (contestId: number, payload: ExtendVotingPayload): Promise<VotingContestDetail> =>
+    unwrap(api.post(`/sharad-samman/voting/${contestId}/extend`, payload)),
+
+  /**
+   * Close voting for contest
+   */
+  closeVoting: (contestId: number): Promise<VotingContestDetail> =>
+    unwrap(api.post(`/sharad-samman/voting/${contestId}/close`)),
 
   /**
    * Search approved committees for nomination creation

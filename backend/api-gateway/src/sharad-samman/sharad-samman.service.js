@@ -1002,6 +1002,298 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
 
         return { success: true, message: 'Draft nomination deleted successfully.' };
     }
+
+    /**
+     * Compute effective closing date for a contest
+     */
+    computeEffectiveClosingDate(contest) {
+        return contest.votingExtendedUntil ? new Date(contest.votingExtendedUntil) : (contest.votingEndDate ? new Date(contest.votingEndDate) : null);
+    }
+
+    /**
+     * Determine dynamic voting status based on dates & manual closing
+     */
+    resolveVotingStatus(contest) {
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            return database_1.VotingStatus.CLOSED;
+        }
+        if (!contest.votingStartDate || !contest.votingEndDate) {
+            return database_1.VotingStatus.NOT_CONFIGURED;
+        }
+        const now = new Date();
+        const effectiveEnd = this.computeEffectiveClosingDate(contest);
+
+        if (effectiveEnd && now >= effectiveEnd) {
+            return database_1.VotingStatus.CLOSED;
+        }
+        if (now < new Date(contest.votingStartDate)) {
+            return database_1.VotingStatus.SCHEDULED;
+        }
+        if (contest.votingExtendedUntil) {
+            return database_1.VotingStatus.EXTENDED;
+        }
+        return database_1.VotingStatus.ACTIVE;
+    }
+
+    /**
+     * List all contests with their voting status, dates, and shortlisted candidate count
+     */
+    async listVotingContests() {
+        const contests = await this.prisma.contest.findMany({
+            include: {
+                _count: {
+                    select: {
+                        nominations: {
+                            where: { status: database_1.NominationStatus.SHORTLISTED },
+                        },
+                    },
+                },
+            },
+            orderBy: [{ year: 'desc' }, { name: 'asc' }],
+        });
+
+        return contests.map((c) => {
+            const effectiveClosingDate = this.computeEffectiveClosingDate(c);
+            const computedStatus = this.resolveVotingStatus(c);
+
+            return {
+                id: c.id,
+                name: c.name,
+                year: c.year,
+                description: c.description,
+                contestStatus: c.status,
+                votingStatus: computedStatus,
+                storedVotingStatus: c.votingStatus,
+                votingStartDate: c.votingStartDate,
+                votingEndDate: c.votingEndDate,
+                votingExtendedUntil: c.votingExtendedUntil,
+                effectiveClosingDate,
+                shortlistedCount: c._count.nominations,
+            };
+        });
+    }
+
+    /**
+     * Get voting details for a specific contest
+     */
+    async getVotingContest(contestId) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+            include: {
+                _count: {
+                    select: {
+                        nominations: {
+                            where: { status: database_1.NominationStatus.SHORTLISTED },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        const effectiveClosingDate = this.computeEffectiveClosingDate(contest);
+        const computedStatus = this.resolveVotingStatus(contest);
+
+        // Get shortlisted candidate breakdown by category
+        const categoryCounts = await this.prisma.sharadSammanNomination.groupBy({
+            by: ['category'],
+            where: {
+                contestId: id,
+                status: database_1.NominationStatus.SHORTLISTED,
+            },
+            _count: { id: true },
+        });
+
+        // Get shortlisted nominations preview
+        const shortlistedNominations = await this.prisma.sharadSammanNomination.findMany({
+            where: {
+                contestId: id,
+                status: database_1.NominationStatus.SHORTLISTED,
+            },
+            select: {
+                id: true,
+                category: true,
+                title: true,
+                committee: {
+                    select: {
+                        id: true,
+                        committeeName: true,
+                        city: true,
+                        state: true,
+                        venueName: true,
+                        pandalImage: true,
+                    },
+                },
+                shortlistedAt: true,
+            },
+            orderBy: [{ category: 'asc' }, { id: 'asc' }],
+        });
+
+        return {
+            id: contest.id,
+            name: contest.name,
+            year: contest.year,
+            description: contest.description,
+            contestStatus: contest.status,
+            votingStatus: computedStatus,
+            storedVotingStatus: contest.votingStatus,
+            votingStartDate: contest.votingStartDate,
+            votingEndDate: contest.votingEndDate,
+            votingExtendedUntil: contest.votingExtendedUntil,
+            effectiveClosingDate,
+            shortlistedCount: contest._count.nominations,
+            categoryStats: categoryCounts.map((g) => ({
+                category: g.category,
+                count: g._count.id,
+            })),
+            shortlistedNominations,
+            votingStatistics: {
+                totalVotes: 0,
+                uniqueVoters: 0,
+            },
+        };
+    }
+
+    /**
+     * Configure or start voting for a specific contest
+     */
+    async configureVoting(contestId, dto) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            throw new common_1.BadRequestException('Voting for this contest is CLOSED and cannot be modified or reconfigured.');
+        }
+
+        if (!dto.votingStartDate || !dto.votingEndDate) {
+            throw new common_1.BadRequestException('Both Voting Start Date and Voting End Date are required.');
+        }
+
+        const startDate = new Date(dto.votingStartDate);
+        const endDate = new Date(dto.votingEndDate);
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            throw new common_1.BadRequestException('Invalid date format for Voting Start Date or Voting End Date.');
+        }
+
+        if (startDate >= endDate) {
+            throw new common_1.BadRequestException('Voting Start Date must be strictly before Voting End Date.');
+        }
+
+        const now = new Date();
+        let targetStatus = database_1.VotingStatus.SCHEDULED;
+        if (startDate <= now && now < endDate) {
+            targetStatus = database_1.VotingStatus.ACTIVE;
+        } else if (now >= endDate) {
+            targetStatus = database_1.VotingStatus.CLOSED;
+        }
+
+        const updated = await this.prisma.contest.update({
+            where: { id },
+            data: {
+                votingStartDate: startDate,
+                votingEndDate: endDate,
+                votingExtendedUntil: null, // Reset any previous extension on fresh configuration
+                votingStatus: targetStatus,
+                updatedAt: new Date(),
+            },
+        });
+
+        return this.getVotingContest(updated.id);
+    }
+
+    /**
+     * Extend voting for a specific contest
+     */
+    async extendVoting(contestId, dto) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            throw new common_1.BadRequestException('Voting for this contest is CLOSED and cannot be extended.');
+        }
+
+        if (!contest.votingStartDate || !contest.votingEndDate) {
+            throw new common_1.BadRequestException('Voting has not been configured yet for this contest. Please configure voting start and end dates first.');
+        }
+
+        if (!dto.votingExtendedUntil) {
+            throw new common_1.BadRequestException('Extended Until Date is required.');
+        }
+
+        const extendedUntil = new Date(dto.votingExtendedUntil);
+        if (isNaN(extendedUntil.getTime())) {
+            throw new common_1.BadRequestException('Invalid date format for Extended Until Date.');
+        }
+
+        const currentEffectiveEnd = this.computeEffectiveClosingDate(contest);
+        if (currentEffectiveEnd && extendedUntil <= currentEffectiveEnd) {
+            throw new common_1.BadRequestException(
+                `Extension date must be strictly after the current effective closing date (${currentEffectiveEnd.toISOString()}).`,
+            );
+        }
+
+        const now = new Date();
+        let targetStatus = database_1.VotingStatus.EXTENDED;
+        if (now >= extendedUntil) {
+            targetStatus = database_1.VotingStatus.CLOSED;
+        }
+
+        const updated = await this.prisma.contest.update({
+            where: { id },
+            data: {
+                votingExtendedUntil: extendedUntil,
+                votingStatus: targetStatus,
+                updatedAt: new Date(),
+            },
+        });
+
+        return this.getVotingContest(updated.id);
+    }
+
+    /**
+     * Close voting explicitly for a specific contest
+     */
+    async closeVoting(contestId) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            throw new common_1.BadRequestException('Voting for this contest is already CLOSED and cannot be modified.');
+        }
+
+        const updated = await this.prisma.contest.update({
+            where: { id },
+            data: {
+                votingStatus: database_1.VotingStatus.CLOSED,
+                updatedAt: new Date(),
+            },
+        });
+
+        return this.getVotingContest(updated.id);
+    }
 };
 exports.SharadSammanService = SharadSammanService;
 exports.SharadSammanService = SharadSammanService = SharadSammanService_1 = __decorate([

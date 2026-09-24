@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateContestDto = exports.CreateContestDto = exports.CommitteeUpdateNominationDto = exports.CommitteeCreateNominationDto = exports.NominationListQueryDto = exports.NominationStatusTransitionDto = exports.UpdateNominationDto = exports.CreateNominationDto = void 0;
+exports.ExtendVotingDto = exports.ConfigureVotingDto = exports.UpdateContestDto = exports.CreateContestDto = exports.CommitteeUpdateNominationDto = exports.CommitteeCreateNominationDto = exports.NominationListQueryDto = exports.NominationStatusTransitionDto = exports.UpdateNominationDto = exports.CreateNominationDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
@@ -345,4 +345,34 @@ __decorate([
     (0, class_validator_1.IsEnum)(database_1.ContestStatus, { message: 'Status must be DRAFT, ACTIVE, or CLOSED' }),
     __metadata("design:type", String)
 ], UpdateContestDto.prototype, "status", void 0);
+
+class ConfigureVotingDto {
+    votingStartDate;
+    votingEndDate;
+}
+exports.ConfigureVotingDto = ConfigureVotingDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Voting Start Date & Time (ISO 8601)' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Voting Start Date is required' }),
+    (0, class_validator_1.IsDateString)({}, { message: 'Voting Start Date must be a valid ISO date' }),
+    __metadata("design:type", String)
+], ConfigureVotingDto.prototype, "votingStartDate", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Voting End Date & Time (ISO 8601)' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Voting End Date is required' }),
+    (0, class_validator_1.IsDateString)({}, { message: 'Voting End Date must be a valid ISO date' }),
+    __metadata("design:type", String)
+], ConfigureVotingDto.prototype, "votingEndDate", void 0);
+
+class ExtendVotingDto {
+    votingExtendedUntil;
+}
+exports.ExtendVotingDto = ExtendVotingDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Voting Extended Until Date & Time (ISO 8601)' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Extended Until Date is required' }),
+    (0, class_validator_1.IsDateString)({}, { message: 'Extended Until Date must be a valid ISO date' }),
+    __metadata("design:type", String)
+], ExtendVotingDto.prototype, "votingExtendedUntil", void 0);
+
 

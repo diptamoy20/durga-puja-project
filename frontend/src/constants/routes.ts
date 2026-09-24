@@ -108,6 +108,9 @@ export const ROUTES = {
   SHARAD_SAMMAN_CONTESTS: '/sharad-samman/contests',
   SHARAD_SAMMAN_CONTEST_NEW: '/sharad-samman/contests/new',
   SHARAD_SAMMAN_CONTEST_EDIT: (id: number | string = ':id') => `/sharad-samman/contests/${id}/edit`,
+  SHARAD_SAMMAN_VOTING: '/sharad-samman/voting',
+  SHARAD_SAMMAN_VOTING_DETAIL: (contestId: number | string = ':contestId') =>
+    `/sharad-samman/voting/${contestId}`,
   SHARAD_SAMMAN_NOMINATIONS: '/sharad-samman/nominations',
   SHARAD_SAMMAN_NOMINATION_NEW: '/sharad-samman/nominations/new',
   SHARAD_SAMMAN_NOMINATION_DETAIL: (id: number | string = ':id') => `/sharad-samman/nominations/${id}`,
