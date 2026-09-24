@@ -211,7 +211,7 @@ let VotingService = VotingService_1 = class VotingService {
             include: {
                 nominations: {
                     where: {
-                        status: { in: ['APPROVED', 'SHORTLISTED'] },
+                        status: 'SHORTLISTED',
                     },
                     include: {
                         committee: {
@@ -400,8 +400,8 @@ let VotingService = VotingService_1 = class VotingService {
         if (!nomination || nomination.contestId !== dto.contestId) {
             throw new common_1.NotFoundException('The selected nomination was not found in this contest.');
         }
-        if (!['APPROVED', 'SHORTLISTED'].includes(nomination.status)) {
-            throw new common_1.BadRequestException('Only approved or shortlisted nominations are eligible for public voting.');
+        if (nomination.status !== 'SHORTLISTED') {
+            throw new common_1.BadRequestException('Only shortlisted nominations are eligible for public voting.');
         }
 
         // 4. One-Person-One-Vote Database Guard
@@ -506,7 +506,7 @@ let VotingService = VotingService_1 = class VotingService {
         const nominations = await this.prisma.sharadSammanNomination.findMany({
             where: {
                 contestId: targetContestId,
-                status: { in: ['APPROVED', 'SHORTLISTED'] },
+                status: 'SHORTLISTED',
             },
             include: {
                 committee: {
