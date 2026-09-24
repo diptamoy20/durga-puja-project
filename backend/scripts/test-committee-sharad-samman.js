@@ -98,10 +98,9 @@ async function runTests() {
     });
   }
 
-  // Clean up prior test nominations for both committees in this contest
+  // Clean up prior test nominations for both committees
   await prisma.sharadSammanNomination.deleteMany({
     where: {
-      contestId: contest.id,
       pujaCommitteeId: { in: [committeeA.id, committeeB.id] },
     },
   });
@@ -273,7 +272,6 @@ async function runTests() {
   // Clean up test nominations
   await prisma.sharadSammanNomination.deleteMany({
     where: {
-      contestId: contest.id,
       pujaCommitteeId: { in: [committeeA.id, committeeB.id] },
     },
   });

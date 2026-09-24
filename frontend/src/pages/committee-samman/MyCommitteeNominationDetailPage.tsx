@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoader } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/ui/Badge';
@@ -49,6 +50,8 @@ export function MyCommitteeNominationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const loadNomination = async () => {
     if (!id) return;
@@ -68,20 +71,14 @@ export function MyCommitteeNominationDetailPage() {
     loadNomination();
   }, [id]);
 
-  const handleSubmitDraft = async () => {
+  const handleConfirmSubmit = async () => {
     if (!nomination) return;
-    if (
-      !window.confirm(
-        `Are you ready to submit your nomination for "${nomination.category}"? After submission, the entry is locked for administrative review.`,
-      )
-    ) {
-      return;
-    }
 
     setActionLoading(true);
     try {
       await committeeSammanService.submit(nomination.id);
       toast.success('Nomination submitted successfully for administrative review!');
+      setSubmitModalOpen(false);
       await loadNomination();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit nomination.');
@@ -90,16 +87,14 @@ export function MyCommitteeNominationDetailPage() {
     }
   };
 
-  const handleDeleteDraft = async () => {
+  const handleConfirmDelete = async () => {
     if (!nomination) return;
-    if (!window.confirm('Are you sure you want to discard this draft nomination? This action cannot be undone.')) {
-      return;
-    }
 
     setActionLoading(true);
     try {
       await committeeSammanService.deleteDraft(nomination.id);
       toast.success('Draft nomination discarded.');
+      setDeleteModalOpen(false);
       navigate(ROUTES.MY_COMMITTEE_NOMINATIONS);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete draft nomination.');
@@ -157,7 +152,7 @@ export function MyCommitteeNominationDetailPage() {
                 </Link>
                 <Button
                   variant="primary"
-                  onClick={handleSubmitDraft}
+                  onClick={() => setSubmitModalOpen(true)}
                   loading={actionLoading}
                 >
                   <i className="fa-solid fa-paper-plane" aria-hidden="true" /> Submit Nomination
@@ -171,12 +166,12 @@ export function MyCommitteeNominationDetailPage() {
       {/* Status Hero Callout */}
       {isDraft && (
         <Alert variant="warning" style={{ marginBottom: 'var(--space-5)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
             <div>
               <strong>Draft Nomination:</strong> This entry is saved as a Draft and is currently not visible to the jury or admin reviewers.
               Review your details and submit when ready.
             </div>
-            <Button size="sm" variant="primary" onClick={handleSubmitDraft} loading={actionLoading}>
+            <Button size="sm" variant="primary" onClick={() => setSubmitModalOpen(true)} loading={actionLoading}>
               Submit Now
             </Button>
           </div>
@@ -237,12 +232,12 @@ export function MyCommitteeNominationDetailPage() {
         </div>
       )}
 
-      {/* Main Grid: Details & Sidebar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 'var(--space-5)' }}>
+      {/* Main Responsive Grid: Details & Sidebar */}
+      <div className="samman-detail-grid">
         {/* Left Column: Concept & Description */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
           <Card title="Nomination Concept & Artistry">
-            <div className="samman-detail-grid">
+            <div className="form-grid form-grid--2">
               <DetailRow label="Award Category">
                 <span className="samman-category-badge">{nomination.category}</span>
               </DetailRow>
@@ -309,10 +304,17 @@ export function MyCommitteeNominationDetailPage() {
 
           {/* Committee Information */}
           <Card title="Puja Committee Profile">
-            <div className="samman-detail-grid">
+            <div className="form-grid form-grid--2">
               <DetailRow label="Committee Name" value={nomination.committee?.committeeName} />
               <DetailRow label="Registration No" value={nomination.committee?.registrationNo} />
-              <DetailRow label="Location" value={`${nomination.committee?.city || ''}, ${nomination.committee?.state || ''}`} />
+              <DetailRow
+                label="Location"
+                value={
+                  [nomination.committee?.city, nomination.committee?.state]
+                    .filter(Boolean)
+                    .join(', ') || '—'
+                }
+              />
               <DetailRow label="Venue / Pandal Ground" value={nomination.committee?.venueName} />
               <DetailRow label="Venue Address" value={nomination.committee?.venueAddress} />
             </div>
@@ -413,7 +415,7 @@ export function MyCommitteeNominationDetailPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 <Button
                   variant="primary"
-                  onClick={handleSubmitDraft}
+                  onClick={() => setSubmitModalOpen(true)}
                   loading={actionLoading}
                   style={{ width: '100%' }}
                 >
@@ -428,7 +430,7 @@ export function MyCommitteeNominationDetailPage() {
                 </Link>
                 <Button
                   variant="danger"
-                  onClick={handleDeleteDraft}
+                  onClick={() => setDeleteModalOpen(true)}
                   loading={actionLoading}
                   style={{ width: '100%' }}
                 >
@@ -439,6 +441,72 @@ export function MyCommitteeNominationDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Submit Confirmation Modal */}
+      <Modal
+        open={submitModalOpen}
+        onClose={() => setSubmitModalOpen(false)}
+        title="Submit Nomination"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setSubmitModalOpen(false)}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleConfirmSubmit}
+              loading={actionLoading}
+            >
+              <i className="fa-solid fa-paper-plane" aria-hidden="true" /> Confirm Submission
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Are you ready to submit your nomination for{' '}
+          <strong>&ldquo;{nomination.category}&rdquo;</strong>?
+        </p>
+        <p style={{ marginTop: 'var(--space-2)', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+          After submission, this nomination is locked and queued for administrative review. You will no longer be able to edit the details.
+        </p>
+      </Modal>
+
+      {/* Discard Confirmation Modal */}
+      <Modal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Discard Draft"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmDelete}
+              loading={actionLoading}
+            >
+              <i className="fa-solid fa-trash" aria-hidden="true" /> Discard Draft
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Are you sure you want to discard this draft nomination for{' '}
+          <strong>&ldquo;{nomination.category}&rdquo;</strong>?
+        </p>
+        <p style={{ marginTop: 'var(--space-2)', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+          This action cannot be undone. All entered data for this draft will be permanently deleted.
+        </p>
+      </Modal>
     </div>
   );
 }

@@ -45,6 +45,13 @@ let CommitteeSharadSammanController = class CommitteeSharadSammanController {
     }
 
     /**
+     * Get available contests for committee dropdown
+     */
+    contests() {
+        return this.service.listContests();
+    }
+
+    /**
      * List all nominations belonging to the logged-in committee
      */
     list(query, actor) {
@@ -102,6 +109,15 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], CommitteeSharadSammanController.prototype, "activeContest", null);
+
+__decorate([
+    (0, common_1.Get)('contests'),
+    (0, response_interceptor_1.ResponseMessage)('Contests retrieved successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get available contests for committee dropdown' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], CommitteeSharadSammanController.prototype, "contests", null);
 
 __decorate([
     (0, common_1.Get)(),

@@ -18,7 +18,7 @@ const ALLOWED_TRANSITIONS = {
     [database_1.NominationStatus.DRAFT]: [database_1.NominationStatus.SUBMITTED],
     [database_1.NominationStatus.SUBMITTED]: [database_1.NominationStatus.UNDER_REVIEW, database_1.NominationStatus.APPROVED, database_1.NominationStatus.REJECTED],
     [database_1.NominationStatus.UNDER_REVIEW]: [database_1.NominationStatus.APPROVED, database_1.NominationStatus.REJECTED],
-    [database_1.NominationStatus.APPROVED]: [],
+    [database_1.NominationStatus.APPROVED]: [database_1.NominationStatus.SHORTLISTED],
     [database_1.NominationStatus.REJECTED]: [database_1.NominationStatus.UNDER_REVIEW, database_1.NominationStatus.APPROVED],
     [database_1.NominationStatus.SHORTLISTED]: [],
 };
@@ -33,18 +33,29 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
 
     /**
      * Dashboard stats: aggregates total, draft, submitted, underReview, approved, rejected, shortlisted
+     * Scoped strictly to the selected or active contest.
      */
-    async getDashboardStats() {
-        const [counts, activeContest] = await Promise.all([
-            this.prisma.sharadSammanNomination.groupBy({
-                by: ['status'],
-                _count: { id: true },
-            }),
-            this.prisma.contest.findFirst({
+    async getDashboardStats(contestId) {
+        let selectedContest = null;
+
+        if (contestId) {
+            selectedContest = await this.prisma.contest.findUnique({
+                where: { id: Number(contestId) },
+            });
+        }
+
+        if (!selectedContest) {
+            selectedContest = await this.prisma.contest.findFirst({
                 where: { status: database_1.ContestStatus.ACTIVE },
                 orderBy: { year: 'desc' },
-            }),
-        ]);
+            });
+        }
+
+        if (!selectedContest) {
+            selectedContest = await this.prisma.contest.findFirst({
+                orderBy: { year: 'desc' },
+            });
+        }
 
         const stats = {
             total: 0,
@@ -56,34 +67,42 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             shortlisted: 0,
         };
 
-        for (const item of counts) {
-            const count = item._count.id;
-            stats.total += count;
-            switch (item.status) {
-                case database_1.NominationStatus.DRAFT:
-                    stats.draft = count;
-                    break;
-                case database_1.NominationStatus.SUBMITTED:
-                    stats.submitted = count;
-                    break;
-                case database_1.NominationStatus.UNDER_REVIEW:
-                    stats.underReview = count;
-                    break;
-                case database_1.NominationStatus.APPROVED:
-                    stats.approved = count;
-                    break;
-                case database_1.NominationStatus.REJECTED:
-                    stats.rejected = count;
-                    break;
-                case database_1.NominationStatus.SHORTLISTED:
-                    stats.shortlisted = count;
-                    break;
+        if (selectedContest) {
+            const counts = await this.prisma.sharadSammanNomination.groupBy({
+                by: ['status'],
+                where: { contestId: selectedContest.id },
+                _count: { id: true },
+            });
+
+            for (const item of counts) {
+                const count = item._count.id;
+                stats.total += count;
+                switch (item.status) {
+                    case database_1.NominationStatus.DRAFT:
+                        stats.draft = count;
+                        break;
+                    case database_1.NominationStatus.SUBMITTED:
+                        stats.submitted = count;
+                        break;
+                    case database_1.NominationStatus.UNDER_REVIEW:
+                        stats.underReview = count;
+                        break;
+                    case database_1.NominationStatus.APPROVED:
+                        stats.approved = count;
+                        break;
+                    case database_1.NominationStatus.REJECTED:
+                        stats.rejected = count;
+                        break;
+                    case database_1.NominationStatus.SHORTLISTED:
+                        stats.shortlisted = count;
+                        break;
+                }
             }
         }
 
         return {
             stats,
-            activeContest,
+            activeContest: selectedContest,
         };
     }
 
@@ -216,6 +235,12 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             throw new common_1.NotFoundException(`Contest #${dto.contestId} not found.`);
         }
 
+        if (contest.status !== database_1.ContestStatus.ACTIVE) {
+            throw new common_1.BadRequestException(
+                `Nominations can only be created for ACTIVE contests. Contest "${contest.name}" is currently ${contest.status}.`,
+            );
+        }
+
         if (!committee) {
             throw new common_1.NotFoundException(`Puja Committee #${dto.pujaCommitteeId} not found.`);
         }
@@ -236,40 +261,49 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
         });
 
         if (existing) {
-            throw new common_1.BadRequestException(
+            throw new common_1.ConflictException(
                 `A nomination already exists for committee "${committee.committeeName}" in category "${category}" for contest "${contest.name}".`,
             );
         }
 
-        return this.prisma.sharadSammanNomination.create({
-            data: {
-                contestId: dto.contestId,
-                pujaCommitteeId: dto.pujaCommitteeId,
-                category,
-                title: dto.title?.trim() || null,
-                description: dto.description?.trim() || null,
-                status: database_1.NominationStatus.DRAFT,
-                createdById: actorId ?? null,
-            },
-            include: {
-                committee: {
-                    select: {
-                        id: true,
-                        committeeName: true,
-                        registrationNo: true,
-                        city: true,
-                        state: true,
+        try {
+            return await this.prisma.sharadSammanNomination.create({
+                data: {
+                    contestId: dto.contestId,
+                    pujaCommitteeId: dto.pujaCommitteeId,
+                    category,
+                    title: dto.title?.trim() || null,
+                    description: dto.description?.trim() || null,
+                    status: database_1.NominationStatus.DRAFT,
+                    createdById: actorId ?? null,
+                },
+                include: {
+                    committee: {
+                        select: {
+                            id: true,
+                            committeeName: true,
+                            registrationNo: true,
+                            city: true,
+                            state: true,
+                        },
+                    },
+                    contest: {
+                        select: {
+                            id: true,
+                            name: true,
+                            year: true,
+                        },
                     },
                 },
-                contest: {
-                    select: {
-                        id: true,
-                        name: true,
-                        year: true,
-                    },
-                },
-            },
-        });
+            });
+        } catch (err) {
+            if (err?.code === 'P2002') {
+                throw new common_1.ConflictException(
+                    `A nomination already exists for committee "${committee.committeeName}" in category "${category}" for contest "${contest.name}".`,
+                );
+            }
+            throw err;
+        }
     }
 
     /**
@@ -312,24 +346,33 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             });
 
             if (existing && existing.id !== nomination.id) {
-                throw new common_1.BadRequestException(
+                throw new common_1.ConflictException(
                     `A nomination already exists for this committee in category "${newCategory}" for this contest.`,
                 );
             }
         }
 
-        return this.prisma.sharadSammanNomination.update({
-            where: { id: Number(id) },
-            data: {
-                category: newCategory,
-                title: dto.title !== undefined ? dto.title?.trim() || null : nomination.title,
-                description: dto.description !== undefined ? dto.description?.trim() || null : nomination.description,
-            },
-            include: {
-                committee: true,
-                contest: true,
-            },
-        });
+        try {
+            return await this.prisma.sharadSammanNomination.update({
+                where: { id: Number(id) },
+                data: {
+                    category: newCategory,
+                    title: dto.title !== undefined ? dto.title?.trim() || null : nomination.title,
+                    description: dto.description !== undefined ? dto.description?.trim() || null : nomination.description,
+                },
+                include: {
+                    committee: true,
+                    contest: true,
+                },
+            });
+        } catch (err) {
+            if (err?.code === 'P2002') {
+                throw new common_1.ConflictException(
+                    `A nomination already exists for this committee in category "${newCategory}" for this contest.`,
+                );
+            }
+            throw err;
+        }
     }
 
     /**
@@ -424,11 +467,171 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
     }
 
     /**
-     * Contest helper list
+     * Contest helper list with nomination counts
      */
     async listContests() {
         return this.prisma.contest.findMany({
+            include: {
+                _count: {
+                    select: { nominations: true },
+                },
+            },
             orderBy: [{ year: 'desc' }, { name: 'asc' }],
+        });
+    }
+
+    /**
+     * Get single contest by ID with nomination count
+     */
+    async getContest(id) {
+        const contest = await this.prisma.contest.findUnique({
+            where: { id: Number(id) },
+            include: {
+                _count: {
+                    select: { nominations: true },
+                },
+            },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${id} not found.`);
+        }
+
+        return contest;
+    }
+
+    /**
+     * Create a new contest
+     */
+    async createContest(dto) {
+        const name = (dto.name || '').trim();
+        if (!name) {
+            throw new common_1.BadRequestException('Contest Name is required.');
+        }
+
+        const year = Number(dto.year);
+        if (!year || isNaN(year)) {
+            throw new common_1.BadRequestException('Valid Contest Year is required.');
+        }
+
+        if (!dto.startDate || !dto.endDate) {
+            throw new common_1.BadRequestException('Start Date and Last Date are required.');
+        }
+
+        const startDate = new Date(dto.startDate);
+        const endDate = new Date(dto.endDate);
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            throw new common_1.BadRequestException('Invalid Start Date or Last Date format.');
+        }
+
+        if (startDate > endDate) {
+            throw new common_1.BadRequestException('Start Date cannot be after Last Date.');
+        }
+
+        // Prevent duplicate Contest Name + Year using existing unique constraint
+        const duplicate = await this.prisma.contest.findFirst({
+            where: {
+                year,
+                name: { equals: name, mode: 'insensitive' },
+            },
+        });
+
+        if (duplicate) {
+            throw new common_1.BadRequestException(
+                `A contest with name "${name}" and year ${year} already exists.`,
+            );
+        }
+
+        return this.prisma.contest.create({
+            data: {
+                name,
+                year,
+                description: dto.description?.trim() || null,
+                startDate,
+                endDate,
+                status: dto.status || database_1.ContestStatus.DRAFT,
+            },
+            include: {
+                _count: {
+                    select: { nominations: true },
+                },
+            },
+        });
+    }
+
+    /**
+     * Update an existing contest in-place
+     */
+    async updateContest(id, dto) {
+        const contestId = Number(id);
+        const existing = await this.prisma.contest.findUnique({
+            where: { id: contestId },
+        });
+
+        if (!existing) {
+            throw new common_1.NotFoundException(`Contest #${id} not found.`);
+        }
+
+        const targetName = dto.name !== undefined ? dto.name.trim() : existing.name;
+        const targetYear = dto.year !== undefined ? Number(dto.year) : existing.year;
+
+        if (!targetName) {
+            throw new common_1.BadRequestException('Contest Name cannot be empty.');
+        }
+
+        if (!targetYear || isNaN(targetYear)) {
+            throw new common_1.BadRequestException('Valid Contest Year is required.');
+        }
+
+        const startDate = dto.startDate !== undefined ? new Date(dto.startDate) : existing.startDate;
+        const endDate = dto.endDate !== undefined ? new Date(dto.endDate) : existing.endDate;
+
+        if (startDate && endDate) {
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                throw new common_1.BadRequestException('Invalid Start Date or Last Date format.');
+            }
+            if (startDate > endDate) {
+                throw new common_1.BadRequestException('Start Date cannot be after Last Date.');
+            }
+        }
+
+        // Duplicate check if name or year is changing
+        if (targetName !== existing.name || targetYear !== existing.year) {
+            const duplicate = await this.prisma.contest.findFirst({
+                where: {
+                    id: { not: contestId },
+                    year: targetYear,
+                    name: { equals: targetName, mode: 'insensitive' },
+                },
+            });
+
+            if (duplicate) {
+                throw new common_1.BadRequestException(
+                    `Another contest with name "${targetName}" and year ${targetYear} already exists.`,
+                );
+            }
+        }
+
+        const data = {
+            updatedAt: new Date(),
+        };
+
+        if (dto.name !== undefined) data.name = targetName;
+        if (dto.year !== undefined) data.year = targetYear;
+        if (dto.description !== undefined) data.description = dto.description?.trim() || null;
+        if (dto.startDate !== undefined) data.startDate = startDate;
+        if (dto.endDate !== undefined) data.endDate = endDate;
+        if (dto.status !== undefined) data.status = dto.status;
+
+        return this.prisma.contest.update({
+            where: { id: contestId },
+            data,
+            include: {
+                _count: {
+                    select: { nominations: true },
+                },
+            },
         });
     }
 
@@ -606,6 +809,12 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
         }
 
+        if (contest.status !== database_1.ContestStatus.ACTIVE) {
+            throw new common_1.BadRequestException(
+                `Nominations can only be submitted for ACTIVE contests. Contest "${contest.name}" is currently ${contest.status}.`,
+            );
+        }
+
         if (!committee) {
             throw new common_1.NotFoundException(`Puja Committee #${commId} not found.`);
         }
@@ -627,44 +836,53 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
         });
 
         if (existing) {
-            throw new common_1.BadRequestException(
-                `Your committee already has a nomination in category "${category}" for contest "${contest.name}".`,
+            throw new common_1.ConflictException(
+                'You have already submitted a nomination for this category in this contest.',
             );
         }
 
         const submitNow = Boolean(dto.submitNow);
         const status = submitNow ? database_1.NominationStatus.SUBMITTED : database_1.NominationStatus.DRAFT;
 
-        return this.prisma.sharadSammanNomination.create({
-            data: {
-                contestId,
-                pujaCommitteeId: commId,
-                category,
-                title: dto.title?.trim() || null,
-                description: dto.description?.trim() || null,
-                status,
-                submittedAt: submitNow ? new Date() : null,
-                createdById: actorId ?? null,
-            },
-            include: {
-                committee: {
-                    select: {
-                        id: true,
-                        committeeName: true,
-                        registrationNo: true,
-                        city: true,
-                        state: true,
+        try {
+            return await this.prisma.sharadSammanNomination.create({
+                data: {
+                    contestId,
+                    pujaCommitteeId: commId,
+                    category,
+                    title: dto.title?.trim() || null,
+                    description: dto.description?.trim() || null,
+                    status,
+                    submittedAt: submitNow ? new Date() : null,
+                    createdById: actorId ?? null,
+                },
+                include: {
+                    committee: {
+                        select: {
+                            id: true,
+                            committeeName: true,
+                            registrationNo: true,
+                            city: true,
+                            state: true,
+                        },
+                    },
+                    contest: {
+                        select: {
+                            id: true,
+                            name: true,
+                            year: true,
+                        },
                     },
                 },
-                contest: {
-                    select: {
-                        id: true,
-                        name: true,
-                        year: true,
-                    },
-                },
-            },
-        });
+            });
+        } catch (err) {
+            if (err?.code === 'P2002') {
+                throw new common_1.ConflictException(
+                    'You have already submitted a nomination for this category in this contest.',
+                );
+            }
+            throw err;
+        }
     }
 
     /**
@@ -700,8 +918,8 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             });
 
             if (existing && existing.id !== nomination.id) {
-                throw new common_1.BadRequestException(
-                    `Your committee already has a nomination in category "${newCategory}" for this contest.`,
+                throw new common_1.ConflictException(
+                    'You have already submitted a nomination for this category in this contest.',
                 );
             }
         }
@@ -719,14 +937,23 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             data.submittedAt = new Date();
         }
 
-        return this.prisma.sharadSammanNomination.update({
-            where: { id: Number(id) },
-            data,
-            include: {
-                committee: true,
-                contest: true,
-            },
-        });
+        try {
+            return await this.prisma.sharadSammanNomination.update({
+                where: { id: Number(id) },
+                data,
+                include: {
+                    committee: true,
+                    contest: true,
+                },
+            });
+        } catch (err) {
+            if (err?.code === 'P2002') {
+                throw new common_1.ConflictException(
+                    'You have already submitted a nomination for this category in this contest.',
+                );
+            }
+            throw err;
+        }
     }
 
     /**
@@ -774,6 +1001,298 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
         });
 
         return { success: true, message: 'Draft nomination deleted successfully.' };
+    }
+
+    /**
+     * Compute effective closing date for a contest
+     */
+    computeEffectiveClosingDate(contest) {
+        return contest.votingExtendedUntil ? new Date(contest.votingExtendedUntil) : (contest.votingEndDate ? new Date(contest.votingEndDate) : null);
+    }
+
+    /**
+     * Determine dynamic voting status based on dates & manual closing
+     */
+    resolveVotingStatus(contest) {
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            return database_1.VotingStatus.CLOSED;
+        }
+        if (!contest.votingStartDate || !contest.votingEndDate) {
+            return database_1.VotingStatus.NOT_CONFIGURED;
+        }
+        const now = new Date();
+        const effectiveEnd = this.computeEffectiveClosingDate(contest);
+
+        if (effectiveEnd && now >= effectiveEnd) {
+            return database_1.VotingStatus.CLOSED;
+        }
+        if (now < new Date(contest.votingStartDate)) {
+            return database_1.VotingStatus.SCHEDULED;
+        }
+        if (contest.votingExtendedUntil) {
+            return database_1.VotingStatus.EXTENDED;
+        }
+        return database_1.VotingStatus.ACTIVE;
+    }
+
+    /**
+     * List all contests with their voting status, dates, and shortlisted candidate count
+     */
+    async listVotingContests() {
+        const contests = await this.prisma.contest.findMany({
+            include: {
+                _count: {
+                    select: {
+                        nominations: {
+                            where: { status: database_1.NominationStatus.SHORTLISTED },
+                        },
+                    },
+                },
+            },
+            orderBy: [{ year: 'desc' }, { name: 'asc' }],
+        });
+
+        return contests.map((c) => {
+            const effectiveClosingDate = this.computeEffectiveClosingDate(c);
+            const computedStatus = this.resolveVotingStatus(c);
+
+            return {
+                id: c.id,
+                name: c.name,
+                year: c.year,
+                description: c.description,
+                contestStatus: c.status,
+                votingStatus: computedStatus,
+                storedVotingStatus: c.votingStatus,
+                votingStartDate: c.votingStartDate,
+                votingEndDate: c.votingEndDate,
+                votingExtendedUntil: c.votingExtendedUntil,
+                effectiveClosingDate,
+                shortlistedCount: c._count.nominations,
+            };
+        });
+    }
+
+    /**
+     * Get voting details for a specific contest
+     */
+    async getVotingContest(contestId) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+            include: {
+                _count: {
+                    select: {
+                        nominations: {
+                            where: { status: database_1.NominationStatus.SHORTLISTED },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        const effectiveClosingDate = this.computeEffectiveClosingDate(contest);
+        const computedStatus = this.resolveVotingStatus(contest);
+
+        // Get shortlisted candidate breakdown by category
+        const categoryCounts = await this.prisma.sharadSammanNomination.groupBy({
+            by: ['category'],
+            where: {
+                contestId: id,
+                status: database_1.NominationStatus.SHORTLISTED,
+            },
+            _count: { id: true },
+        });
+
+        // Get shortlisted nominations preview
+        const shortlistedNominations = await this.prisma.sharadSammanNomination.findMany({
+            where: {
+                contestId: id,
+                status: database_1.NominationStatus.SHORTLISTED,
+            },
+            select: {
+                id: true,
+                category: true,
+                title: true,
+                committee: {
+                    select: {
+                        id: true,
+                        committeeName: true,
+                        city: true,
+                        state: true,
+                        venueName: true,
+                        pandalImage: true,
+                    },
+                },
+                shortlistedAt: true,
+            },
+            orderBy: [{ category: 'asc' }, { id: 'asc' }],
+        });
+
+        return {
+            id: contest.id,
+            name: contest.name,
+            year: contest.year,
+            description: contest.description,
+            contestStatus: contest.status,
+            votingStatus: computedStatus,
+            storedVotingStatus: contest.votingStatus,
+            votingStartDate: contest.votingStartDate,
+            votingEndDate: contest.votingEndDate,
+            votingExtendedUntil: contest.votingExtendedUntil,
+            effectiveClosingDate,
+            shortlistedCount: contest._count.nominations,
+            categoryStats: categoryCounts.map((g) => ({
+                category: g.category,
+                count: g._count.id,
+            })),
+            shortlistedNominations,
+            votingStatistics: {
+                totalVotes: 0,
+                uniqueVoters: 0,
+            },
+        };
+    }
+
+    /**
+     * Configure or start voting for a specific contest
+     */
+    async configureVoting(contestId, dto) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            throw new common_1.BadRequestException('Voting for this contest is CLOSED and cannot be modified or reconfigured.');
+        }
+
+        if (!dto.votingStartDate || !dto.votingEndDate) {
+            throw new common_1.BadRequestException('Both Voting Start Date and Voting End Date are required.');
+        }
+
+        const startDate = new Date(dto.votingStartDate);
+        const endDate = new Date(dto.votingEndDate);
+
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            throw new common_1.BadRequestException('Invalid date format for Voting Start Date or Voting End Date.');
+        }
+
+        if (startDate >= endDate) {
+            throw new common_1.BadRequestException('Voting Start Date must be strictly before Voting End Date.');
+        }
+
+        const now = new Date();
+        let targetStatus = database_1.VotingStatus.SCHEDULED;
+        if (startDate <= now && now < endDate) {
+            targetStatus = database_1.VotingStatus.ACTIVE;
+        } else if (now >= endDate) {
+            targetStatus = database_1.VotingStatus.CLOSED;
+        }
+
+        const updated = await this.prisma.contest.update({
+            where: { id },
+            data: {
+                votingStartDate: startDate,
+                votingEndDate: endDate,
+                votingExtendedUntil: null, // Reset any previous extension on fresh configuration
+                votingStatus: targetStatus,
+                updatedAt: new Date(),
+            },
+        });
+
+        return this.getVotingContest(updated.id);
+    }
+
+    /**
+     * Extend voting for a specific contest
+     */
+    async extendVoting(contestId, dto) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            throw new common_1.BadRequestException('Voting for this contest is CLOSED and cannot be extended.');
+        }
+
+        if (!contest.votingStartDate || !contest.votingEndDate) {
+            throw new common_1.BadRequestException('Voting has not been configured yet for this contest. Please configure voting start and end dates first.');
+        }
+
+        if (!dto.votingExtendedUntil) {
+            throw new common_1.BadRequestException('Extended Until Date is required.');
+        }
+
+        const extendedUntil = new Date(dto.votingExtendedUntil);
+        if (isNaN(extendedUntil.getTime())) {
+            throw new common_1.BadRequestException('Invalid date format for Extended Until Date.');
+        }
+
+        const currentEffectiveEnd = this.computeEffectiveClosingDate(contest);
+        if (currentEffectiveEnd && extendedUntil <= currentEffectiveEnd) {
+            throw new common_1.BadRequestException(
+                `Extension date must be strictly after the current effective closing date (${currentEffectiveEnd.toISOString()}).`,
+            );
+        }
+
+        const now = new Date();
+        let targetStatus = database_1.VotingStatus.EXTENDED;
+        if (now >= extendedUntil) {
+            targetStatus = database_1.VotingStatus.CLOSED;
+        }
+
+        const updated = await this.prisma.contest.update({
+            where: { id },
+            data: {
+                votingExtendedUntil: extendedUntil,
+                votingStatus: targetStatus,
+                updatedAt: new Date(),
+            },
+        });
+
+        return this.getVotingContest(updated.id);
+    }
+
+    /**
+     * Close voting explicitly for a specific contest
+     */
+    async closeVoting(contestId) {
+        const id = Number(contestId);
+        const contest = await this.prisma.contest.findUnique({
+            where: { id },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest #${contestId} not found.`);
+        }
+
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+            throw new common_1.BadRequestException('Voting for this contest is already CLOSED and cannot be modified.');
+        }
+
+        const updated = await this.prisma.contest.update({
+            where: { id },
+            data: {
+                votingStatus: database_1.VotingStatus.CLOSED,
+                updatedAt: new Date(),
+            },
+        });
+
+        return this.getVotingContest(updated.id);
     }
 };
 exports.SharadSammanService = SharadSammanService;

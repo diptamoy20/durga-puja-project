@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { Modal } from '@/components/ui/Modal';
 import { PageLoader } from '@/components/ui/Spinner';
 import { ROUTES } from '@/constants/routes';
-import { formatContestDate, SUGGESTED_CATEGORIES } from '@/constants/samman';
+import { formatContestDate, formatNominationStatus } from '@/constants/samman';
 import { committeeSammanService } from '@/services/sammanService';
+import { subcategoryService } from '@/services/contentService';
 import { errorMessage } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import type { Contest } from '@/types/samman';
+import type { Contest, SharadSammanNomination } from '@/types/samman';
 
 import '@/styles/sharad-samman-admin.css';
 
@@ -20,66 +22,100 @@ export function MyCommitteeNominationFormPage() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
+  const [submitAction, setSubmitAction] = useState<'draft' | 'submit' | null>(null);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Active Contest & Existing nominations for category preview
-  const [activeContest, setActiveContest] = useState<Contest | null>(null);
-  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+  // Contests & Nominations
+  const [contests, setContests] = useState<Contest[]>([]);
+  const [selectedContestId, setSelectedContestId] = useState<number | ''>('');
+  const [committeeNominations, setCommitteeNominations] = useState<SharadSammanNomination[]>([]);
+  const [existingNomination, setExistingNomination] = useState<SharadSammanNomination | null>(null);
 
   // Form Fields
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [category, setCategory] = useState('');
-  const [customCategory, setCustomCategory] = useState('');
-  const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
-  // Initial Load: Fetch active contest and existing nominations
+  const activeContests = useMemo(() => contests.filter((c) => c.status === 'ACTIVE'), [contests]);
+
+  const selectedContest = useMemo(() => {
+    return (
+      contests.find((c) => c.id === Number(selectedContestId)) ||
+      (isEdit ? existingNomination?.contest : null) ||
+      null
+    );
+  }, [contests, selectedContestId, isEdit, existingNomination]);
+
+  // List categories already submitted in the selected contest
+  const existingCategories = useMemo(() => {
+    if (!selectedContestId) return [];
+    return committeeNominations
+      .filter((item) => (!isEdit || item.id !== Number(id)) && item.contestId === Number(selectedContestId))
+      .map((item) => item.category);
+  }, [committeeNominations, selectedContestId, isEdit, id]);
+
+  // Initial Load: Fetch contests and existing nominations
   useEffect(() => {
     let isMounted = true;
 
     async function loadData() {
       try {
-        const listData = await committeeSammanService.list({ perPage: 100 });
+        const [listData, contestsData, activeContestData, categoriesData] = await Promise.all([
+          committeeSammanService.list({ perPage: 100 }),
+          committeeSammanService.getContests().catch((): Contest[] => []),
+          committeeSammanService.getActiveContest().catch(() => null),
+          subcategoryService.listNominationCategories().catch((): string[] => []),
+        ]);
         if (!isMounted) return;
 
-        if (listData.activeContest) {
-          setActiveContest(listData.activeContest);
-        }
+        setAvailableCategories(categoriesData);
 
-        // List categories already submitted in this contest
-        const currentCats = listData.items
-          .filter((item) => !isEdit || item.id !== Number(id))
-          .map((item) => item.category);
-        setExistingCategories(currentCats);
+        const contestsList = [...contestsData];
+        if (activeContestData && !contestsList.some((c) => c.id === activeContestData.id)) {
+          contestsList.push(activeContestData);
+        }
+        const fallbackContest = listData.activeContest;
+        if (fallbackContest && !contestsList.some((c) => c.id === fallbackContest.id)) {
+          contestsList.push(fallbackContest);
+        }
+        setContests(contestsList);
+        setCommitteeNominations(listData.items ?? []);
 
         if (isEdit && id) {
           const nom = await committeeSammanService.get(Number(id));
           if (!isMounted) return;
+          setExistingNomination(nom);
+          setSelectedContestId(nom.contestId);
 
           if (nom.status !== 'DRAFT') {
-            setError(`Only draft nominations can be modified. This nomination has already been "${nom.status}".`);
+            setError(`Only draft nominations can be modified. This nomination has already been "${formatNominationStatus(nom.status)}".`);
             setLoading(false);
             return;
           }
 
           setTitle(nom.title || '');
           setDescription(nom.description || '');
-
-          if (SUGGESTED_CATEGORIES.includes(nom.category)) {
-            setCategory(nom.category);
-            setIsCustomCategory(false);
-          } else {
-            setCategory('CUSTOM');
-            setCustomCategory(nom.category);
-            setIsCustomCategory(true);
+          setCategory(nom.category || '');
+          if (nom.category && !categoriesData.includes(nom.category)) {
+            setAvailableCategories((prev) => [nom.category, ...prev]);
+          }
+        } else {
+          const activeList = contestsList.filter((c) => c.status === 'ACTIVE');
+          if (activeContestData && activeContestData.status === 'ACTIVE') {
+            setSelectedContestId(activeContestData.id);
+          } else if (activeList.length > 0) {
+            setSelectedContestId(activeList[0].id);
           }
         }
       } catch (err: unknown) {
         if (!isMounted) return;
-        setError(err instanceof Error ? err.message : 'Failed to load nomination data.');
+        setError(errorMessage(err, 'Failed to load nomination data.'));
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -92,88 +128,101 @@ export function MyCommitteeNominationFormPage() {
     };
   }, [id, isEdit]);
 
-  const handleCategorySelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    if (val === 'CUSTOM') {
-      setIsCustomCategory(true);
-      setCategory('CUSTOM');
-    } else {
-      setIsCustomCategory(false);
-      setCategory(val);
-      setCustomCategory('');
-    }
-  };
+  const committeeDisplayName =
+    existingNomination?.committee?.committeeName ||
+    (user?.name ? `${user.name}` : 'Authenticated Puja Committee');
 
-  const getEffectiveCategory = (): string => {
-    if (isCustomCategory) {
-      return customCategory.trim();
-    }
-    return category.trim();
-  };
-
-  const handleSave = async (submitNow: boolean) => {
-    const effectiveCategory = getEffectiveCategory();
-
-    if (!effectiveCategory) {
-      setError('Please select or specify an award category.');
-      return;
-    }
-
-    if (!title.trim()) {
-      setError('Please provide a nomination title or theme.');
-      return;
-    }
-
-    if (!description.trim()) {
-      setError('Please describe your pandal concept and artistry.');
-      return;
-    }
-
-    if (existingCategories.includes(effectiveCategory)) {
-      setError(`A nomination for your committee in category "${effectiveCategory}" already exists for this contest.`);
-      return;
-    }
-
-    setSubmitting(true);
+  const validateForm = (): boolean => {
     setError(null);
+    if (!isEdit && (!selectedContest || selectedContest.status !== 'ACTIVE')) {
+      const msg = 'Nominations can only be submitted for ACTIVE contests.';
+      setError(msg);
+      toast.error(msg);
+      return false;
+    }
+
+    const trimmedCategory = category.trim();
+
+    if (!trimmedCategory) {
+      toast.warning('Please select an award category.');
+      return false;
+    }
+
+    if (existingCategories.includes(trimmedCategory)) {
+      toast.warning(`A nomination for your committee in category "${trimmedCategory}" already exists for this contest.`);
+      return false;
+    }
+
+    return true;
+  };
+
+  const executeSave = async (directSubmit: boolean = false) => {
+    setError(null);
+    setSubmitting(true);
+    setSubmitAction(directSubmit ? 'submit' : 'draft');
+
+    const trimmedCategory = category.trim();
 
     try {
       if (isEdit && id) {
         await committeeSammanService.update(Number(id), {
-          category: effectiveCategory,
-          title: title.trim(),
-          description: description.trim(),
-          submitNow,
+          category: trimmedCategory,
+          title: title.trim() || undefined,
+          description: description.trim() || undefined,
+          submitNow: directSubmit,
         });
 
         toast.success(
-          submitNow
+          directSubmit
             ? 'Nomination submitted successfully for administrative review!'
             : 'Draft nomination updated successfully.',
         );
+        setShowSubmitModal(false);
+        navigate(ROUTES.MY_COMMITTEE_NOMINATIONS);
       } else {
         await committeeSammanService.create({
-          category: effectiveCategory,
-          title: title.trim(),
-          description: description.trim(),
-          contestId: activeContest?.id,
-          submitNow,
+          contestId: Number(selectedContestId),
+          category: trimmedCategory,
+          title: title.trim() || undefined,
+          description: description.trim() || undefined,
+          submitNow: directSubmit,
         });
 
         toast.success(
-          submitNow
-            ? 'Nomination submitted successfully for administrative review!'
-            : 'Nomination saved as Draft.',
+          directSubmit
+            ? 'Nomination created and submitted for review successfully.'
+            : 'Nomination saved as Draft successfully.',
         );
+        setShowSubmitModal(false);
+        navigate(ROUTES.MY_COMMITTEE_NOMINATIONS);
       }
-
-      navigate(ROUTES.MY_COMMITTEE_NOMINATIONS);
     } catch (err: unknown) {
-      const msg = errorMessage(err, 'Failed to save nomination.');
-      setError(msg);
-      toast.error(msg);
+      const message = errorMessage(err, 'Failed to save nomination.');
+      setError(message);
+      toast.error(message);
+      setShowSubmitModal(false);
     } finally {
       setSubmitting(false);
+      setSubmitAction(null);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    if (validateForm()) {
+      executeSave(false);
+    }
+  };
+
+  const handleDirectSubmitClick = () => {
+    if (validateForm()) {
+      setShowSubmitModal(true);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      executeSave(false);
     }
   };
 
@@ -181,232 +230,411 @@ export function MyCommitteeNominationFormPage() {
     return <PageLoader label={isEdit ? 'Loading draft nomination...' : 'Preparing nomination form...'} />;
   }
 
-  const effectiveCat = getEffectiveCategory();
-  const isCategoryConflict = existingCategories.includes(effectiveCat);
+  if (isEdit && existingNomination && existingNomination.status !== 'DRAFT') {
+    return (
+      <div className="page samman-page">
+        <div className="samman-form-container">
+          <header className="page__header">
+            <nav className="breadcrumbs" aria-label="Breadcrumb">
+              <ol>
+                <li><Link to={ROUTES.DASHBOARD}>Dashboard</Link></li>
+                <li><Link to={ROUTES.MY_COMMITTEE_NOMINATIONS}>Sharad Samman</Link></li>
+                <li><Link to={ROUTES.MY_COMMITTEE_NOMINATIONS}>My Nominations</Link></li>
+                <li><span>Edit Nomination #{id}</span></li>
+              </ol>
+            </nav>
+            <h1 className="page__title">Nomination Locked</h1>
+          </header>
+          <Card>
+            <div style={{ padding: 'var(--space-5)' }}>
+              <Alert variant="warning" title="Nomination is Locked for Review">
+                Only draft nominations can be modified. This nomination has already progressed to{' '}
+                <strong>&ldquo;{formatNominationStatus(existingNomination.status)}&rdquo;</strong> status and cannot be edited.
+              </Alert>
+              <div style={{ marginTop: 'var(--space-4)', display: 'flex', gap: 'var(--space-3)' }}>
+                <Button variant="primary" onClick={() => navigate(ROUTES.MY_COMMITTEE_NOMINATION_DETAIL(id!))}>
+                  View Nomination Details
+                </Button>
+                <Button variant="secondary" onClick={() => navigate(ROUTES.MY_COMMITTEE_NOMINATIONS)}>
+                  &larr; Back to My Nominations
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isEdit && activeContests.length === 0) {
+    return (
+      <div className="page samman-page">
+        <div className="samman-form-container">
+          <header className="page__header">
+            <nav className="breadcrumbs" aria-label="Breadcrumb">
+              <ol>
+                <li><Link to={ROUTES.DASHBOARD}>Dashboard</Link></li>
+                <li><Link to={ROUTES.MY_COMMITTEE_NOMINATIONS}>Sharad Samman</Link></li>
+                <li><Link to={ROUTES.MY_COMMITTEE_NOMINATIONS}>My Nominations</Link></li>
+                <li><span>New Nomination</span></li>
+              </ol>
+            </nav>
+            <h1 className="page__title">Submissions Unavailable</h1>
+          </header>
+          <Card>
+            <div style={{ padding: 'var(--space-5)' }}>
+              <Alert variant="warning" title="No Active Contest for Submissions">
+                New nominations can only be created and submitted when a contest is currently <strong>ACTIVE</strong>.
+                There is currently no active contest session open for submissions.
+              </Alert>
+              <div style={{ marginTop: 'var(--space-4)' }}>
+                <Button variant="secondary" onClick={() => navigate(ROUTES.MY_COMMITTEE_NOMINATIONS)}>
+                  &larr; Back to My Nominations
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const trimmedCat = category.trim();
+  const isCategoryConflict = Boolean(trimmedCat && existingCategories.includes(trimmedCat));
 
   return (
     <div className="page samman-page">
-      <PageHeader
-        title={isEdit ? 'Edit Draft Nomination' : 'Submit Sharad Samman Nomination'}
-        description="Submit your Puja Committee's official artistic pandal concept and craftsmanship for state-level award recognition."
-        breadcrumbs={[
-          { label: 'Dashboard', to: ROUTES.DASHBOARD },
-          { label: 'Sharad Samman', to: ROUTES.MY_COMMITTEE_NOMINATIONS },
-          { label: isEdit ? 'Edit Draft' : 'New Nomination' },
-        ]}
-      />
+      <div className="samman-form-container">
+        <header className="page__header">
+          <nav className="breadcrumbs" aria-label="Breadcrumb">
+            <ol>
+              <li><Link to={ROUTES.DASHBOARD}>Dashboard</Link></li>
+              <li><Link to={ROUTES.MY_COMMITTEE_NOMINATIONS}>Sharad Samman</Link></li>
+              <li><Link to={ROUTES.MY_COMMITTEE_NOMINATIONS}>My Nominations</Link></li>
+              <li><span>{isEdit ? `Edit #${id}` : 'New Nomination'}</span></li>
+            </ol>
+          </nav>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+            <div>
+              <h1 className="page__title">{isEdit ? `Edit Nomination #${id}` : 'Submit Sharad Samman Nomination'}</h1>
+              <p className="page__subtitle">
+                {isEdit
+                  ? `Update concept and category details for ${committeeDisplayName}.`
+                  : "Submit your Puja Committee's official artistic pandal concept and craftsmanship for state-level award recognition."}
+              </p>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(isEdit && id ? ROUTES.MY_COMMITTEE_NOMINATION_DETAIL(id) : ROUTES.MY_COMMITTEE_NOMINATIONS)}
+            >
+              &larr; Back
+            </Button>
+          </div>
+        </header>
 
-      {/* Active Contest Banner */}
-      <div className="samman-rule-callout" style={{ marginBottom: 'var(--space-5)' }}>
-        <i className="fa-solid fa-trophy" aria-hidden="true" />
-        <div>
+        {error && <Alert variant="error">{error}</Alert>}
+
+        {/* Active Contest & Multi-Category Callout */}
+        <div className="samman-rule-callout">
+          <i className="fas fa-trophy" style={{ marginTop: '2px' }} />
           <div>
-            <strong>Active Contest:</strong>{' '}
-            {activeContest ? (
-              <>
-                {activeContest.name} (Contest Year: {activeContest.year}
-                {formatContestDate(activeContest.endDate) && (
-                  <> · Last Date: {formatContestDate(activeContest.endDate)}</>
-                )}
-                )
-              </>
-            ) : (
-              'Sharad Samman 2026'
-            )}
-          </div>
-          <div style={{ marginTop: 'var(--space-1)', fontSize: '0.875rem' }}>
-            Multi-Category Rule: You can nominate in multiple categories. However, each committee may submit <strong>only one nomination per category</strong>.
-          </div>
-        </div>
-      </div>
-
-      {/* Categories Already Nominated Callout */}
-      {existingCategories.length > 0 && (
-        <Card className="samman-filter-card" style={{ marginBottom: 'var(--space-5)', padding: 'var(--space-4)' }}>
-          <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-emphasis)', marginBottom: 'var(--space-2)' }}>
-            <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-success)', marginRight: 'var(--space-2)' }} aria-hidden="true" />
-            Categories already nominated by your committee for this contest:
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-            {existingCategories.map((cat) => (
-              <span key={cat} className="samman-category-badge" style={{ opacity: 0.85 }}>
-                {cat} (Nominated)
-              </span>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {error && (
-        <Alert variant="error" style={{ marginBottom: 'var(--space-5)' }}>
-          {error}
-        </Alert>
-      )}
-
-      {isCategoryConflict && (
-        <Alert variant="warning" style={{ marginBottom: 'var(--space-5)' }}>
-          Your committee has already submitted a nomination in category &quot;{effectiveCat}&quot;. Please select a different category to submit another entry.
-        </Alert>
-      )}
-
-      <Card>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSave(false);
-          }}
-          className="form-grid"
-          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}
-        >
-          {/* Section: Category */}
-          <div className="samman-form-section">
-            <h3 style={{ fontSize: '1.125rem', marginBottom: 'var(--space-2)' }}>Award Category</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: 'var(--space-4)' }}>
-              Choose the award category best suited for your pandal&apos;s artistic theme or craftsmanship.
-            </p>
-
-            <div className="form-grid form-grid--2">
-              <div className="field">
-                <label className="field__label" htmlFor="award-category-select">
-                  Award Category <span className="field__required">*</span>
-                </label>
-                <select
-                  id="award-category-select"
-                  className="input select"
-                  value={category}
-                  onChange={handleCategorySelectChange}
-                  disabled={submitting}
-                  required
-                >
-                  <option value="">-- Select an Award Category --</option>
-                  {SUGGESTED_CATEGORIES.map((cat) => {
-                    const isTaken = existingCategories.includes(cat);
-                    return (
-                      <option key={cat} value={cat} disabled={isTaken}>
-                        {cat} {isTaken ? '(Already Nominated)' : ''}
-                      </option>
-                    );
-                  })}
-                  <option value="CUSTOM">+ Specify Custom Category...</option>
-                </select>
-                <div className="field__hint">
-                  Committees may submit once per category. Taken categories are disabled.
-                </div>
-              </div>
-
-              {isCustomCategory && (
-                <div className="field">
-                  <label className="field__label" htmlFor="custom-category-input">
-                    Custom Category Name <span className="field__required">*</span>
-                  </label>
-                  <input
-                    id="custom-category-input"
-                    type="text"
-                    className="input"
-                    placeholder="e.g. Best Dhunuchi Dance Performance"
-                    value={customCategory}
-                    onChange={(e) => setCustomCategory(e.target.value)}
-                    disabled={submitting}
-                    maxLength={100}
-                    required
-                  />
-                  <div className="field__hint">Provide a descriptive award category name.</div>
-                </div>
+            <div>
+              <strong>Contest Session:</strong>{' '}
+              {selectedContest ? (
+                <>
+                  {selectedContest.name} ({selectedContest.year})
+                  {formatContestDate(selectedContest.endDate) && (
+                    <> &bull; Last Date for Entries: {formatContestDate(selectedContest.endDate)}</>
+                  )}
+                </>
+              ) : (
+                'Select an active contest session'
               )}
             </div>
-          </div>
-
-          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border-subtle)' }} />
-
-          {/* Section: Theme & Concept */}
-          <div className="samman-form-section">
-            <h3 style={{ fontSize: '1.125rem', marginBottom: 'var(--space-2)' }}>Pandal Concept & Theme</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: 'var(--space-4)' }}>
-              Explain the creative narrative, artisan craftsmanship, and highlights of this nomination.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-              <div className="field">
-                <label className="field__label" htmlFor="nomination-title">
-                  Nomination Title / Pandal Theme <span className="field__required">*</span>
-                </label>
-                <input
-                  id="nomination-title"
-                  type="text"
-                  className="input"
-                  placeholder="e.g. Terracotta Heritage of Bishnupur: Revival of Ancient Clay Temple Architecture"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  disabled={submitting}
-                  maxLength={200}
-                  required
-                />
-                <div className="field__hint">
-                  A compelling title or theme name summarizing your pandal concept ({title.length}/200 chars).
-                </div>
-              </div>
-
-              <div className="field">
-                <label className="field__label" htmlFor="nomination-description">
-                  Concept & Artistry Description <span className="field__required">*</span>
-                </label>
-                <textarea
-                  id="nomination-description"
-                  className="input textarea"
-                  rows={6}
-                  placeholder="Provide detailed concept notes: artistic vision, lead artisan/architect names, eco-friendly materials used, historical inspiration, lighting innovation, and cultural significance..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  disabled={submitting}
-                  required
-                />
-                <div className="field__hint">
-                  This narrative will be reviewed by the Sharad Samman jury panel during evaluation.
-                </div>
-              </div>
+            <div style={{ marginTop: 'var(--space-1)', fontSize: '0.875rem' }}>
+              <strong>Multi-Category Nomination Policy:</strong> A Puja Committee may submit nominations under multiple categories in the same contest, but only one nomination per category per contest.
             </div>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div
-            className="form-actions"
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginTop: 'var(--space-4)',
-              paddingTop: 'var(--space-4)',
-              borderTop: '1px solid var(--color-border-subtle)',
+        {/* Categories Already Nominated Callout */}
+        {existingCategories.length > 0 && (
+          <Card className="samman-filter-card" style={{ marginBottom: 'var(--space-5)', padding: 'var(--space-4)' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-emphasis)', marginBottom: 'var(--space-2)' }}>
+              <i className="fas fa-circle-check" style={{ color: 'var(--color-success)', marginRight: 'var(--space-2)' }} aria-hidden="true" />
+              Categories already nominated by your committee for this contest:
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+              {existingCategories.map((cat) => (
+                <span key={cat} className="samman-category-badge" style={{ opacity: 0.85 }}>
+                  {cat} (Nominated)
+                </span>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        <div className="samman-form-card">
+          <form onSubmit={handleFormSubmit} className="form">
+            <Card>
+              {/* Section 1: Contest & Puja Committee */}
+              <div className="samman-form-section">
+                <h2 className="samman-form-section__title">Contest & Puja Committee</h2>
+                <p className="samman-form-section__desc">
+                  Contest session and committee associations are fixed for your committee portal session.
+                </p>
+
+                <div className="form-grid form-grid--2">
+                  <div className="field">
+                    <label className="field__label" htmlFor="form-contest-id">
+                      Contest Session {isEdit ? '' : <span className="field__required">*</span>}
+                    </label>
+                    {isEdit ? (
+                      <div className="field__control" style={{ background: 'var(--colour-canvas)', fontWeight: 600 }}>
+                        {selectedContest ? (
+                          <>
+                            {selectedContest.name} ({selectedContest.year})
+                            {formatContestDate(selectedContest.endDate) && (
+                              <span style={{ fontWeight: 400, color: 'var(--colour-ink-soft)', marginLeft: 'var(--space-2)' }}>
+                                &bull; Last Date: {formatContestDate(selectedContest.endDate)}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          'Assigned Contest'
+                        )}
+                      </div>
+                    ) : (
+                      <select
+                        id="form-contest-id"
+                        name="contestId"
+                        className="field__control form-control"
+                        value={selectedContestId}
+                        onChange={(e) => setSelectedContestId(e.target.value ? Number(e.target.value) : '')}
+                        required
+                      >
+                        {activeContests.length === 0 ? (
+                          <option value="">No active contests available</option>
+                        ) : (
+                          activeContests.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} ({c.year})
+                              {formatContestDate(c.endDate) ? ` — Last Date: ${formatContestDate(c.endDate)}` : ''}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    )}
+                    <p className="field__hint">
+                      {isEdit
+                        ? 'Contest session cannot be changed once the nomination draft is created.'
+                        : 'Select the active festival award contest session to submit this nomination for.'}
+                    </p>
+                  </div>
+                  <div className="field">
+                    <span className="field__label">Puja Committee</span>
+                    <div className="field__control" style={{ background: 'var(--colour-canvas)', fontWeight: 600 }}>
+                      {committeeDisplayName}
+                    </div>
+                    <p className="field__hint">
+                      Automatically assigned to your authenticated committee profile.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Award Category & Theme */}
+              <div className="samman-form-section">
+                <h2 className="samman-form-section__title">Award Category & Concept Theme</h2>
+                <p className="samman-form-section__desc">
+                  Define the specific award category and the thematic narrative of this nomination.
+                </p>
+
+                <div className="field">
+                  <label className="field__label" htmlFor="form-category">
+                    Award Category <span className="field__required">*</span>
+                  </label>
+                  <select
+                    id="form-category"
+                    className="field__control"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    required
+                  >
+                    <option value="">Select award category...</option>
+                    {availableCategories.map((cat) => {
+                      const isTaken = existingCategories.includes(cat);
+                      return (
+                        <option key={cat} value={cat} disabled={isTaken}>
+                          {cat} {isTaken ? '(Already Nominated)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="field__hint">
+                    The committee may have only one nomination per category in this contest. Choose an award category.
+                  </p>
+                </div>
+
+                <div className="field">
+                  <label className="field__label" htmlFor="form-title">
+                    Nomination Title / Theme Name <span className="field__optional">(Optional)</span>
+                  </label>
+                  <input
+                    id="form-title"
+                    type="text"
+                    className="field__control"
+                    placeholder="e.g. Shobhabazar Rajbari Heritage Clay Modeling & Terracotta"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    maxLength={200}
+                  />
+                  <p className="field__hint">
+                    A catchy or traditional title highlighting the theme, pandal concept, or idol artistry.
+                  </p>
+                </div>
+
+                <div className="field">
+                  <label className="field__label" htmlFor="form-desc">
+                    Concept Narrative & Pandal Description <span className="field__optional">(Optional)</span>
+                  </label>
+                  <textarea
+                    id="form-desc"
+                    rows={6}
+                    className="field__control"
+                    placeholder="Describe the historical significance, cultural theme, safety and crowd management features, lighting architecture, and artisans involved in this presentation..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                  <p className="field__hint">
+                    Provide detailed notes for evaluation during the administrative and jury review phases.
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 3: Actions */}
+              <div style={{ padding: 'var(--space-4) var(--space-5)', background: 'var(--colour-canvas)', borderTop: '1px solid var(--colour-border)' }}>
+                <div className="form-actions">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => navigate(isEdit && id ? ROUTES.MY_COMMITTEE_NOMINATION_DETAIL(id) : ROUTES.MY_COMMITTEE_NOMINATIONS)}
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleSaveDraft}
+                    disabled={submitting || isCategoryConflict}
+                  >
+                    <i
+                      className={`fas ${submitting && submitAction === 'draft' ? 'fa-spinner fa-spin' : 'fa-save'}`}
+                      aria-hidden="true"
+                      style={{ marginRight: '6px' }}
+                    />
+                    {submitting && submitAction === 'draft' ? 'Saving Draft...' : 'Save as Draft'}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={handleDirectSubmitClick}
+                    disabled={submitting || isCategoryConflict}
+                  >
+                    <i
+                      className={`fas ${submitting && submitAction === 'submit' ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}
+                      aria-hidden="true"
+                      style={{ marginRight: '6px' }}
+                    />
+                    {submitting && submitAction === 'submit' ? 'Submitting...' : 'Submit Nomination'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </form>
+        </div>
+
+        {/* Direct Submit Confirmation Modal */}
+        {showSubmitModal && (
+          <Modal
+            open={showSubmitModal}
+            title="Submit Nomination?"
+            onClose={() => {
+              if (!submitting) {
+                setShowSubmitModal(false);
+              }
             }}
+            footer={
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowSubmitModal(false)}
+                  disabled={submitting}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => executeSave(true)}
+                  disabled={submitting}
+                  loading={submitting && submitAction === 'submit'}
+                  leadingIcon={
+                    !(submitting && submitAction === 'submit') ? (
+                      <i className="fas fa-paper-plane" aria-hidden="true" style={{ marginRight: '6px' }} />
+                    ) : undefined
+                  }
+                >
+                  {submitting && submitAction === 'submit' ? 'Submitting...' : 'Submit Nomination'}
+                </Button>
+              </>
+            }
           >
-            <Link to={ROUTES.MY_COMMITTEE_NOMINATIONS} className="btn btn--secondary">
-              Cancel
-            </Link>
+            <div className="samman-confirm-modal">
+              <div className="samman-confirm-modal__icon-wrap" aria-hidden="true">
+                <i className="fas fa-circle-info" />
+              </div>
+              <div className="samman-confirm-modal__content">
+                <p className="samman-confirm-modal__message">
+                  Are you sure you want to directly submit this nomination? Once submitted, it will be placed in the{' '}
+                  <strong>review queue</strong> for administrative evaluation.
+                </p>
 
-            <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => handleSave(false)}
-                loading={submitting}
-                disabled={isCategoryConflict}
-              >
-                <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Save as Draft
-              </Button>
+                {(category.trim() || committeeDisplayName) && (
+                  <div className="samman-confirm-modal__card">
+                    {category.trim() && (
+                      <div className="samman-confirm-modal__row">
+                        <span className="samman-confirm-modal__label">Award Category:</span>
+                        <span className="samman-confirm-modal__value samman-confirm-modal__value--highlight">
+                          {category.trim()}
+                        </span>
+                      </div>
+                    )}
+                    {committeeDisplayName && (
+                      <div className="samman-confirm-modal__row">
+                        <span className="samman-confirm-modal__label">Puja Committee:</span>
+                        <span className="samman-confirm-modal__value">{committeeDisplayName}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => handleSave(true)}
-                loading={submitting}
-                disabled={isCategoryConflict}
-              >
-                <i className="fa-solid fa-paper-plane" aria-hidden="true" /> Submit Nomination
-              </Button>
+                <p className="samman-confirm-modal__note">
+                  You can monitor and review the progress of this entry from your nominations list after submission.
+                </p>
+              </div>
             </div>
-          </div>
-        </form>
-      </Card>
+          </Modal>
+        )}
+      </div>
     </div>
   );
 }
+
+export default MyCommitteeNominationFormPage;

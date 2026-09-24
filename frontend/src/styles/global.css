@@ -2273,6 +2273,39 @@ a.btn:hover {
   padding: 4px 0 8px;
 }
 
+/* --- Subsection inside a section group ------------------------------------ */
+
+.sidebar__subsection-wrapper {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+
+.sidebar__subsection-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px 6px;
+  user-select: none;
+}
+
+.sidebar__subsection-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgb(255 255 255 / 45%);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar__link--sub {
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.sidebar__link--sub .sidebar__icon {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
 /* --- Item ---------------------------------------------------------------- */
 
 .sidebar__link {

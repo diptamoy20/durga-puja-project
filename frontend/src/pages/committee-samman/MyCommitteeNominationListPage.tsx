@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Pagination } from '@/components/ui/Pagination';
 import { PageLoader } from '@/components/ui/Spinner';
@@ -38,33 +39,38 @@ export function MyCommitteeNominationListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const statusParam = (searchParams.get('status') as NominationStatus) || '';
+  const searchParam = searchParams.get('search') || '';
+  const pageParam = Number(searchParams.get('page')) || 1;
 
   const [nominations, setNominations] = useState<SharadSammanNomination[]>([]);
   const [activeContest, setActiveContest] = useState<Contest | null>(null);
   const [pagination, setPagination] = useState<PaginationMeta | undefined>();
   const [loading, setLoading] = useState(true);
   const [submittingId, setSubmittingId] = useState<number | null>(null);
+  const [draftToSubmit, setDraftToSubmit] = useState<SharadSammanNomination | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState<NominationListQuery>({
-    page: 1,
+    page: pageParam,
     perPage: 10,
-    search: '',
+    search: searchParam,
     status: statusParam,
     sortDir: 'desc',
   });
 
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState(searchParam);
 
   const fetchNominations = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await committeeSammanService.list(query);
-      setNominations(data.items);
-      setActiveContest(data.activeContest || null);
-      setPagination(data.pagination);
+      const safeItems = Array.isArray(data?.items) ? data.items : [];
+      setNominations(safeItems);
+      setActiveContest(data?.activeContest ?? null);
+      setPagination(data?.pagination ?? undefined);
     } catch (err: unknown) {
+      setNominations([]);
       setError(err instanceof Error ? err.message : 'Failed to load your committee nominations.');
     } finally {
       setLoading(false);
@@ -83,28 +89,41 @@ export function MyCommitteeNominationListPage() {
     } else {
       nextParams.delete('status');
     }
+    nextParams.set('page', '1');
     setSearchParams(nextParams);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setQuery((prev) => ({ ...prev, search: searchInput.trim(), page: 1 }));
+    const nextParams = new URLSearchParams(searchParams);
+    if (searchInput.trim()) {
+      nextParams.set('search', searchInput.trim());
+    } else {
+      nextParams.delete('search');
+    }
+    nextParams.set('page', '1');
+    setSearchParams(nextParams);
   };
 
   const handleSearchReset = () => {
     setSearchInput('');
-    setQuery((prev) => ({ ...prev, search: '', page: 1 }));
+    setQuery((prev) => ({ ...prev, search: '', status: '', page: 1 }));
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('search');
+    nextParams.delete('status');
+    nextParams.set('page', '1');
+    setSearchParams(nextParams);
   };
 
-  const handleSubmitDraft = async (nomination: SharadSammanNomination) => {
-    if (!window.confirm(`Are you sure you want to submit your nomination for "${nomination.category}"? Once submitted, it will be queued for administrative review.`)) {
-      return;
-    }
+  const handleConfirmSubmit = async () => {
+    if (!draftToSubmit) return;
 
-    setSubmittingId(nomination.id);
+    setSubmittingId(draftToSubmit.id);
     try {
-      await committeeSammanService.submit(nomination.id);
-      toast.success(`Nomination for "${nomination.category}" submitted successfully!`);
+      await committeeSammanService.submit(draftToSubmit.id);
+      toast.success(`Nomination for "${draftToSubmit.category}" submitted successfully for administrative review!`);
+      setDraftToSubmit(null);
       await fetchNominations();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to submit nomination.');
@@ -112,6 +131,9 @@ export function MyCommitteeNominationListPage() {
       setSubmittingId(null);
     }
   };
+
+  const hasActiveFilters = Boolean(query.status || query.search);
+  const isContestActive = activeContest?.status === 'ACTIVE';
 
   return (
     <div className="page samman-page">
@@ -124,30 +146,52 @@ export function MyCommitteeNominationListPage() {
           { label: 'My Nominations' },
         ]}
         actions={
-          <Link to={ROUTES.MY_COMMITTEE_NOMINATION_NEW} className="btn btn--primary">
-            <i className="fa-solid fa-circle-plus" aria-hidden="true" /> Submit New Nomination
-          </Link>
+          isContestActive ? (
+            <Link
+              to={ROUTES.MY_COMMITTEE_NOMINATION_NEW}
+              className="btn btn--primary btn--sm samman-header-action-btn"
+            >
+              <i className="fas fa-plus" aria-hidden="true" />
+              <span>Submit New Nomination</span>
+            </Link>
+          ) : (
+            <span className="badge badge--neutral" style={{ padding: '6px 12px', fontSize: '13px' }}>
+              Submissions Closed
+            </span>
+          )
         }
       />
 
-      {/* Multi-Category Rule Banner */}
-      <div className="samman-rule-callout" style={{ marginBottom: 'var(--space-5)' }}>
-        <i className="fa-solid fa-circle-info" aria-hidden="true" />
-        <div>
-          <strong>Award Nomination Guidelines:</strong> Your Puja Committee may submit nominations across multiple categories{' '}
-          {activeContest ? (
-            <>
-              in &quot;{activeContest.name}&quot; (Contest Year: {activeContest.year}
-              {formatContestDate(activeContest.endDate) && (
-                <> · Last Date: {formatContestDate(activeContest.endDate)}</>
+      {/* Guideline / Contest Info Banner */}
+      <div className="samman-contest-banner">
+        <div className="samman-contest-banner__info">
+          <div className="samman-contest-banner__icon" aria-hidden="true">
+            <i className="fas fa-trophy" />
+          </div>
+          <div>
+            <h2 className="samman-contest-banner__title">
+              {activeContest ? `${activeContest.name} (${activeContest.year})` : 'Active Sharad Samman Contest'}
+            </h2>
+            <div className="samman-contest-banner__meta">
+              <span>
+                <i className="far fa-calendar-alt" aria-hidden="true" style={{ marginRight: '4px' }} />
+                Contest Year: <strong>{activeContest?.year ? String(activeContest.year) : '—'}</strong>
+              </span>
+              {activeContest?.endDate && formatContestDate(activeContest.endDate) && (
+                <>
+                  <span>&bull;</span>
+                  <span style={{ color: 'var(--colour-brand)', fontWeight: 600 }}>
+                    <i className="far fa-clock" aria-hidden="true" style={{ marginRight: '4px' }} />
+                    Submission Deadline: {formatContestDate(activeContest.endDate)}
+                  </span>
+                </>
               )}
-              )
-            </>
-          ) : (
-            'in the active contest'
-          )}{' '}
-          (e.g. Traditional Pandal, Idol Artistry, Illumination). However, each award category allows{' '}
-          <strong>exactly one nomination per committee</strong>. Drafts can be edited anytime prior to submission.
+            </div>
+          </div>
+        </div>
+
+        <div style={{ maxWidth: '440px', fontSize: '12.5px', color: 'var(--colour-ink-soft)', lineHeight: 1.45 }}>
+          <strong>Multi-Category Nomination Policy:</strong> Your Puja Committee may submit entries across multiple distinct award categories, with a limit of <strong>one nomination per category</strong>. Drafts can be edited anytime prior to submission.
         </div>
       </div>
 
@@ -162,208 +206,307 @@ export function MyCommitteeNominationListPage() {
         </Alert>
       )}
 
-      {/* Search & Filter Toolbar */}
-      <Card className="samman-filter-card" style={{ marginBottom: 'var(--space-5)' }}>
+      {/* Search & Status Filters Card */}
+      <div className="samman-filter-card">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          {/* Status Tabs */}
-          <div className="samman-status-tabs" role="tablist" aria-label="Filter nominations by status">
-            {STATUS_FILTERS.map((filter) => {
-              const isActive = (query.status ?? '') === filter.value;
-              return (
-                <button
-                  key={filter.value || 'all'}
-                  type="button"
-                  className={`samman-status-tab ${isActive ? 'samman-status-tab--active' : ''}`}
-                  onClick={() => handleStatusFilterChange(filter.value)}
-                  role="tab"
-                  aria-selected={isActive}
-                >
-                  {filter.label}
-                </button>
-              );
-            })}
+          {/* Segmented Status Tabs */}
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--colour-ink-soft)', marginBottom: 'var(--space-2)' }}>
+              Filter by Lifecycle Status
+            </div>
+            <div className="samman-status-tabs" role="tablist" aria-label="Filter nominations by status">
+              {STATUS_FILTERS.map((filter) => {
+                const isActive = (query.status ?? '') === filter.value;
+                return (
+                  <button
+                    key={filter.value || 'all'}
+                    type="button"
+                    className={`samman-status-tab ${isActive ? 'samman-status-tab--active' : ''}`}
+                    onClick={() => handleStatusFilterChange(filter.value)}
+                    role="tab"
+                    aria-selected={isActive}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
-            <div style={{ flex: 1, position: 'relative' }}>
+          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '260px' }} className="samman-search-wrapper">
+              <i className="fas fa-search samman-search-icon" aria-hidden="true" />
               <input
-                type="text"
-                className="input"
-                placeholder="Search by theme title or award category..."
+                type="search"
+                className="field__control samman-search-input"
+                placeholder="Search by nomination title, theme, or award category..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                style={{ width: '100%', paddingLeft: 'var(--space-8)' }}
-              />
-              <i
-                className="fa-solid fa-magnifying-glass"
-                style={{
-                  position: 'absolute',
-                  left: 'var(--space-3)',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--color-text-muted)',
-                }}
-                aria-hidden="true"
               />
             </div>
-            <Button type="submit" variant="primary">
-              Search
-            </Button>
-            {query.search && (
-              <Button type="button" variant="secondary" onClick={handleSearchReset}>
-                Reset
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <Button type="submit" variant="primary" loading={loading && Boolean(searchInput)}>
+                <i className="fas fa-search" aria-hidden="true" style={{ marginRight: '6px' }} />
+                Search
               </Button>
-            )}
+              {hasActiveFilters && (
+                <Button type="button" variant="secondary" onClick={handleSearchReset}>
+                  Reset
+                </Button>
+              )}
+            </div>
           </form>
         </div>
-      </Card>
+      </div>
 
       {/* Nominations List View */}
-      {loading ? (
-        <PageLoader label="Loading your nominations..." />
-      ) : nominations.length === 0 ? (
-        <Card>
-          <div className="samman-empty-state" style={{ padding: 'var(--space-10) var(--space-4)', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', color: 'var(--color-primary-base)', marginBottom: 'var(--space-3)' }}>
-              <i className="fa-solid fa-trophy" aria-hidden="true" />
+      <Card>
+        {loading ? (
+          <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
+            <PageLoader label="Loading your nominations..." />
+          </div>
+        ) : nominations.length === 0 ? (
+          hasActiveFilters ? (
+            /* Empty Filter / Search Result State */
+            <div style={{ textAlign: 'center', padding: 'var(--space-8) var(--space-4)' }}>
+              <i
+                className="fas fa-search"
+                style={{ fontSize: '2.5rem', color: 'var(--colour-ink-faint)', marginBottom: 'var(--space-3)' }}
+                aria-hidden="true"
+              />
+              <h3 style={{ margin: '0 0 var(--space-1)', fontSize: '1.1rem', fontWeight: 600 }}>
+                No Matching Nominations
+              </h3>
+              <p style={{ margin: '0 auto var(--space-4)', maxWidth: '440px', fontSize: '13px', color: 'var(--colour-ink-soft)', lineHeight: 1.5 }}>
+                No nominations match your active status or search query. Try selecting a different status tab or clearing the search terms.
+              </p>
+              <Button variant="secondary" onClick={handleSearchReset}>
+                Clear Filters & Search
+              </Button>
             </div>
-            <h3 style={{ marginBottom: 'var(--space-2)' }}>No Nominations Found</h3>
-            <p style={{ color: 'var(--color-text-muted)', maxWidth: '480px', margin: '0 auto var(--space-4)' }}>
-              {query.status || query.search
-                ? 'No nominations match your active filters. Try clearing the search or status filter.'
-                : 'Your Puja Committee has not submitted any nominations yet. Showcase your artistic pandal theme, lighting, or idol artistry in the active Sharad Samman contest.'}
-            </p>
-            {query.status || query.search ? (
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setSearchInput('');
-                  setQuery({ page: 1, perPage: 10, search: '', status: '', sortDir: 'desc' });
-                  setSearchParams({});
+          ) : (
+            /* First-time Zero Nominations State */
+            <div style={{ textAlign: 'center', padding: 'var(--space-8) var(--space-4)' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'var(--colour-brand-tint)',
+                  color: 'var(--colour-brand)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  marginBottom: 'var(--space-3)',
                 }}
               >
-                Clear Filters
-              </Button>
-            ) : (
-              <Link to={ROUTES.MY_COMMITTEE_NOMINATION_NEW} className="btn btn--primary">
-                <i className="fa-solid fa-circle-plus" aria-hidden="true" /> Submit Your First Nomination
-              </Link>
-            )}
-          </div>
-        </Card>
-      ) : (
-        <>
-          <div className="table-responsive" style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}>
-            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left', padding: 'var(--space-3) var(--space-4)' }}>Category</th>
-                  <th style={{ textAlign: 'left', padding: 'var(--space-3) var(--space-4)' }}>Theme / Title</th>
-                  <th style={{ textAlign: 'left', padding: 'var(--space-3) var(--space-4)' }}>Contest</th>
-                  <th style={{ textAlign: 'left', padding: 'var(--space-3) var(--space-4)' }}>Status</th>
-                  <th style={{ textAlign: 'left', padding: 'var(--space-3) var(--space-4)' }}>Date</th>
-                  <th style={{ textAlign: 'right', padding: 'var(--space-3) var(--space-4)' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {nominations.map((nom) => {
-                  const isDraft = nom.status === 'DRAFT';
-                  const dateToDisplay = nom.submittedAt || nom.createdAt;
-
-                  return (
-                    <tr key={nom.id} style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
-                      <td style={{ padding: 'var(--space-4)' }}>
-                        <span className="samman-category-badge">{nom.category}</span>
-                      </td>
-                      <td style={{ padding: 'var(--space-4)' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--color-text-emphasis)' }}>
-                          {nom.title || 'Untitled Theme'}
-                        </div>
-                        {nom.description && (
-                          <div
-                            style={{
-                              fontSize: '0.8125rem',
-                              color: 'var(--color-text-muted)',
-                              marginTop: '2px',
-                              maxWidth: '320px',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {nom.description}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ padding: 'var(--space-4)', fontSize: '0.875rem' }}>
-                        <div>{nom.contest?.name || 'Active Contest'}</div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                          Year {nom.contest?.year}
-                        </span>
-                      </td>
-                      <td style={{ padding: 'var(--space-4)' }}>
-                        <StatusBadge
-                          status={nom.status}
-                          label={formatNominationStatus(nom.status)}
-                          tone={nominationStatusTone(nom.status)}
-                        />
-                      </td>
-                      <td style={{ padding: 'var(--space-4)', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                        <div>{dateFormatter.format(new Date(dateToDisplay))}</div>
-                        <span style={{ fontSize: '0.75rem' }}>
-                          {isDraft ? 'Draft Created' : 'Submitted'}
-                        </span>
-                      </td>
-                      <td style={{ padding: 'var(--space-4)', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: 'var(--space-2)', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <Link
-                            to={ROUTES.MY_COMMITTEE_NOMINATION_DETAIL(nom.id)}
-                            className="btn btn--secondary btn--sm"
-                            title="View details"
-                          >
-                            View
-                          </Link>
-
-                          {isDraft && (
-                            <>
-                              <Link
-                                to={ROUTES.MY_COMMITTEE_NOMINATION_EDIT(nom.id)}
-                                className="btn btn--secondary btn--sm"
-                                title="Edit draft"
-                              >
-                                <i className="fa-solid fa-pen-to-square" aria-hidden="true" /> Edit
-                              </Link>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleSubmitDraft(nom)}
-                                loading={submittingId === nom.id}
-                                title="Submit nomination to reviewers"
-                              >
-                                <i className="fa-solid fa-paper-plane" aria-hidden="true" /> Submit
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {pagination && pagination.lastPage > 1 && (
-            <div style={{ marginTop: 'var(--space-5)' }}>
-              <Pagination
-                pagination={pagination}
-                onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))}
-              />
+                <i className="fas fa-trophy" aria-hidden="true" />
+              </div>
+              <h3 style={{ margin: '0 0 var(--space-1)', fontSize: '1.2rem', fontWeight: 700 }}>
+                No Nominations Created Yet
+              </h3>
+              <p style={{ margin: '0 auto var(--space-5)', maxWidth: '480px', fontSize: '13.5px', color: 'var(--colour-ink-soft)', lineHeight: 1.5 }}>
+                Your Puja Committee has not submitted any award nominations for {activeContest?.name || 'the active contest'} yet. Showcase your artistic pandal concept, theme, lighting, or idol craftsmanship to gain state-level recognition.
+              </p>
+              {isContestActive ? (
+                <Link to={ROUTES.MY_COMMITTEE_NOMINATION_NEW} className="btn btn--primary">
+                  <i className="fas fa-plus" aria-hidden="true" style={{ marginRight: '6px' }} />
+                  Submit Your First Nomination
+                </Link>
+              ) : (
+                <span className="badge badge--neutral" style={{ padding: '6px 16px', fontSize: '14px' }}>
+                  Contest is {activeContest?.status || 'Inactive'} &bull; Submissions Closed
+                </span>
+              )}
             </div>
-          )}
-        </>
+          )
+        ) : (
+          <>
+            <div className="table-wrapper">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th style={{ minWidth: '180px' }}>Category</th>
+                    <th style={{ minWidth: '240px' }}>Theme / Title</th>
+                    <th style={{ minWidth: '140px' }}>Contest</th>
+                    <th style={{ minWidth: '120px' }}>Status</th>
+                    <th style={{ minWidth: '130px' }}>Last Updated</th>
+                    <th style={{ minWidth: '160px', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {nominations.map((nom) => {
+                    const isDraft = nom.status === 'DRAFT';
+                    const dateToDisplay = nom.submittedAt || nom.updatedAt || nom.createdAt;
+
+                    return (
+                      <tr key={nom.id}>
+                        <td>
+                          <span className="samman-category-badge">
+                            <i className="fas fa-tag" style={{ fontSize: '10px' }} aria-hidden="true" />
+                            {nom.category}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--colour-ink)', fontSize: '14px' }}>
+                            {nom.title || 'Untitled Theme'}
+                          </div>
+                          {nom.description && (
+                            <div
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--colour-ink-soft)',
+                                marginTop: '3px',
+                                maxWidth: '380px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                              title={nom.description}
+                            >
+                              {nom.description}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ fontSize: '13px' }}>
+                          <div style={{ fontWeight: 500 }}>{nom.contest?.name || 'Active Contest'}</div>
+                          <span style={{ fontSize: '11.5px', color: 'var(--colour-ink-soft)' }}>
+                            Year {nom.contest?.year}
+                          </span>
+                        </td>
+                        <td>
+                          <StatusBadge
+                            status={nom.status}
+                            label={formatNominationStatus(nom.status)}
+                            tone={nominationStatusTone(nom.status)}
+                          />
+                        </td>
+                        <td style={{ fontSize: '13px', color: 'var(--colour-ink-soft)' }}>
+                          <div>{dateFormatter.format(new Date(dateToDisplay))}</div>
+                          <span style={{ fontSize: '11px', textTransform: 'capitalize' }}>
+                            {isDraft ? 'Draft Saved' : 'Submitted'}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: 'var(--space-2)', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <Link
+                              to={ROUTES.MY_COMMITTEE_NOMINATION_DETAIL(nom.id)}
+                              className="btn btn--secondary btn--sm"
+                              title="View full nomination details"
+                            >
+                              <i className="fas fa-eye" aria-hidden="true" style={{ marginRight: '4px' }} />
+                              View
+                            </Link>
+
+                            {isDraft && (
+                              <>
+                                <Link
+                                  to={ROUTES.MY_COMMITTEE_NOMINATION_EDIT(nom.id)}
+                                  className="btn btn--secondary btn--sm"
+                                  title="Edit draft details"
+                                >
+                                  <i className="fas fa-edit" aria-hidden="true" style={{ marginRight: '4px' }} />
+                                  Edit
+                                </Link>
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => setDraftToSubmit(nom)}
+                                  title="Submit nomination to reviewers"
+                                >
+                                  <i className="fas fa-paper-plane" aria-hidden="true" style={{ marginRight: '4px' }} />
+                                  Submit
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {pagination && pagination.lastPage > 1 && (
+              <div style={{ padding: 'var(--space-4)', borderTop: '1px solid var(--colour-border)' }}>
+                <Pagination
+                  pagination={pagination}
+                  onPageChange={(page) => {
+                    setQuery((prev) => ({ ...prev, page }));
+                    const nextParams = new URLSearchParams(searchParams);
+                    nextParams.set('page', String(page));
+                    setSearchParams(nextParams);
+                  }}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+
+      {/* Submit Confirmation Modal */}
+      {draftToSubmit && (
+        <Modal
+          open={Boolean(draftToSubmit)}
+          title="Submit Nomination?"
+          onClose={() => {
+            if (!submittingId) setDraftToSubmit(null);
+          }}
+          footer={
+            <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <Button
+                variant="secondary"
+                onClick={() => setDraftToSubmit(null)}
+                disabled={Boolean(submittingId)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleConfirmSubmit}
+                loading={Boolean(submittingId)}
+              >
+                <i className="fas fa-paper-plane" aria-hidden="true" style={{ marginRight: '6px' }} />
+                Confirm Submission
+              </Button>
+            </div>
+          }
+        >
+          <div className="samman-confirm-modal">
+            <div className="samman-confirm-modal__icon-wrap" aria-hidden="true">
+              <i className="fas fa-circle-info" />
+            </div>
+            <div className="samman-confirm-modal__content">
+              <p className="samman-confirm-modal__message">
+                Are you ready to submit your nomination for{' '}
+                <strong>&ldquo;{draftToSubmit.category}&rdquo;</strong>?
+              </p>
+              <div className="samman-confirm-modal__card">
+                <div className="samman-confirm-modal__row">
+                  <span className="samman-confirm-modal__label">Award Category:</span>
+                  <span className="samman-confirm-modal__value samman-confirm-modal__value--highlight">
+                    {draftToSubmit.category}
+                  </span>
+                </div>
+                {draftToSubmit.title && (
+                  <div className="samman-confirm-modal__row">
+                    <span className="samman-confirm-modal__label">Theme / Title:</span>
+                    <span className="samman-confirm-modal__value">{draftToSubmit.title}</span>
+                  </div>
+                )}
+              </div>
+              <p className="samman-confirm-modal__note">
+                Once submitted, this nomination is locked for administrative review. You will no longer be able to edit the details.
+              </p>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
 }
+
+export default MyCommitteeNominationListPage;

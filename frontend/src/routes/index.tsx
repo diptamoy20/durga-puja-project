@@ -346,6 +346,18 @@ const NominationFormPage = lazy(() =>
 const VotingAuditPage = lazy(() =>
   import('@/pages/sharad-samman/VotingAuditPage').then((m) => ({ default: m.VotingAuditPage })),
 );
+const ContestListPage = lazy(() =>
+  import('@/pages/sharad-samman/ContestListPage').then((m) => ({ default: m.ContestListPage })),
+);
+const ContestFormPage = lazy(() =>
+  import('@/pages/sharad-samman/ContestFormPage').then((m) => ({ default: m.ContestFormPage })),
+);
+const VotingManagementPage = lazy(() =>
+  import('@/pages/sharad-samman/VotingManagementPage').then((m) => ({ default: m.VotingManagementPage })),
+);
+const ContestVotingDetailPage = lazy(() =>
+  import('@/pages/sharad-samman/ContestVotingDetailPage').then((m) => ({ default: m.ContestVotingDetailPage })),
+);
 
 // Public Sharad Samman Voting Pages
 const PublicVotingPage = lazy(() =>
@@ -605,6 +617,46 @@ export function AppRoutes() {
           }
         />
         <Route
+          path={ROUTES.SHARAD_SAMMAN_CONTESTS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+              <ContestListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_CONTEST_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+              <ContestFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_CONTEST_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+              <ContestFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_VOTING}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+              <VotingManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_VOTING_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+              <ContestVotingDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path={ROUTES.SHARAD_SAMMAN_NOMINATIONS}
           element={
             <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
@@ -633,6 +685,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
               <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_VOTING_AUDIT}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+              <VotingAuditPage />
             </ProtectedRoute>
           }
         />
@@ -1154,55 +1214,6 @@ export function AppRoutes() {
         />
 
 
-        {/* Sharad Samman Admin */}
-        <Route
-          path={ROUTES.SHARAD_SAMMAN_DASHBOARD}
-          element={
-            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
-              <SharadSammanDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.SHARAD_SAMMAN_NOMINATIONS}
-          element={
-            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
-              <NominationListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.SHARAD_SAMMAN_NOMINATION_NEW}
-          element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
-              <NominationFormPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.SHARAD_SAMMAN_NOMINATION_DETAIL()}
-          element={
-            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
-              <NominationDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.SHARAD_SAMMAN_NOMINATION_EDIT()}
-          element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
-              <NominationFormPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.SHARAD_SAMMAN_VOTING_AUDIT}
-          element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
-              <VotingAuditPage />
-            </ProtectedRoute>
-          }
-        />
 
         {/* Account */}
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />

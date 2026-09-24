@@ -184,4 +184,29 @@ export const subcategoryService = {
 
   remove: (id: number): Promise<{ id: number; deleted: boolean }> =>
     unwrap(api.delete(`/subcategories/${id}`)),
+
+  /**
+   * Fetch active subcategories under the "Nomination" master category
+   * for Sharad Samman Award Category selection.
+   */
+  listNominationCategories: async (): Promise<string[]> => {
+    try {
+      const catRes = await categoryService.list({ search: 'Nomination', perPage: 10 });
+      const nominationCat = catRes.items.find(
+        (c) => c.slug === 'nomination' || c.name.toLowerCase() === 'nomination',
+      );
+      if (!nominationCat) return [];
+
+      const subRes = await subcategoryService.list({
+        categoryId: nominationCat.id,
+        status: 'ACTIVE',
+        perPage: 100,
+        sortDir: 'asc',
+      });
+
+      return subRes.items.map((s) => s.name);
+    } catch {
+      return [];
+    }
+  },
 };

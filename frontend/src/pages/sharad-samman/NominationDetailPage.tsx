@@ -55,7 +55,7 @@ export function NominationDetailPage() {
   const [reviewNotes, setReviewNotes] = useState('');
 
   const canManage = can(PERMISSIONS.MANAGE_NOMINATIONS);
-  const canReview = can(PERMISSIONS.REVIEW_NOMINATIONS, PERMISSIONS.MANAGE_NOMINATIONS);
+  const canReview = can(PERMISSIONS.REVIEW_NOMINATIONS);
   const canShortlist = can(PERMISSIONS.SHORTLIST_NOMINATIONS) || user?.isSuperAdmin;
 
   const loadNomination = (silent = false) => {
@@ -132,6 +132,8 @@ export function NominationDetailPage() {
       setBusy(false);
     }
   };
+
+  console.log( canTransitionNomination(nomination.status, 'SHORTLISTED'),nomination.status,'aaa')
 
   const isShortlisted = nomination.status === 'SHORTLISTED';
   const snapshot = nomination.snapshotData;

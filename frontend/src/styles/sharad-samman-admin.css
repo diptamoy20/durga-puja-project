@@ -527,3 +527,576 @@
   }
 }
 
+/* ===========================================================================
+   Segmented Status Filter Tabs (ERP Style)
+   =========================================================================== */
+.samman-status-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px;
+  background: var(--colour-canvas);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+}
+
+.samman-status-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--colour-ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.3;
+  user-select: none;
+}
+
+.samman-status-tab:hover {
+  color: var(--colour-ink);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.samman-status-tab:focus-visible {
+  outline: 2px solid var(--colour-brand);
+  outline-offset: 1px;
+}
+
+.samman-status-tab--active {
+  background: var(--colour-surface) !important;
+  color: var(--colour-brand) !important;
+  font-weight: 600;
+  border-color: var(--colour-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.samman-status-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--colour-ink-soft);
+}
+
+.samman-status-tab--active .samman-status-tab__badge {
+  background: var(--colour-brand-tint);
+  color: var(--colour-brand);
+}
+
+/* ===========================================================================
+   Compact ERP Primary Header Action Button
+   =========================================================================== */
+.samman-header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  height: 34px;
+  width: auto;
+  border-radius: var(--radius-md);
+  background: var(--colour-brand);
+  color: #fff !important;
+  text-decoration: none !important;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.samman-header-action-btn:hover {
+  background: var(--colour-brand-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.samman-header-action-btn:focus-visible {
+  outline: 2px solid var(--colour-brand);
+  outline-offset: 2px;
+}
+
+.samman-header-action-btn i {
+  font-size: 11px;
+}
+
+@media (max-width: 640px) {
+  .samman-header-action-btn {
+    width: auto;
+    align-self: flex-start;
+    margin-top: 0;
+  }
+}
+
+/* ===========================================================================
+   Contest Create / Edit Form Grid & Layout
+   =========================================================================== */
+.contest-form-card {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.contest-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5) var(--space-5);
+  width: 100%;
+}
+
+.contest-form-grid__col-2 {
+  grid-column: span 2;
+}
+
+.contest-form-grid__col-1 {
+  grid-column: span 1;
+}
+
+.contest-form-grid__col-3 {
+  grid-column: span 3;
+}
+
+.contest-form-control {
+  height: 42px;
+  min-height: 42px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.contest-form-textarea {
+  height: 120px;
+  min-height: 100px;
+  max-height: 160px;
+  resize: vertical;
+  line-height: 1.5;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .contest-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+  .contest-form-grid__col-2 {
+    grid-column: span 2;
+  }
+  .contest-form-grid__col-1 {
+    grid-column: span 1;
+  }
+  .contest-form-grid__col-3 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .contest-form-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  .contest-form-grid__col-2,
+  .contest-form-grid__col-1,
+  .contest-form-grid__col-3 {
+    grid-column: span 1;
+  }
+}
+
+/* ===========================================================================
+   Sharad Samman Voting Management (2-Level UX)
+   =========================================================================== */
+.voting-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-4);
+}
+
+.voting-card {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.voting-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--colour-brand);
+}
+
+.voting-card__header {
+  padding: var(--space-4);
+  background: var(--colour-canvas);
+  border-bottom: 1px solid var(--colour-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.voting-card__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.voting-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--colour-ink);
+}
+
+.voting-card__year {
+  font-size: 0.8rem;
+  color: var(--colour-ink-soft);
+  font-weight: 600;
+}
+
+.voting-card__body {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.voting-card__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.voting-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  gap: var(--space-2);
+}
+
+.voting-card__row-label {
+  color: var(--colour-ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.voting-card__row-value {
+  font-weight: 600;
+  color: var(--colour-ink);
+  text-align: right;
+}
+
+.voting-card__row-value--extended {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.voting-card__row-value--effective {
+  color: var(--colour-brand);
+  font-weight: 700;
+}
+
+.voting-card__meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--colour-border);
+  font-size: 0.85rem;
+}
+
+.voting-card__footer {
+  padding: var(--space-3) var(--space-4);
+  background: var(--colour-canvas);
+  border-top: 1px solid var(--colour-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Level 2 Contest Voting Detail Page Styles */
+.voting-detail-hero {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.voting-detail-hero__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.voting-detail-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.voting-detail-timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--colour-canvas);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+}
+
+.voting-timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.voting-timeline-item__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--colour-ink-soft);
+}
+
+.voting-timeline-item__value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--colour-ink);
+}
+
+.voting-timeline-item__sub {
+  font-size: 0.75rem;
+  color: var(--colour-ink-soft);
+}
+
+/* ===========================================================================
+   Voting Management Search & Filter Bar (Level 1)
+   =========================================================================== */
+.voting-search-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  width: 100%;
+}
+
+.voting-search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.voting-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+}
+
+.voting-search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--colour-ink-faint);
+  font-size: 15px;
+  pointer-events: none;
+  transition: color 0.15s ease;
+  z-index: 1;
+}
+
+.voting-search-input {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 44px 0 44px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--colour-ink);
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.voting-search-input:hover {
+  border-color: var(--colour-border-strong);
+}
+
+.voting-search-input:focus {
+  outline: none;
+  border-color: var(--colour-brand);
+  box-shadow: 0 0 0 3px rgb(155 28 28 / 12%);
+  background: #ffffff;
+}
+
+.voting-search-input::placeholder {
+  color: var(--colour-ink-faint);
+  font-size: 14px;
+}
+
+.voting-search-input-wrap:focus-within .voting-search-icon {
+  color: var(--colour-brand);
+}
+
+.voting-search-clear-btn {
+  position: absolute;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--colour-ink-soft);
+  border-radius: 50%;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  z-index: 1;
+}
+
+.voting-search-clear-btn:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--colour-ink);
+}
+
+.voting-search-clear-btn:focus-visible {
+  outline: 2px solid var(--colour-brand);
+  outline-offset: 1px;
+}
+
+.voting-search-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+@media (max-width: 640px) {
+  .voting-search-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ===========================================================================
+   Polished DateTime Input Form Controls
+   =========================================================================== */
+.datetime-control-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.datetime-control-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--colour-ink-faint);
+  font-size: 14px;
+  pointer-events: none;
+  transition: color 0.15s ease;
+  z-index: 1;
+}
+
+.datetime-control-wrap:focus-within .datetime-control-icon {
+  color: var(--colour-brand);
+}
+
+.datetime-input {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 14px 0 42px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--colour-ink);
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.datetime-input:hover {
+  border-color: var(--colour-border-strong);
+}
+
+.datetime-input:focus {
+  outline: none;
+  border-color: var(--colour-brand);
+  box-shadow: 0 0 0 3px rgb(155 28 28 / 12%);
+  background: #ffffff;
+}
+
+.datetime-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  padding: 4px;
+  margin-right: -2px;
+}
+
+.datetime-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.voting-modal-helper-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px dashed var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: var(--colour-ink-soft);
+  margin-top: 4px;
+}
+
+
+
+
