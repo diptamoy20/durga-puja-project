@@ -142,7 +142,7 @@ export const NAVIGATION: NavSection[] = [
     items: [
       { label: 'Dashboard', icon: 'fa-trophy', to: ROUTES.SHARAD_SAMMAN_DASHBOARD, end: true },
       {
-        label: 'Contest Session',
+        label: 'Contest Sessions',
         icon: 'fa-calendar-check',
         permissions: [PERMISSIONS.MANAGE_CONTESTS],
         to: ROUTES.SHARAD_SAMMAN_CONTESTS,
@@ -152,6 +152,12 @@ export const NAVIGATION: NavSection[] = [
         icon: 'fa-check-to-slot',
         permissions: [PERMISSIONS.MANAGE_CONTESTS],
         to: ROUTES.SHARAD_SAMMAN_VOTING,
+      },
+      {
+        label: 'Voting Audit & Controls',
+        icon: 'fa-shield-halved',
+        permissions: [PERMISSIONS.MANAGE_NOMINATIONS],
+        to: ROUTES.SHARAD_SAMMAN_VOTING_AUDIT,
       },
       { label: 'All Nominations', icon: 'fa-list-check', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
       { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=UNDER_REVIEW` },
@@ -165,6 +171,8 @@ export const NAVIGATION: NavSection[] = [
         to: ROUTES.SHARAD_SAMMAN_NOMINATION_NEW,
         end: true,
       },
+      { label: 'Public Voting Portal', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE },
+      { label: 'Live Standings & Podium', icon: 'fa-ranking-star', to: ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS },
     ],
   },
 
@@ -346,22 +354,7 @@ export const NAVIGATION: NavSection[] = [
     ],
   },
 
-  {
-    label: 'Sharad Samman International',
-    permissions: [PERMISSIONS.VIEW_NOMINATIONS],
-    items: [
-      { label: 'Dashboard', icon: 'fa-trophy', to: ROUTES.SHARAD_SAMMAN_DASHBOARD },
-      { label: 'All Nominations', icon: 'fa-award', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
-      {
-        label: 'Voting Audit & Controls',
-        icon: 'fa-shield-halved',
-        permissions: [PERMISSIONS.MANAGE_NOMINATIONS],
-        to: ROUTES.SHARAD_SAMMAN_VOTING_AUDIT,
-      },
-      { label: 'Public Voting Portal', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE },
-      { label: 'Live Standings & Podium', icon: 'fa-ranking-star', to: ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS },
-    ],
-  },
+
 
   {
     label: 'Content Management',
