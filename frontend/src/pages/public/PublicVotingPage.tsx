@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { votingService } from '@/services/votingService';
 import type { 
@@ -126,16 +126,21 @@ export function PublicVotingPage() {
   const [submittingVote, setSubmittingVote] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [voteReceipt, setVoteReceipt] = useState<{ voteId: number; status: string } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlContestId = searchParams.get('contestId') ? Number(searchParams.get('contestId')) : undefined;
 
   useEffect(() => {
-    loadContest();
-  }, []);
+    loadContest(urlContestId);
+  }, [urlContestId]);
 
-  const loadContest = async () => {
+  const loadContest = async (targetContestId?: number) => {
     try {
       setLoading(true);
-      const res = await votingService.public.getContest();
+      const res = await votingService.public.getContest(targetContestId);
       setContestData(res);
+      if (res.contest?.id && targetContestId && res.contest.id !== urlContestId) {
+        setSearchParams({ contestId: String(res.contest.id) }, { replace: true });
+      }
     } catch (err) {
       console.error('Failed to load public contest:', err);
     } finally {
@@ -270,7 +275,7 @@ export function PublicVotingPage() {
             </span>
             <span className="voting-hero__badge">
               <i className="fa-solid fa-trophy" />
-              {t.heroBadge}
+              {contestData?.contest?.name || t.heroBadge}
             </span>
           </div>
 
@@ -313,7 +318,14 @@ export function PublicVotingPage() {
             <span className="voting-hero__stat-lbl">Verified Tally</span>
           </div>
           <div className="ml-auto">
-            <Link to={ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS} className="btn btn--outline btn--sm text-white border-white hover:bg-white/10 flex items-center gap-2">
+            <Link
+              to={
+                contestData?.contest?.id
+                  ? `${ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS}?contestId=${contestData.contest.id}`
+                  : ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS
+              }
+              className="btn btn--outline btn--sm text-white border-white hover:bg-white/10 flex items-center gap-2"
+            >
               <i className="fa-solid fa-chart-line" />
               {t.viewLeaderboard}
             </Link>
@@ -332,6 +344,28 @@ export function PublicVotingPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+
+        {contestData?.availableContests && contestData.availableContests.length > 0 && (
+          <div className="voting-filters">
+            <select
+              className="voting-select font-semibold"
+              value={contestData.contest?.id || ''}
+              onChange={(e) => {
+                const id = Number(e.target.value);
+                if (id) {
+                  setSearchParams({ contestId: String(id) });
+                  loadContest(id);
+                }
+              }}
+            >
+              {contestData.availableContests.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.year}) {c.isVotingOpen ? '• Live Voting' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="voting-filters">
           <select
@@ -356,12 +390,33 @@ export function PublicVotingPage() {
           <span>Loading eligible Puja nominations…</span>
         </div>
       ) : filteredNominations.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl p-8">
-          <i className="fa-solid fa-trophy text-slate-400 text-4xl mb-3 block" />
-          <h3 className="text-lg font-bold text-slate-800">No Nominations Found</h3>
-          <p className="text-slate-500 text-sm mt-1">
-            Try adjusting your search keywords or category filter.
+        <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl p-8 max-w-xl mx-auto my-6 shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 text-2xl">
+            <i className="fa-solid fa-trophy" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800">
+            {nominations.length === 0
+              ? `No Shortlisted Nominees Yet for ${contestData?.contest?.name || 'this Contest'}`
+              : 'No Nominations Found'}
+          </h3>
+          <p className="text-slate-500 text-sm mt-1 leading-relaxed">
+            {nominations.length === 0
+              ? contestData?.isVotingOpen
+                ? 'Voting is active. Shortlisted nominees from jury evaluation will automatically appear here for public voting.'
+                : 'Voting will open once jury evaluation concludes and nominees are shortlisted for this contest session.'
+              : 'Try adjusting your search keywords or category filter.'}
           </p>
+          {contestData?.contest?.votingStartDate && (
+            <div className="mt-4 text-xs font-semibold px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg inline-flex items-center gap-2">
+              <i className="fa-solid fa-calendar-days text-amber-600" />
+              <span>
+                Voting Window: {new Date(contestData.contest.votingStartDate).toLocaleDateString()} –{' '}
+                {contestData.contest.votingEndDate
+                  ? new Date(contestData.contest.votingEndDate).toLocaleDateString()
+                  : 'TBD'}
+              </span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="voting-grid">

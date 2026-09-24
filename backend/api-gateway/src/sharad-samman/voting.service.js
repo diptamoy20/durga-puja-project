@@ -204,10 +204,60 @@ let VotingService = VotingService_1 = class VotingService {
     /**
      * Get active contest & eligible nominations for public voting
      */
-    async getPublicVotingContest() {
-        const contest = await this.prisma.contest.findFirst({
-            where: { status: 'ACTIVE' },
-            orderBy: { year: 'desc' },
+    async getPublicVotingContest(contestId) {
+        // Fetch all candidate contests for public voting switcher
+        const allContests = await this.prisma.contest.findMany({
+            orderBy: [{ year: 'desc' }, { id: 'desc' }],
+            select: {
+                id: true,
+                name: true,
+                year: true,
+                status: true,
+                votingStatus: true,
+                isVotingOpen: true,
+                votingStartDate: true,
+                votingEndDate: true,
+                votingExtendedUntil: true,
+                resultsPublished: true,
+            },
+        });
+
+        let targetContestId = contestId ? Number(contestId) : null;
+
+        // If no explicit contestId provided, resolve the active voting session:
+        if (!targetContestId) {
+            const activeVoting = allContests.find((c) =>
+                c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED' || Boolean(c.isVotingOpen)
+            );
+            if (activeVoting) {
+                targetContestId = activeVoting.id;
+            } else {
+                const scheduledVoting = allContests.find((c) => c.votingStatus === 'SCHEDULED');
+                if (scheduledVoting) {
+                    targetContestId = scheduledVoting.id;
+                } else {
+                    const activeStatus = allContests.find((c) => c.status === 'ACTIVE');
+                    if (activeStatus) {
+                        targetContestId = activeStatus.id;
+                    } else if (allContests.length > 0) {
+                        targetContestId = allContests[0].id;
+                    }
+                }
+            }
+        }
+
+        if (!targetContestId) {
+            return {
+                hasActiveContest: false,
+                contest: null,
+                isVotingOpen: false,
+                availableContests: [],
+                nominations: [],
+            };
+        }
+
+        const contest = await this.prisma.contest.findUnique({
+            where: { id: targetContestId },
             include: {
                 nominations: {
                     where: {
@@ -237,6 +287,7 @@ let VotingService = VotingService_1 = class VotingService {
                 hasActiveContest: false,
                 contest: null,
                 isVotingOpen: false,
+                availableContests: [],
                 nominations: [],
             };
         }
@@ -250,7 +301,7 @@ let VotingService = VotingService_1 = class VotingService {
         if (effectiveEnd && now > new Date(effectiveEnd)) {
             isWindowOpen = false;
         }
-        if (contest.votingStatus === 'CLOSED') {
+        if (contest.votingStatus === 'CLOSED' || contest.status === 'CLOSED') {
             isWindowOpen = false;
         }
 
@@ -268,6 +319,21 @@ let VotingService = VotingService_1 = class VotingService {
                 votingExtendedUntil: contest.votingExtendedUntil,
                 resultsPublished: contest.resultsPublished,
             },
+            availableContests: allContests.map((c) => {
+                const effEnd = c.votingExtendedUntil || c.votingEndDate;
+                let cOpen = c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED' || Boolean(c.isVotingOpen);
+                if (c.votingStartDate && now < new Date(c.votingStartDate)) cOpen = false;
+                if (effEnd && now > new Date(effEnd)) cOpen = false;
+                if (c.votingStatus === 'CLOSED' || c.status === 'CLOSED') cOpen = false;
+                return {
+                    id: c.id,
+                    name: c.name,
+                    year: c.year,
+                    status: c.status,
+                    votingStatus: c.votingStatus,
+                    isVotingOpen: cOpen,
+                };
+            }),
             nominations: contest.nominations.map((nom) => ({
                 id: nom.id,
                 contestId: nom.contestId,
@@ -296,8 +362,22 @@ let VotingService = VotingService_1 = class VotingService {
         const contest = await this.prisma.contest.findUnique({
             where: { id: dto.contestId },
         });
-        if (!contest || contest.status !== 'ACTIVE') {
+        if (!contest || contest.status === 'CLOSED' || contest.votingStatus === 'CLOSED') {
             throw new common_1.BadRequestException('The specified contest is not currently active for voting.');
+        }
+
+        const now = new Date();
+        const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate;
+        const isVotingOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED' || Boolean(contest.isVotingOpen);
+
+        if (!isVotingOpen) {
+            throw new common_1.BadRequestException('Voting is currently closed or not yet active for this contest session.');
+        }
+        if (contest.votingStartDate && now < new Date(contest.votingStartDate)) {
+            throw new common_1.BadRequestException(`Voting for ${contest.name} will begin on ${new Date(contest.votingStartDate).toLocaleDateString()}.`);
+        }
+        if (effectiveEnd && now > new Date(effectiveEnd)) {
+            throw new common_1.BadRequestException(`Voting for ${contest.name} concluded on ${new Date(effectiveEnd).toLocaleDateString()}.`);
         }
 
         // 3. Database Check: Check if email has already voted in this contest
@@ -378,16 +458,22 @@ let VotingService = VotingService_1 = class VotingService {
         const contest = await this.prisma.contest.findUnique({
             where: { id: dto.contestId },
         });
-        if (!contest || contest.status !== 'ACTIVE') {
+        if (!contest || contest.status === 'CLOSED' || contest.votingStatus === 'CLOSED') {
             throw new common_1.BadRequestException('Voting is not open for this contest session.');
         }
 
         const now = new Date();
-        if (contest.votingStartDate && now < contest.votingStartDate) {
-            throw new common_1.BadRequestException(`Voting for ${contest.name} will begin on ${contest.votingStartDate.toLocaleDateString()}.`);
+        const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate;
+        const isVotingOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED' || Boolean(contest.isVotingOpen);
+
+        if (!isVotingOpen) {
+            throw new common_1.BadRequestException('Voting is currently closed for this contest session.');
         }
-        if (contest.votingEndDate && now > contest.votingEndDate) {
-            throw new common_1.BadRequestException(`Voting for ${contest.name} concluded on ${contest.votingEndDate.toLocaleDateString()}.`);
+        if (contest.votingStartDate && now < new Date(contest.votingStartDate)) {
+            throw new common_1.BadRequestException(`Voting for ${contest.name} will begin on ${new Date(contest.votingStartDate).toLocaleDateString()}.`);
+        }
+        if (effectiveEnd && now > new Date(effectiveEnd)) {
+            throw new common_1.BadRequestException(`Voting for ${contest.name} concluded on ${new Date(effectiveEnd).toLocaleDateString()}.`);
         }
 
         // 3. Validate Nomination
@@ -482,9 +568,44 @@ let VotingService = VotingService_1 = class VotingService {
      * Public Leaderboard: Real-time aggregated vote count for VALID votes
      */
     async getLeaderboard(contestId) {
-        const contest = contestId 
-            ? await this.prisma.contest.findUnique({ where: { id: Number(contestId) } })
-            : await this.prisma.contest.findFirst({ where: { status: 'ACTIVE' }, orderBy: { year: 'desc' } });
+        const allContests = await this.prisma.contest.findMany({
+            orderBy: [{ year: 'desc' }, { id: 'desc' }],
+            select: {
+                id: true,
+                name: true,
+                year: true,
+                status: true,
+                votingStatus: true,
+                isVotingOpen: true,
+            },
+        });
+
+        let contest = null;
+        if (contestId) {
+            contest = await this.prisma.contest.findUnique({ where: { id: Number(contestId) } });
+        } else {
+            // Priority: Active voting contest, then active status, then latest
+            contest = await this.prisma.contest.findFirst({
+                where: {
+                    OR: [
+                        { votingStatus: { in: ['ACTIVE', 'EXTENDED'] } },
+                        { isVotingOpen: true },
+                    ],
+                },
+                orderBy: { year: 'desc' },
+            });
+            if (!contest) {
+                contest = await this.prisma.contest.findFirst({
+                    where: { status: 'ACTIVE' },
+                    orderBy: { year: 'desc' },
+                });
+            }
+            if (!contest) {
+                contest = await this.prisma.contest.findFirst({
+                    orderBy: { year: 'desc' },
+                });
+            }
+        }
 
         if (!contest) {
             throw new common_1.NotFoundException(`No active contest found.`);
@@ -549,6 +670,14 @@ let VotingService = VotingService_1 = class VotingService {
             isVotingOpen: contest.isVotingOpen,
             resultsPublished: contest.resultsPublished,
             totalValidVotes,
+            availableContests: allContests.map((c) => ({
+                id: c.id,
+                name: c.name,
+                year: c.year,
+                status: c.status,
+                votingStatus: c.votingStatus,
+                isVotingOpen: c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED' || Boolean(c.isVotingOpen),
+            })),
             leaderboard,
         };
     }
@@ -691,8 +820,16 @@ let VotingService = VotingService_1 = class VotingService {
      */
     async toggleVotingWindow(dto) {
         const contestId = Number(dto.contestId);
-        const data = {};
-        if (dto.isVotingOpen !== undefined) data.isVotingOpen = dto.isVotingOpen;
+        const data = { updatedAt: new Date() };
+        if (dto.isVotingOpen !== undefined) {
+            data.isVotingOpen = dto.isVotingOpen;
+            if (dto.isVotingOpen) {
+                data.votingStatus = database_1.VotingStatus.ACTIVE;
+                data.status = database_1.ContestStatus.ACTIVE;
+            } else {
+                data.votingStatus = database_1.VotingStatus.CLOSED;
+            }
+        }
         if (dto.votingStartDate !== undefined) data.votingStartDate = dto.votingStartDate ? new Date(dto.votingStartDate) : null;
         if (dto.votingEndDate !== undefined) data.votingEndDate = dto.votingEndDate ? new Date(dto.votingEndDate) : null;
 

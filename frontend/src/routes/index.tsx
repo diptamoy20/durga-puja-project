@@ -415,7 +415,11 @@ export function AppRoutes() {
 
         {/* Public Sharad Samman Voting & Results */}
         <Route path={ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE} element={<PublicVotingPage />} />
+        <Route path="/voting" element={<PublicVotingPage />} />
+        <Route path="/public/voting" element={<PublicVotingPage />} />
         <Route path={ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS} element={<PublicVotingResultsPage />} />
+        <Route path="/voting/results" element={<PublicVotingResultsPage />} />
+        <Route path="/public/voting/results" element={<PublicVotingResultsPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}

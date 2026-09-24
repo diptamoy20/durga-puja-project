@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { votingService } from '@/services/votingService';
 import type { 
@@ -69,15 +69,21 @@ export function PublicVotingResultsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlContestId = searchParams.get('contestId') ? Number(searchParams.get('contestId')) : undefined;
 
-  const loadLeaderboard = async () => {
+  useEffect(() => {
+    loadLeaderboard(urlContestId);
+  }, [urlContestId]);
+
+  const loadLeaderboard = async (targetContestId?: number) => {
     try {
       setLoading(true);
-      const res = await votingService.public.getLeaderboard();
+      const res = await votingService.public.getLeaderboard(targetContestId);
       setLeaderboardData(res);
+      if (res.contestId && targetContestId && res.contestId !== urlContestId) {
+        setSearchParams({ contestId: String(res.contestId) }, { replace: true });
+      }
     } catch (err) {
       console.error('Failed to load leaderboard:', err);
     } finally {
@@ -157,14 +163,18 @@ export function PublicVotingResultsPage() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             <button
-              onClick={loadLeaderboard}
+              onClick={() => loadLeaderboard(urlContestId)}
               className="btn btn--outline btn--sm text-white border-white hover:bg-white/10 flex items-center gap-2"
             >
               <i className={`fa-solid fa-arrows-rotate ${loading ? 'fa-spin' : ''}`} />
               Refresh
             </button>
             <Link
-              to={ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE}
+              to={
+                leaderboardData?.contestId
+                  ? `${ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE}?contestId=${leaderboardData.contestId}`
+                  : ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE
+              }
               className="btn btn--primary btn--sm flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold border-none"
             >
               <i className="fa-solid fa-check-to-slot" />
@@ -173,6 +183,30 @@ export function PublicVotingResultsPage() {
           </div>
         </div>
       </section>
+
+      {/* Contest Switcher Bar if multiple available */}
+      {leaderboardData?.availableContests && leaderboardData.availableContests.length > 0 && (
+        <div className="voting-toolbar">
+          <span className="font-bold text-sm text-slate-700">Contest Edition:</span>
+          <select
+            className="voting-select font-semibold"
+            value={leaderboardData.contestId || ''}
+            onChange={(e) => {
+              const id = Number(e.target.value);
+              if (id) {
+                setSearchParams({ contestId: String(id) });
+                loadLeaderboard(id);
+              }
+            }}
+          >
+            {leaderboardData.availableContests.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.year}) {c.isVotingOpen ? '• Live Voting' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Top 3 Podium (if at least 1 entry exists) */}
       {!loading && list.length > 0 && (

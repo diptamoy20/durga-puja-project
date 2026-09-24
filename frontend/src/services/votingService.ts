@@ -14,8 +14,8 @@ import type {
 export const votingService = {
   // Public Endpoints
   public: {
-    getContest: (): Promise<PublicVotingResponse> =>
-      unwrap(api.get('/sharad-samman/voting/contest')),
+    getContest: (contestId?: number): Promise<PublicVotingResponse> =>
+      unwrap(api.get('/sharad-samman/voting/contest', { params: contestId ? { contestId } : undefined })),
 
     getCaptcha: (): Promise<CaptchaResponse> =>
       unwrap(api.get('/sharad-samman/voting/captcha')),
@@ -26,11 +26,11 @@ export const votingService = {
     castVote: (payload: CastVotePayload): Promise<CastVoteResponse> =>
       unwrap(api.post('/sharad-samman/voting/cast-vote', payload)),
 
-    getLeaderboard: (): Promise<LeaderboardResponse> =>
-      unwrap(api.get('/sharad-samman/voting/leaderboard')),
+    getLeaderboard: (contestId?: number): Promise<LeaderboardResponse> =>
+      unwrap(api.get('/sharad-samman/voting/leaderboard', { params: contestId ? { contestId } : undefined })),
 
-    getResults: (): Promise<ContestResultsResponse> =>
-      unwrap(api.get('/sharad-samman/voting/results')),
+    getResults: (contestId?: number): Promise<ContestResultsResponse> =>
+      unwrap(api.get('/sharad-samman/voting/results', { params: contestId ? { contestId } : undefined })),
   },
 
   // Admin Endpoints

@@ -23,14 +23,25 @@ export interface VotingNomination {
   snapshotData?: Record<string, any>;
 }
 
+export interface AvailableContestSummary {
+  id: number;
+  name: string;
+  year: number;
+  status: string;
+  votingStatus?: string;
+  isVotingOpen: boolean;
+}
+
 export interface PublicVotingContest {
   id: number;
   name: string;
   year: number;
   description?: string;
   isVotingOpen: boolean;
+  votingStatus?: string;
   votingStartDate?: string;
   votingEndDate?: string;
+  votingExtendedUntil?: string;
   resultsPublished: boolean;
 }
 
@@ -38,6 +49,7 @@ export interface PublicVotingResponse {
   hasActiveContest: boolean;
   contest: PublicVotingContest | null;
   isVotingOpen: boolean;
+  availableContests?: AvailableContestSummary[];
   nominations: VotingNomination[];
 }
 
@@ -99,6 +111,7 @@ export interface LeaderboardResponse {
   isVotingOpen: boolean;
   resultsPublished: boolean;
   totalValidVotes: number;
+  availableContests?: AvailableContestSummary[];
   leaderboard: LeaderboardEntry[];
 }
 

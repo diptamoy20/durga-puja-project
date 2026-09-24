@@ -30,8 +30,8 @@ let VotingController = class VotingController {
     /**
      * Get active contest & nominations for public voting
      */
-    async getActiveContest() {
-        return this.votingService.getPublicVotingContest();
+    async getActiveContest(contestId) {
+        return this.votingService.getPublicVotingContest(contestId);
     }
 
     /**
@@ -126,8 +126,9 @@ __decorate([
     (0, shared_1.Public)(),
     (0, response_interceptor_1.ResponseMessage)('Active voting contest retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get active contest and nominations for public voting' }),
+    __param(0, (0, common_1.Query)('contestId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], VotingController.prototype, "getActiveContest", null);
 
