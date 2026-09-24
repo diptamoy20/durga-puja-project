@@ -19,6 +19,7 @@ const PERMISSIONS_TO_SEED = [
   { module: 'Sharad Samman', permissionName: 'Manage Nominations', permissionKey: 'manage_nominations' },
   { module: 'Sharad Samman', permissionName: 'Review Nominations', permissionKey: 'review_nominations' },
   { module: 'Sharad Samman', permissionName: 'Shortlist Nominations', permissionKey: 'shortlist_nominations' },
+  { module: 'Sharad Samman', permissionName: 'Manage Contests', permissionKey: 'manage_contests' },
 ];
 
 async function main() {

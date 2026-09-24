@@ -103,12 +103,26 @@ let VotingController = class VotingController {
     async adminToggleVoting(contestId, dto) {
         return this.votingService.adminToggleVoting(contestId, dto);
     }
+
+    /**
+     * Admin: Toggle voting window settings directly
+     */
+    async toggleVotingWindow(dto) {
+        return this.votingService.toggleVotingWindow(dto);
+    }
+
+    /**
+     * Admin: Publish results directly
+     */
+    async publishResults(dto) {
+        return this.votingService.publishResults(dto);
+    }
 };
 
 exports.VotingController = VotingController;
 
 __decorate([
-    (0, common_1.Get)('sharad-samman/voting/active'),
+    (0, common_1.Get)(['sharad-samman/voting/active', 'sharad-samman/voting/contest']),
     (0, shared_1.Public)(),
     (0, response_interceptor_1.ResponseMessage)('Active voting contest retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get active contest and nominations for public voting' }),
@@ -128,7 +142,7 @@ __decorate([
 ], VotingController.prototype, "getCaptcha", null);
 
 __decorate([
-    (0, common_1.Post)('sharad-samman/voting/otp/request'),
+    (0, common_1.Post)(['sharad-samman/voting/otp/request', 'sharad-samman/voting/request-otp']),
     (0, shared_1.Public)(),
     (0, response_interceptor_1.ResponseMessage)('OTP request processed'),
     (0, swagger_1.ApiOperation)({ summary: 'Request 6-digit OTP verification code for voting' }),
@@ -140,7 +154,7 @@ __decorate([
 ], VotingController.prototype, "requestOtp", null);
 
 __decorate([
-    (0, common_1.Post)('sharad-samman/voting/cast'),
+    (0, common_1.Post)(['sharad-samman/voting/cast', 'sharad-samman/voting/cast-vote']),
     (0, shared_1.Public)(),
     (0, response_interceptor_1.ResponseMessage)('Vote recorded successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Cast a verified vote for a nomination' }),
@@ -198,6 +212,19 @@ __decorate([
 ], VotingController.prototype, "adminReviewFlaggedVote", null);
 
 __decorate([
+    (0, common_1.Patch)('sharad-samman/admin/voting/:id/review'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.REVIEW_NOMINATIONS, shared_1.PERMISSIONS.MANAGE_NOMINATIONS),
+    (0, response_interceptor_1.ResponseMessage)('Flagged vote reviewed successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Review a flagged vote' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, shared_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, typeof (_c = typeof voting_dto_1.ReviewFlaggedVoteDto !== "undefined" && voting_dto_1.ReviewFlaggedVoteDto) === "function" ? _c : Object, Object]),
+    __metadata("design:returntype", Promise)
+], VotingController.prototype, "adminReviewFlaggedVote", null);
+
+__decorate([
     (0, common_1.Get)('sharad-samman/admin/voting/contest/:id/stats'),
     (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.VIEW_NOMINATIONS, shared_1.PERMISSIONS.MANAGE_NOMINATIONS),
     (0, response_interceptor_1.ResponseMessage)('Voting metrics retrieved successfully'),
@@ -219,6 +246,28 @@ __decorate([
     __metadata("design:paramtypes", [Number, typeof (_d = typeof voting_dto_1.ToggleVotingDto !== "undefined" && voting_dto_1.ToggleVotingDto) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], VotingController.prototype, "adminToggleVoting", null);
+
+__decorate([
+    (0, common_1.Post)('sharad-samman/admin/voting/toggle-window'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_NOMINATIONS),
+    (0, response_interceptor_1.ResponseMessage)('Voting window settings updated successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Toggle voting window settings' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VotingController.prototype, "toggleVotingWindow", null);
+
+__decorate([
+    (0, common_1.Post)('sharad-samman/admin/voting/publish-results'),
+    (0, shared_1.RequirePermissions)(shared_1.PERMISSIONS.MANAGE_NOMINATIONS),
+    (0, response_interceptor_1.ResponseMessage)('Voting results published successfully'),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Publish final voting results' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VotingController.prototype, "publishResults", null);
 
 exports.VotingController = VotingController = __decorate([
     (0, swagger_1.ApiTags)('Sharad Samman Voting'),

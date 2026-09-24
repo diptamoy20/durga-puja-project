@@ -22,9 +22,9 @@ exports.SharadSammanModule = SharadSammanModule = __decorate([
     (0, common_1.Module)({
         imports: [database_1.PrismaModule],
         controllers: [
+            voting_controller_1.VotingController,
             sharad_samman_controller_1.SharadSammanController,
             committee_sharad_samman_controller_1.CommitteeSharadSammanController,
-            voting_controller_1.VotingController,
         ],
         providers: [
             sharad_samman_service_1.SharadSammanService,

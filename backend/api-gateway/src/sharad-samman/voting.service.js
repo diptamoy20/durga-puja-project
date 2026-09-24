@@ -242,11 +242,15 @@ let VotingService = VotingService_1 = class VotingService {
         }
 
         const now = new Date();
-        let isWindowOpen = contest.isVotingOpen;
-        if (contest.votingStartDate && now < contest.votingStartDate) {
+        const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate;
+        let isWindowOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED' || Boolean(contest.isVotingOpen);
+        if (contest.votingStartDate && now < new Date(contest.votingStartDate)) {
             isWindowOpen = false;
         }
-        if (contest.votingEndDate && now > contest.votingEndDate) {
+        if (effectiveEnd && now > new Date(effectiveEnd)) {
+            isWindowOpen = false;
+        }
+        if (contest.votingStatus === 'CLOSED') {
             isWindowOpen = false;
         }
 
@@ -258,8 +262,10 @@ let VotingService = VotingService_1 = class VotingService {
                 year: contest.year,
                 description: contest.description,
                 isVotingOpen: isWindowOpen,
+                votingStatus: contest.votingStatus,
                 votingStartDate: contest.votingStartDate,
                 votingEndDate: contest.votingEndDate,
+                votingExtendedUntil: contest.votingExtendedUntil,
                 resultsPublished: contest.resultsPublished,
             },
             nominations: contest.nominations.map((nom) => ({
@@ -694,6 +700,44 @@ let VotingService = VotingService_1 = class VotingService {
             where: { id: contestId },
             data,
         });
+    }
+
+    /**
+     * Admin: Get flagged votes queue for audit
+     */
+    async adminGetFlaggedVotes(query = {}) {
+        return this.getFlaggedVotes(query);
+    }
+
+    /**
+     * Admin: Review and approve/reject a flagged vote
+     */
+    async adminReviewFlaggedVote(voteId, dto, actorId) {
+        return this.reviewFlaggedVote(voteId, dto, actorId);
+    }
+
+    /**
+     * Admin: Get live voting summary metrics for a contest
+     */
+    async adminGetVotingStats(contestId) {
+        const id = Number(contestId);
+        const statsRows = await this.prisma.$queryRaw`
+            SELECT 
+                COUNT(*)::int as "totalVotes",
+                COUNT(CASE WHEN status = 'VALID'::"VoteStatus" THEN 1 END)::int as "validVotes",
+                COUNT(CASE WHEN status = 'FLAGGED'::"VoteStatus" THEN 1 END)::int as "flaggedVotes",
+                COUNT(CASE WHEN status = 'REJECTED'::"VoteStatus" THEN 1 END)::int as "rejectedVotes"
+            FROM sharad_samman_votes
+            WHERE contest_id = ${id}
+        `;
+        return statsRows[0] || { totalVotes: 0, validVotes: 0, flaggedVotes: 0, rejectedVotes: 0 };
+    }
+
+    /**
+     * Admin: Toggle voting settings
+     */
+    async adminToggleVoting(contestId, dto) {
+        return this.toggleVotingWindow({ ...dto, contestId: Number(contestId) });
     }
 
     /**
