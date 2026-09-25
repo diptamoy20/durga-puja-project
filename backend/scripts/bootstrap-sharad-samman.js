@@ -15,11 +15,20 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const PERMISSIONS_TO_SEED = [
+  { module: 'Sharad Samman', permissionName: 'View Sharad Samman Dashboard', permissionKey: 'view_sharad_samman' },
   { module: 'Sharad Samman', permissionName: 'View Nominations', permissionKey: 'view_nominations' },
+  { module: 'Sharad Samman', permissionName: 'Create Nominations', permissionKey: 'create_nominations' },
+  { module: 'Sharad Samman', permissionName: 'Edit Nominations', permissionKey: 'edit_nominations' },
+  { module: 'Sharad Samman', permissionName: 'Delete Nominations', permissionKey: 'delete_nominations' },
   { module: 'Sharad Samman', permissionName: 'Manage Nominations', permissionKey: 'manage_nominations' },
   { module: 'Sharad Samman', permissionName: 'Review Nominations', permissionKey: 'review_nominations' },
+  { module: 'Sharad Samman', permissionName: 'Approve / Reject Nominations', permissionKey: 'approve_nominations' },
   { module: 'Sharad Samman', permissionName: 'Shortlist Nominations', permissionKey: 'shortlist_nominations' },
-  { module: 'Sharad Samman', permissionName: 'Manage Contests', permissionKey: 'manage_contests' },
+  { module: 'Sharad Samman', permissionName: 'View Contest Sessions', permissionKey: 'view_contests' },
+  { module: 'Sharad Samman', permissionName: 'Manage Contest Sessions', permissionKey: 'manage_contests' },
+  { module: 'Sharad Samman', permissionName: 'Manage Voting & Windows', permissionKey: 'manage_voting' },
+  { module: 'Sharad Samman', permissionName: 'Voting Audit & Controls', permissionKey: 'view_voting_audit' },
+  { module: 'Sharad Samman', permissionName: 'Export Sharad Samman Data', permissionKey: 'export_sharad_samman' },
 ];
 
 async function main() {
@@ -63,7 +72,7 @@ async function main() {
         },
       });
     }
-    console.log(`✓ Assigned 4 permissions to role "${portalAdminRole.name}" (ID: ${portalAdminRole.id})`);
+    console.log(`✓ Assigned ${permissionIds.length} permissions to role "${portalAdminRole.name}" (ID: ${portalAdminRole.id})`);
   } else {
     console.log('ℹ Role "portal-administrator" not found, skipping role mapping (Super Admin inherits all via wildcard)');
   }

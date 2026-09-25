@@ -81,7 +81,7 @@ export function PublicVotingResultsPage() {
       setLoading(true);
       const res = await votingService.public.getLeaderboard(targetContestId);
       setLeaderboardData(res);
-      if (res.contestId && targetContestId && res.contestId !== urlContestId) {
+      if (res.contestId && String(res.contestId) !== searchParams.get('contestId')) {
         setSearchParams({ contestId: String(res.contestId) }, { replace: true });
       }
     } catch (err) {

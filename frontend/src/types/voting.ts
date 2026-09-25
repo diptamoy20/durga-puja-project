@@ -4,12 +4,26 @@ export interface CommitteeSnapshot {
   id: number;
   committeeName: string;
   registrationNo: string;
+  committeeId?: string;
   city: string;
   state: string;
+  country?: string;
   venueName?: string;
   venueAddress?: string;
+  landmark?: string;
+  address?: string;
   establishedYear?: number;
+  pujaType?: string;
+  pujaCategory?: string;
+  committeeDescription?: string;
   pandalImage?: string;
+  committeeMedia?: Array<{
+    id: number;
+    title?: string;
+    description?: string;
+    storedPath: string;
+    thumbnailPath?: string;
+  }>;
 }
 
 export interface VotingNomination {
@@ -21,6 +35,7 @@ export interface VotingNomination {
   status: string;
   committee: CommitteeSnapshot;
   snapshotData?: Record<string, any>;
+  photos?: string[];
 }
 
 export interface AvailableContestSummary {
@@ -39,6 +54,8 @@ export interface PublicVotingContest {
   description?: string;
   isVotingOpen: boolean;
   votingStatus?: string;
+  startDate?: string;
+  endDate?: string;
   votingStartDate?: string;
   votingEndDate?: string;
   votingExtendedUntil?: string;
@@ -61,6 +78,7 @@ export interface CaptchaResponse {
 export interface RequestOtpPayload {
   contestId: number;
   email: string;
+  phone?: string;
   captchaToken: string;
   captchaAnswer: string;
 }
@@ -78,6 +96,8 @@ export interface CastVotePayload {
   nominationId: number;
   voterEmail: string;
   voterName?: string;
+  voterPhone?: string;
+  voterAddress?: string;
   voterCity?: string;
   voterCountry?: string;
   otpCode: string;
@@ -134,6 +154,7 @@ export interface FlaggedVoteItem {
   voterCity?: string;
   voterCountry?: string;
   ipAddress?: string;
+  deviceFingerprint?: string;
   riskScore: number;
   flagReason?: string;
   status: VoteStatus;

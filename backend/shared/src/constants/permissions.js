@@ -113,11 +113,20 @@ exports.PERMISSIONS = {
     MANAGE_INVESTMENT_ENQUIRIES: 'manage_investment_enquiries',
     MANAGE_ASSOCIATIONS: 'manage_associations',
     // Sharad Samman
+    VIEW_SHARAD_SAMMAN: 'view_sharad_samman',
     VIEW_NOMINATIONS: 'view_nominations',
+    CREATE_NOMINATIONS: 'create_nominations',
+    EDIT_NOMINATIONS: 'edit_nominations',
+    DELETE_NOMINATIONS: 'delete_nominations',
     MANAGE_NOMINATIONS: 'manage_nominations',
     REVIEW_NOMINATIONS: 'review_nominations',
+    APPROVE_NOMINATIONS: 'approve_nominations',
     SHORTLIST_NOMINATIONS: 'shortlist_nominations',
+    VIEW_CONTESTS: 'view_contests',
     MANAGE_CONTESTS: 'manage_contests',
+    MANAGE_VOTING: 'manage_voting',
+    VIEW_VOTING_AUDIT: 'view_voting_audit',
+    EXPORT_SHARAD_SAMMAN: 'export_sharad_samman',
 };
 /** Human-readable definitions used to populate the `permissions` table. */
 exports.PERMISSION_DEFINITIONS = [
@@ -206,10 +215,19 @@ exports.PERMISSION_DEFINITIONS = [
     { module: 'Investor Showcase', permissionName: 'Publish Opportunities', permissionKey: exports.PERMISSIONS.PUBLISH_INVESTMENTS },
     { module: 'Investor Showcase', permissionName: 'Manage Investment Enquiries', permissionKey: exports.PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES },
     { module: 'Investor Showcase', permissionName: 'Manage Industry Associations', permissionKey: exports.PERMISSIONS.MANAGE_ASSOCIATIONS },
+    { module: 'Sharad Samman', permissionName: 'View Sharad Samman Dashboard', permissionKey: exports.PERMISSIONS.VIEW_SHARAD_SAMMAN },
     { module: 'Sharad Samman', permissionName: 'View Nominations', permissionKey: exports.PERMISSIONS.VIEW_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Create Nominations', permissionKey: exports.PERMISSIONS.CREATE_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Edit Nominations', permissionKey: exports.PERMISSIONS.EDIT_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Delete Nominations', permissionKey: exports.PERMISSIONS.DELETE_NOMINATIONS },
     { module: 'Sharad Samman', permissionName: 'Manage Nominations', permissionKey: exports.PERMISSIONS.MANAGE_NOMINATIONS },
     { module: 'Sharad Samman', permissionName: 'Review Nominations', permissionKey: exports.PERMISSIONS.REVIEW_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Approve / Reject Nominations', permissionKey: exports.PERMISSIONS.APPROVE_NOMINATIONS },
     { module: 'Sharad Samman', permissionName: 'Shortlist Nominations', permissionKey: exports.PERMISSIONS.SHORTLIST_NOMINATIONS },
-    { module: 'Sharad Samman', permissionName: 'Manage Contests', permissionKey: exports.PERMISSIONS.MANAGE_CONTESTS },
+    { module: 'Sharad Samman', permissionName: 'View Contest Sessions', permissionKey: exports.PERMISSIONS.VIEW_CONTESTS },
+    { module: 'Sharad Samman', permissionName: 'Manage Contest Sessions', permissionKey: exports.PERMISSIONS.MANAGE_CONTESTS },
+    { module: 'Sharad Samman', permissionName: 'Manage Voting & Windows', permissionKey: exports.PERMISSIONS.MANAGE_VOTING },
+    { module: 'Sharad Samman', permissionName: 'Voting Audit & Controls', permissionKey: exports.PERMISSIONS.VIEW_VOTING_AUDIT },
+    { module: 'Sharad Samman', permissionName: 'Export Sharad Samman Data', permissionKey: exports.PERMISSIONS.EXPORT_SHARAD_SAMMAN },
 ];
 exports.ALL_PERMISSION_KEYS = exports.PERMISSION_DEFINITIONS.map((definition) => definition.permissionKey);

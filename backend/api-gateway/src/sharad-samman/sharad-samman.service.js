@@ -266,6 +266,12 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             );
         }
 
+        const photos = Array.isArray(dto.photos) ? dto.photos.filter(Boolean) : [];
+        const initialSnapshot = {
+            ...(photos.length > 0 ? { photos } : {}),
+            ...(dto.pandalImage ? { pandalImage: dto.pandalImage } : {}),
+        };
+
         try {
             return await this.prisma.sharadSammanNomination.create({
                 data: {
@@ -274,6 +280,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                     category,
                     title: dto.title?.trim() || null,
                     description: dto.description?.trim() || null,
+                    snapshotData: Object.keys(initialSnapshot).length > 0 ? initialSnapshot : null,
                     status: database_1.NominationStatus.DRAFT,
                     createdById: actorId ?? null,
                 },
@@ -285,6 +292,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                             registrationNo: true,
                             city: true,
                             state: true,
+                            pandalImage: true,
                         },
                     },
                     contest: {
@@ -307,7 +315,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
     }
 
     /**
-     * Edit nomination details (category, title, description)
+     * Edit nomination details (category, title, description, photos)
      * Rejects changes to snapshotData and prevents editing of shortlisted nominations.
      */
     async updateNomination(id, dto) {
@@ -352,6 +360,14 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             }
         }
 
+        const currentSnap = (nomination.snapshotData && typeof nomination.snapshotData === 'object') ? { ...nomination.snapshotData } : {};
+        if (dto.photos !== undefined) {
+            currentSnap.photos = Array.isArray(dto.photos) ? dto.photos.filter(Boolean) : [];
+        }
+        if (dto.pandalImage !== undefined) {
+            currentSnap.pandalImage = dto.pandalImage;
+        }
+
         try {
             return await this.prisma.sharadSammanNomination.update({
                 where: { id: Number(id) },
@@ -359,6 +375,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                     category: newCategory,
                     title: dto.title !== undefined ? dto.title?.trim() || null : nomination.title,
                     description: dto.description !== undefined ? dto.description?.trim() || null : nomination.description,
+                    snapshotData: Object.keys(currentSnap).length > 0 ? currentSnap : null,
                 },
                 include: {
                     committee: true,
@@ -431,7 +448,13 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
 
             // Generate immutable snapshot of committee and candidate data
             const comm = nomination.committee;
+            const prevSnap = (nomination.snapshotData && typeof nomination.snapshotData === 'object') ? nomination.snapshotData : {};
+            const snapPhotos = Array.isArray(prevSnap.photos) ? prevSnap.photos : [];
+            const commPhotos = [prevSnap.pandalImage, comm.pandalImage].filter(Boolean);
+            const allPhotos = Array.from(new Set([...commPhotos, ...snapPhotos])).filter(Boolean);
+
             data.snapshotData = {
+                ...prevSnap,
                 committeeId: comm.id,
                 committeeName: comm.committeeName,
                 registrationNo: comm.registrationNo,
@@ -443,7 +466,8 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                 country: comm.country,
                 venueName: comm.venueName,
                 venueAddress: comm.venueAddress,
-                pandalImage: comm.pandalImage,
+                pandalImage: prevSnap.pandalImage || comm.pandalImage,
+                photos: allPhotos,
                 category: nomination.category || comm.pujaCategory,
                 title: nomination.title || comm.committeeName,
                 description: nomination.description || comm.committeeDescription,
@@ -844,6 +868,12 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
         const submitNow = Boolean(dto.submitNow);
         const status = submitNow ? database_1.NominationStatus.SUBMITTED : database_1.NominationStatus.DRAFT;
 
+        const photos = Array.isArray(dto.photos) ? dto.photos.filter(Boolean) : [];
+        const initialSnapshot = {
+            ...(photos.length > 0 ? { photos } : {}),
+            ...(dto.pandalImage ? { pandalImage: dto.pandalImage } : {}),
+        };
+
         try {
             return await this.prisma.sharadSammanNomination.create({
                 data: {
@@ -852,6 +882,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                     category,
                     title: dto.title?.trim() || null,
                     description: dto.description?.trim() || null,
+                    snapshotData: Object.keys(initialSnapshot).length > 0 ? initialSnapshot : null,
                     status,
                     submittedAt: submitNow ? new Date() : null,
                     createdById: actorId ?? null,
@@ -864,6 +895,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                             registrationNo: true,
                             city: true,
                             state: true,
+                            pandalImage: true,
                         },
                     },
                     contest: {
@@ -924,11 +956,20 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
             }
         }
 
+        const currentSnap = (nomination.snapshotData && typeof nomination.snapshotData === 'object') ? { ...nomination.snapshotData } : {};
+        if (dto.photos !== undefined) {
+            currentSnap.photos = Array.isArray(dto.photos) ? dto.photos.filter(Boolean) : [];
+        }
+        if (dto.pandalImage !== undefined) {
+            currentSnap.pandalImage = dto.pandalImage;
+        }
+
         const submitNow = Boolean(dto.submitNow);
         const data = {
             category: newCategory,
             title: dto.title !== undefined ? dto.title?.trim() || null : nomination.title,
             description: dto.description !== undefined ? dto.description?.trim() || null : nomination.description,
+            snapshotData: Object.keys(currentSnap).length > 0 ? currentSnap : null,
             updatedAt: new Date(),
         };
 
@@ -1007,30 +1048,44 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
      * Compute effective closing date for a contest
      */
     computeEffectiveClosingDate(contest) {
-        return contest.votingExtendedUntil ? new Date(contest.votingExtendedUntil) : (contest.votingEndDate ? new Date(contest.votingEndDate) : null);
+        return contest.votingExtendedUntil
+            ? new Date(contest.votingExtendedUntil)
+            : (contest.votingEndDate
+                ? new Date(contest.votingEndDate)
+                : (contest.endDate ? new Date(contest.endDate) : null));
     }
 
     /**
      * Determine dynamic voting status based on dates & manual closing
      */
     resolveVotingStatus(contest) {
-        if (contest.votingStatus === database_1.VotingStatus.CLOSED) {
+        if (contest.votingStatus === database_1.VotingStatus.CLOSED || contest.status === database_1.ContestStatus.CLOSED) {
             return database_1.VotingStatus.CLOSED;
         }
-        if (!contest.votingStartDate || !contest.votingEndDate) {
-            return database_1.VotingStatus.NOT_CONFIGURED;
-        }
-        const now = new Date();
+
+        const effectiveStart = contest.votingStartDate
+            ? new Date(contest.votingStartDate)
+            : (contest.startDate ? new Date(contest.startDate) : null);
+
         const effectiveEnd = this.computeEffectiveClosingDate(contest);
+
+        if (!effectiveStart && !effectiveEnd) {
+            return contest.votingStatus || database_1.VotingStatus.NOT_CONFIGURED;
+        }
+
+        const now = new Date();
 
         if (effectiveEnd && now >= effectiveEnd) {
             return database_1.VotingStatus.CLOSED;
         }
-        if (now < new Date(contest.votingStartDate)) {
+        if (effectiveStart && now < effectiveStart) {
             return database_1.VotingStatus.SCHEDULED;
         }
         if (contest.votingExtendedUntil) {
             return database_1.VotingStatus.EXTENDED;
+        }
+        if (contest.votingStatus === database_1.VotingStatus.ACTIVE || contest.status === database_1.ContestStatus.ACTIVE) {
+            return database_1.VotingStatus.ACTIVE;
         }
         return database_1.VotingStatus.ACTIVE;
     }
@@ -1044,7 +1099,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                 _count: {
                     select: {
                         nominations: {
-                            where: { status: database_1.NominationStatus.SHORTLISTED },
+                            where: { status: { in: [database_1.NominationStatus.SHORTLISTED, database_1.NominationStatus.APPROVED] } },
                         },
                     },
                 },
@@ -1084,7 +1139,7 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
                 _count: {
                     select: {
                         nominations: {
-                            where: { status: database_1.NominationStatus.SHORTLISTED },
+                            where: { status: { in: [database_1.NominationStatus.SHORTLISTED, database_1.NominationStatus.APPROVED] } },
                         },
                     },
                 },
@@ -1098,21 +1153,21 @@ let SharadSammanService = SharadSammanService_1 = class SharadSammanService {
         const effectiveClosingDate = this.computeEffectiveClosingDate(contest);
         const computedStatus = this.resolveVotingStatus(contest);
 
-        // Get shortlisted candidate breakdown by category
+        // Get candidate breakdown by category
         const categoryCounts = await this.prisma.sharadSammanNomination.groupBy({
             by: ['category'],
             where: {
                 contestId: id,
-                status: database_1.NominationStatus.SHORTLISTED,
+                status: { in: [database_1.NominationStatus.SHORTLISTED, database_1.NominationStatus.APPROVED] },
             },
             _count: { id: true },
         });
 
-        // Get shortlisted nominations preview
+        // Get nominations preview
         const shortlistedNominations = await this.prisma.sharadSammanNomination.findMany({
             where: {
                 contestId: id,
-                status: database_1.NominationStatus.SHORTLISTED,
+                status: { in: [database_1.NominationStatus.SHORTLISTED, database_1.NominationStatus.APPROVED] },
             },
             select: {
                 id: true,

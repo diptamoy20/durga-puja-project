@@ -60,6 +60,7 @@ export interface CandidateSnapshot {
   venueName: string;
   venueAddress: string;
   pandalImage?: string;
+  photos?: string[];
   category?: string;
   title?: string;
   description?: string;
@@ -155,12 +156,16 @@ export interface CreateNominationPayload {
   category: string;
   title?: string;
   description?: string;
+  photos?: string[];
+  pandalImage?: string;
 }
 
 export interface UpdateNominationPayload {
   category?: string;
   title?: string;
   description?: string;
+  photos?: string[];
+  pandalImage?: string;
 }
 
 export interface TransitionStatusPayload {

@@ -21,6 +21,8 @@ class CreateNominationDto {
     category;
     title;
     description;
+    photos;
+    pandalImage;
 }
 exports.CreateNominationDto = CreateNominationDto;
 __decorate([
@@ -55,11 +57,25 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateNominationDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Array of Puja photo URLs (Pandal, Idol, Illumination, Decor)', type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    __metadata("design:type", Array)
+], CreateNominationDto.prototype, "photos", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Primary pandal cover image URL' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateNominationDto.prototype, "pandalImage", void 0);
 
 class UpdateNominationDto {
     category;
     title;
     description;
+    photos;
+    pandalImage;
 }
 exports.UpdateNominationDto = UpdateNominationDto;
 __decorate([
@@ -83,6 +99,18 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateNominationDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Array of Puja photo URLs', type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    __metadata("design:type", Array)
+], UpdateNominationDto.prototype, "photos", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Primary pandal cover image URL' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateNominationDto.prototype, "pandalImage", void 0);
 
 class NominationStatusTransitionDto {
     status;
@@ -172,6 +200,8 @@ class CommitteeCreateNominationDto {
     category;
     title;
     description;
+    photos;
+    pandalImage;
     submitNow;
 }
 exports.CommitteeCreateNominationDto = CommitteeCreateNominationDto;
@@ -203,6 +233,18 @@ __decorate([
     __metadata("design:type", String)
 ], CommitteeCreateNominationDto.prototype, "description", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Array of Puja photo URLs (Pandal, Idol, Illumination, Decor)', type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    __metadata("design:type", Array)
+], CommitteeCreateNominationDto.prototype, "photos", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Primary pandal cover image URL' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CommitteeCreateNominationDto.prototype, "pandalImage", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Whether to submit immediately rather than saving as draft', default: false }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Boolean),
@@ -214,6 +256,8 @@ class CommitteeUpdateNominationDto {
     category;
     title;
     description;
+    photos;
+    pandalImage;
     submitNow;
 }
 exports.CommitteeUpdateNominationDto = CommitteeUpdateNominationDto;
@@ -238,6 +282,18 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CommitteeUpdateNominationDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Array of Puja photo URLs (Pandal, Idol, Illumination, Decor)', type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    __metadata("design:type", Array)
+], CommitteeUpdateNominationDto.prototype, "photos", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Primary pandal cover image URL' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CommitteeUpdateNominationDto.prototype, "pandalImage", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Whether to transition from draft to submitted on save', default: false }),
     (0, class_validator_1.IsOptional)(),

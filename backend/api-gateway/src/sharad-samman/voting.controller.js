@@ -171,9 +171,9 @@ __decorate([
     (0, shared_1.Public)(),
     (0, response_interceptor_1.ResponseMessage)('Voting leaderboard retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get real-time voting leaderboard (valid votes only)' }),
-    __param(0, (0, common_1.Query)('contestId', common_1.ParseIntPipe)),
+    __param(0, (0, common_1.Query)('contestId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], VotingController.prototype, "getLeaderboard", null);
 
@@ -182,9 +182,9 @@ __decorate([
     (0, shared_1.Public)(),
     (0, response_interceptor_1.ResponseMessage)('Final voting results retrieved successfully'),
     (0, swagger_1.ApiOperation)({ summary: 'Get official published voting results and winners' }),
-    __param(0, (0, common_1.Query)('contestId', common_1.ParseIntPipe)),
+    __param(0, (0, common_1.Query)('contestId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], VotingController.prototype, "getResults", null);
 

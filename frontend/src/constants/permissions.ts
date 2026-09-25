@@ -121,11 +121,20 @@ export const PERMISSIONS = {
   MANAGE_ASSOCIATIONS: 'manage_associations',
 
   // Sharad Samman
+  VIEW_SHARAD_SAMMAN: 'view_sharad_samman',
   VIEW_NOMINATIONS: 'view_nominations',
+  CREATE_NOMINATIONS: 'create_nominations',
+  EDIT_NOMINATIONS: 'edit_nominations',
+  DELETE_NOMINATIONS: 'delete_nominations',
   MANAGE_NOMINATIONS: 'manage_nominations',
   REVIEW_NOMINATIONS: 'review_nominations',
+  APPROVE_NOMINATIONS: 'approve_nominations',
   SHORTLIST_NOMINATIONS: 'shortlist_nominations',
+  VIEW_CONTESTS: 'view_contests',
   MANAGE_CONTESTS: 'manage_contests',
+  MANAGE_VOTING: 'manage_voting',
+  VIEW_VOTING_AUDIT: 'view_voting_audit',
+  EXPORT_SHARAD_SAMMAN: 'export_sharad_samman',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

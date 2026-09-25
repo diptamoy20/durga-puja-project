@@ -40,6 +40,8 @@ export function NominationFormPage() {
   const [category, setCategory] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [pandalImage, setPandalImage] = useState('');
+  const [photos, setPhotos] = useState<string[]>(['']);
   const [existingNomination, setExistingNomination] = useState<SharadSammanNomination | null>(null);
 
   const selectedCommittee = committees.find((c) => String(c.id) === String(pujaCommitteeId));
@@ -94,6 +96,15 @@ export function NominationFormPage() {
         setTitle(nom.title || '');
         setDescription(nom.description || '');
         setCategory(nom.category || '');
+        setPandalImage(nom.snapshotData?.pandalImage || nom.committee?.pandalImage || '');
+
+        const existingPhotos = Array.isArray(nom.snapshotData?.photos) ? nom.snapshotData.photos : [];
+        if (existingPhotos.length > 0) {
+          setPhotos(existingPhotos);
+        } else if (nom.committee?.pandalImage) {
+          setPhotos([nom.committee.pandalImage]);
+        }
+
         if (nom.category && !cats.includes(nom.category)) {
           setAvailableCategories((prev) => [nom.category, ...prev]);
         }
@@ -151,6 +162,8 @@ export function NominationFormPage() {
     setSubmitAction(directSubmit ? 'submit' : 'draft');
 
     const trimmedCategory = category.trim();
+    const cleanPhotos = photos.map((p) => p.trim()).filter(Boolean);
+    const primaryPandal = pandalImage.trim() || cleanPhotos[0] || undefined;
 
     try {
       if (isEdit && id) {
@@ -158,6 +171,8 @@ export function NominationFormPage() {
           category: trimmedCategory,
           title: title.trim() || undefined,
           description: description.trim() || undefined,
+          photos: cleanPhotos.length > 0 ? cleanPhotos : undefined,
+          pandalImage: primaryPandal,
         });
         toast.success('Nomination updated successfully.');
         navigate(ROUTES.SHARAD_SAMMAN_NOMINATION_DETAIL(id));
@@ -168,6 +183,8 @@ export function NominationFormPage() {
           category: trimmedCategory,
           title: title.trim() || undefined,
           description: description.trim() || undefined,
+          photos: cleanPhotos.length > 0 ? cleanPhotos : undefined,
+          pandalImage: primaryPandal,
         });
 
         if (directSubmit) {
@@ -468,7 +485,121 @@ export function NominationFormPage() {
               </div>
             </div>
 
-            {/* Section 3: Actions */}
+            {/* Section 3: Puja & Pandal Pictures */}
+            <div className="samman-form-section">
+              <h2 className="samman-form-section__title">Puja & Pandal Pictures</h2>
+              <p className="samman-form-section__desc">
+                Provide high-resolution photos of the Puja pandal, idol craftsmanship, illumination architecture, and traditional decor. These pictures will be displayed on the public Sharad Samman voting portal.
+              </p>
+
+              <div className="field">
+                <label className="field__label" htmlFor="form-pandal-image">
+                  Primary Pandal Cover Image URL <span className="field__optional">(Optional)</span>
+                </label>
+                <input
+                  id="form-pandal-image"
+                  type="url"
+                  className="field__control"
+                  placeholder="https://example.com/pandal-exterior.jpg"
+                  value={pandalImage}
+                  onChange={(e) => setPandalImage(e.target.value)}
+                />
+                <p className="field__hint">
+                  Main cover photograph showcasing the exterior pandal theme and architectural structure.
+                </p>
+              </div>
+
+              <div className="field">
+                <label className="field__label">
+                  Additional Puja & Artistry Photos <span className="field__optional">({photos.filter(Boolean).length} added)</span>
+                </label>
+                <p className="field__hint" style={{ marginBottom: 'var(--space-3)' }}>
+                  Add multiple pictures (Idol artistry, lighting decoration, traditional craftsmanship, cultural rituals).
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {photos.map((photoUrl, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-2)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '48px',
+                          height: '48px',
+                          borderRadius: '8px',
+                          background: 'var(--colour-canvas)',
+                          border: '1px solid var(--colour-border)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {photoUrl.trim() ? (
+                          <img
+                            src={photoUrl}
+                            alt={`Preview ${idx + 1}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <i className="fas fa-image" style={{ color: 'var(--colour-ink-soft)', fontSize: '1.2rem' }} />
+                        )}
+                      </div>
+
+                      <input
+                        type="url"
+                        className="field__control"
+                        placeholder={`Photo ${idx + 1} URL (e.g. idol, illumination, craftsmanship)...`}
+                        value={photoUrl}
+                        onChange={(e) => {
+                          const updated = [...photos];
+                          updated[idx] = e.target.value;
+                          setPhotos(updated);
+                        }}
+                        style={{ flex: 1 }}
+                      />
+
+                      {photos.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setPhotos(photos.filter((_, i) => i !== idx));
+                          }}
+                          title="Remove this photo"
+                        >
+                          <i className="fas fa-trash-can" style={{ color: 'var(--color-danger)' }} />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: 'var(--space-3)' }}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPhotos([...photos, ''])}
+                  >
+                    <i className="fas fa-plus" style={{ marginRight: '6px' }} />
+                    Add Another Picture
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Actions */}
             <div style={{ padding: 'var(--space-4) var(--space-5)', background: 'var(--colour-canvas)', borderTop: '1px solid var(--colour-border)' }}>
               <div className="form-actions">
                 <Button

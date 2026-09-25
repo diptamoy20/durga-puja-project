@@ -33,6 +33,41 @@ let VotingService = VotingService_1 = class VotingService {
     }
 
     /**
+     * Resolve whether a contest's public voting window is currently active and open.
+     * Respects voting window dates first (votingStartDate / votingEndDate / votingExtendedUntil).
+     * Falls back to contest timeline dates (startDate / endDate) when voting dates are not explicitly configured.
+     */
+    resolveVotingWindowOpen(contest, now = new Date()) {
+        if (!contest) return false;
+        if (contest.status === 'CLOSED' || contest.votingStatus === 'CLOSED') {
+            return false;
+        }
+
+        const effectiveStart = contest.votingStartDate 
+            ? new Date(contest.votingStartDate) 
+            : (contest.startDate ? new Date(contest.startDate) : null);
+
+        const effectiveEnd = contest.votingExtendedUntil
+            ? new Date(contest.votingExtendedUntil)
+            : contest.votingEndDate
+                ? new Date(contest.votingEndDate)
+                : (contest.endDate ? new Date(contest.endDate) : null);
+
+        if (effectiveStart && !isNaN(effectiveStart.getTime()) && now < effectiveStart) {
+            return false;
+        }
+        if (effectiveEnd && !isNaN(effectiveEnd.getTime()) && now > effectiveEnd) {
+            return false;
+        }
+
+        if (contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED' || contest.status === 'ACTIVE') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * DB Fallback Helpers for robust execution across all environments
      */
     async dbFindVoteByContestAndEmail(contestId, voterEmail) {
@@ -259,7 +294,7 @@ let VotingService = VotingService_1 = class VotingService {
             include: {
                 nominations: {
                     where: {
-                        status: 'SHORTLISTED',
+                        status: { in: ['SHORTLISTED', 'APPROVED'] },
                     },
                     include: {
                         committee: {
@@ -267,12 +302,30 @@ let VotingService = VotingService_1 = class VotingService {
                                 id: true,
                                 committeeName: true,
                                 registrationNo: true,
+                                committeeId: true,
                                 city: true,
                                 state: true,
+                                country: true,
                                 venueName: true,
                                 venueAddress: true,
+                                landmark: true,
+                                address: true,
                                 establishedYear: true,
+                                pujaType: true,
+                                pujaCategory: true,
+                                committeeDescription: true,
                                 pandalImage: true,
+                                committeeMedia: {
+                                    take: 12,
+                                    select: {
+                                        id: true,
+                                        title: true,
+                                        description: true,
+                                        storedPath: true,
+                                        thumbnailPath: true,
+                                        mediaType: true,
+                                    },
+                                },
                             },
                         },
                     },
@@ -291,20 +344,11 @@ let VotingService = VotingService_1 = class VotingService {
         }
 
         const now = new Date();
-        const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate;
-        let isWindowOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED';
-        if (contest.votingStartDate && now < new Date(contest.votingStartDate)) {
-            isWindowOpen = false;
-        }
-        if (effectiveEnd && now > new Date(effectiveEnd)) {
-            isWindowOpen = false;
-        }
-        if (contest.votingStatus === 'CLOSED' || contest.status === 'CLOSED') {
-            isWindowOpen = false;
-        }
+        const isWindowOpen = this.resolveVotingWindowOpen(contest, now);
 
         return {
             hasActiveContest: true,
+            isVotingOpen: isWindowOpen,
             contest: {
                 id: contest.id,
                 name: contest.name,
@@ -312,36 +356,73 @@ let VotingService = VotingService_1 = class VotingService {
                 description: contest.description,
                 isVotingOpen: isWindowOpen,
                 votingStatus: contest.votingStatus,
-                votingStartDate: contest.votingStartDate,
-                votingEndDate: contest.votingEndDate,
+                startDate: contest.startDate,
+                endDate: contest.endDate,
+                votingStartDate: contest.votingStartDate || contest.startDate,
+                votingEndDate: contest.votingExtendedUntil || contest.votingEndDate || contest.endDate,
                 votingExtendedUntil: contest.votingExtendedUntil,
                 resultsPublished: contest.votingStatus === 'CLOSED',
             },
             availableContests: allContests.map((c) => {
-                const effEnd = c.votingExtendedUntil || c.votingEndDate;
-                let cOpen = c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED';
-                if (c.votingStartDate && now < new Date(c.votingStartDate)) cOpen = false;
-                if (effEnd && now > new Date(effEnd)) cOpen = false;
-                if (c.votingStatus === 'CLOSED' || c.status === 'CLOSED') cOpen = false;
+                const cOpen = this.resolveVotingWindowOpen(c, now);
                 return {
                     id: c.id,
                     name: c.name,
                     year: c.year,
                     status: c.status,
                     votingStatus: c.votingStatus,
+                    startDate: c.startDate,
+                    endDate: c.endDate,
                     isVotingOpen: cOpen,
                 };
             }),
-            nominations: contest.nominations.map((nom) => ({
-                id: nom.id,
-                contestId: nom.contestId,
-                category: nom.category,
-                title: nom.title,
-                description: nom.description,
-                status: nom.status,
-                committee: nom.committee,
-                snapshotData: nom.snapshotData,
-            })),
+            nominations: contest.nominations.map((nom) => {
+                const rawSnap = (nom.snapshotData && typeof nom.snapshotData === 'object') ? nom.snapshotData : {};
+                const snapPhotos = Array.isArray(rawSnap.photos) ? rawSnap.photos : [];
+                const mediaPhotos = nom.committee?.committeeMedia?.map((m) => m.storedPath || m.thumbnailPath).filter(Boolean) || [];
+                const directPandal = [rawSnap.pandalImage, nom.committee?.pandalImage].filter(Boolean);
+                const sanitizeUrl = (raw) => {
+                    if (!raw || typeof raw !== 'string') return null;
+                    const clean = raw.trim().replace(/^["']|["']$/g, '');
+                    if (!clean) return null;
+                    if (/^[A-Za-z]:[\\/]/.test(clean) || clean.includes('\\Users\\') || clean.includes('\\Screenshots\\') || clean.includes('\\Pictures\\')) {
+                        return null;
+                    }
+                    if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:image/')) {
+                        return clean;
+                    }
+                    if (clean.startsWith('committee-documents/') || clean.startsWith('uploads/')) {
+                        return null;
+                    }
+                    return clean;
+                };
+
+                const validPhotos = Array.from(new Set([
+                    ...directPandal,
+                    ...snapPhotos,
+                    ...mediaPhotos,
+                ]))
+                    .map(sanitizeUrl)
+                    .filter(Boolean);
+
+                const photos = validPhotos.length > 0 
+                    ? validPhotos 
+                    : ['https://images.unsplash.com/photo-1601614749441-df07a04944d1?auto=format&fit=crop&w=1200&q=80'];
+
+                const computedTitle = nom.title || (nom.committee?.committeeName ? `${nom.committee.committeeName} - ${nom.category}` : `Puja Nomination #${nom.id}`);
+
+                return {
+                    id: nom.id,
+                    contestId: nom.contestId,
+                    category: nom.category,
+                    title: computedTitle,
+                    description: nom.description || nom.committee?.committeeDescription || '',
+                    status: nom.status,
+                    committee: nom.committee,
+                    snapshotData: nom.snapshotData,
+                    photos,
+                };
+            }),
         };
     }
 
@@ -365,17 +446,18 @@ let VotingService = VotingService_1 = class VotingService {
         }
 
         const now = new Date();
-        const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate;
-        const isVotingOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED' || Boolean(contest.isVotingOpen);
+        const isVotingOpen = this.resolveVotingWindowOpen(contest, now);
 
         if (!isVotingOpen) {
+            const effectiveStart = contest.votingStartDate || contest.startDate;
+            const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate || contest.endDate;
+            if (effectiveStart && now < new Date(effectiveStart)) {
+                throw new common_1.BadRequestException(`Voting for ${contest.name} will begin on ${new Date(effectiveStart).toLocaleDateString()}.`);
+            }
+            if (effectiveEnd && now > new Date(effectiveEnd)) {
+                throw new common_1.BadRequestException(`Voting for ${contest.name} concluded on ${new Date(effectiveEnd).toLocaleDateString()}.`);
+            }
             throw new common_1.BadRequestException('Voting is currently closed or not yet active for this contest session.');
-        }
-        if (contest.votingStartDate && now < new Date(contest.votingStartDate)) {
-            throw new common_1.BadRequestException(`Voting for ${contest.name} will begin on ${new Date(contest.votingStartDate).toLocaleDateString()}.`);
-        }
-        if (effectiveEnd && now > new Date(effectiveEnd)) {
-            throw new common_1.BadRequestException(`Voting for ${contest.name} concluded on ${new Date(effectiveEnd).toLocaleDateString()}.`);
         }
 
         // 3. Database Check: Check if email has already voted in this contest
@@ -461,17 +543,18 @@ let VotingService = VotingService_1 = class VotingService {
         }
 
         const now = new Date();
-        const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate;
-        const isVotingOpen = contest.votingStatus === 'ACTIVE' || contest.votingStatus === 'EXTENDED' || Boolean(contest.isVotingOpen);
+        const isVotingOpen = this.resolveVotingWindowOpen(contest, now);
 
         if (!isVotingOpen) {
+            const effectiveStart = contest.votingStartDate || contest.startDate;
+            const effectiveEnd = contest.votingExtendedUntil || contest.votingEndDate || contest.endDate;
+            if (effectiveStart && now < new Date(effectiveStart)) {
+                throw new common_1.BadRequestException(`Voting for ${contest.name} will begin on ${new Date(effectiveStart).toLocaleDateString()}.`);
+            }
+            if (effectiveEnd && now > new Date(effectiveEnd)) {
+                throw new common_1.BadRequestException(`Voting for ${contest.name} concluded on ${new Date(effectiveEnd).toLocaleDateString()}.`);
+            }
             throw new common_1.BadRequestException('Voting is currently closed for this contest session.');
-        }
-        if (contest.votingStartDate && now < new Date(contest.votingStartDate)) {
-            throw new common_1.BadRequestException(`Voting for ${contest.name} will begin on ${new Date(contest.votingStartDate).toLocaleDateString()}.`);
-        }
-        if (effectiveEnd && now > new Date(effectiveEnd)) {
-            throw new common_1.BadRequestException(`Voting for ${contest.name} concluded on ${new Date(effectiveEnd).toLocaleDateString()}.`);
         }
 
         // 3. Validate Nomination
@@ -484,8 +567,8 @@ let VotingService = VotingService_1 = class VotingService {
         if (!nomination || nomination.contestId !== dto.contestId) {
             throw new common_1.NotFoundException('The selected nomination was not found in this contest.');
         }
-        if (nomination.status !== 'SHORTLISTED') {
-            throw new common_1.BadRequestException('Only shortlisted nominations are eligible for public voting.');
+        if (nomination.status !== 'SHORTLISTED' && nomination.status !== 'APPROVED') {
+            throw new common_1.BadRequestException('Only shortlisted or approved nominations are eligible for public voting.');
         }
 
         // 4. One-Person-One-Vote Database Guard
@@ -523,6 +606,10 @@ let VotingService = VotingService_1 = class VotingService {
 
         // 6. Record Vote in Database
         try {
+            const finalLocation = dto.voterAddress?.trim()
+                ? (dto.voterCity?.trim() ? `${dto.voterAddress.trim()}, ${dto.voterCity.trim()}` : dto.voterAddress.trim())
+                : (dto.voterCity?.trim() || null);
+
             const vote = await this.dbCreateVote({
                 contestId: dto.contestId,
                 nominationId: dto.nominationId,
@@ -530,7 +617,7 @@ let VotingService = VotingService_1 = class VotingService {
                 voterName: dto.voterName?.trim() || null,
                 voterPhone: dto.voterPhone?.trim() || null,
                 voterCountry: dto.voterCountry?.trim() || 'India',
-                voterCity: dto.voterCity?.trim() || null,
+                voterCity: finalLocation,
                 status,
                 riskScore,
                 flagReason,
@@ -574,38 +661,49 @@ let VotingService = VotingService_1 = class VotingService {
                 year: true,
                 status: true,
                 votingStatus: true,
+                votingStartDate: true,
+                votingEndDate: true,
+                votingExtendedUntil: true,
             },
         });
 
-        let contest = null;
-        if (contestId) {
-            contest = await this.prisma.contest.findUnique({ where: { id: Number(contestId) } });
-        } else {
-            // Priority: Active voting contest, then active status, then latest
-            contest = await this.prisma.contest.findFirst({
-                where: {
-                    votingStatus: { in: ['ACTIVE', 'EXTENDED'] },
-                },
-                orderBy: { year: 'desc' },
-            });
-            if (!contest) {
-                contest = await this.prisma.contest.findFirst({
-                    where: { status: 'ACTIVE' },
-                    orderBy: { year: 'desc' },
-                });
-            }
-            if (!contest) {
-                contest = await this.prisma.contest.findFirst({
-                    orderBy: { year: 'desc' },
-                });
+        let targetContestId = contestId ? Number(contestId) : null;
+
+        if (!targetContestId) {
+            const activeVoting = allContests.find((c) =>
+                c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED'
+            );
+            if (activeVoting) {
+                targetContestId = activeVoting.id;
+            } else {
+                const scheduledVoting = allContests.find((c) => c.votingStatus === 'SCHEDULED');
+                if (scheduledVoting) {
+                    targetContestId = scheduledVoting.id;
+                } else {
+                    const activeStatus = allContests.find((c) => c.status === 'ACTIVE');
+                    if (activeStatus) {
+                        targetContestId = activeStatus.id;
+                    } else if (allContests.length > 0) {
+                        targetContestId = allContests[0].id;
+                    }
+                }
             }
         }
 
-        if (!contest) {
+        if (!targetContestId) {
             throw new common_1.NotFoundException(`No active contest found.`);
         }
 
-        const targetContestId = contest.id;
+        const contest = await this.prisma.contest.findUnique({
+            where: { id: targetContestId },
+        });
+
+        if (!contest) {
+            throw new common_1.NotFoundException(`Contest with ID ${targetContestId} not found.`);
+        }
+
+        const now = new Date();
+        const isWindowOpen = this.resolveVotingWindowOpen(contest, now);
 
         // Aggregate valid votes by nomination directly from database
         const voteCounts = await this.prisma.$queryRaw`
@@ -621,7 +719,7 @@ let VotingService = VotingService_1 = class VotingService {
         const nominations = await this.prisma.sharadSammanNomination.findMany({
             where: {
                 contestId: targetContestId,
-                status: 'SHORTLISTED',
+                status: { in: ['SHORTLISTED', 'APPROVED'] },
             },
             include: {
                 committee: {
@@ -661,17 +759,22 @@ let VotingService = VotingService_1 = class VotingService {
             contestId: contest.id,
             contestName: contest.name,
             contestYear: contest.year,
-            isVotingOpen: contest.isVotingOpen,
-            resultsPublished: contest.resultsPublished,
+            isVotingOpen: isWindowOpen,
+            resultsPublished: contest.votingStatus === 'CLOSED',
             totalValidVotes,
-            availableContests: allContests.map((c) => ({
-                id: c.id,
-                name: c.name,
-                year: c.year,
-                status: c.status,
-                votingStatus: c.votingStatus,
-                isVotingOpen: c.votingStatus === 'ACTIVE' || c.votingStatus === 'EXTENDED' || Boolean(c.isVotingOpen),
-            })),
+            availableContests: allContests.map((c) => {
+                const cOpen = this.resolveVotingWindowOpen(c, now);
+                return {
+                    id: c.id,
+                    name: c.name,
+                    year: c.year,
+                    status: c.status,
+                    votingStatus: c.votingStatus,
+                    startDate: c.startDate,
+                    endDate: c.endDate,
+                    isVotingOpen: cOpen,
+                };
+            }),
             leaderboard,
         };
     }

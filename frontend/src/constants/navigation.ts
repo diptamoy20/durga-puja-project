@@ -138,25 +138,25 @@ export const NAVIGATION: NavSection[] = [
 
   {
     label: 'Sharad Samman',
-    permissions: [PERMISSIONS.VIEW_NOMINATIONS],
+    permissions: [PERMISSIONS.VIEW_NOMINATIONS, PERMISSIONS.VIEW_SHARAD_SAMMAN],
     items: [
       { label: 'Dashboard', icon: 'fa-trophy', to: ROUTES.SHARAD_SAMMAN_DASHBOARD, end: true },
       {
         label: 'Contest Sessions',
         icon: 'fa-calendar-check',
-        permissions: [PERMISSIONS.MANAGE_CONTESTS],
+        permissions: [PERMISSIONS.MANAGE_CONTESTS, PERMISSIONS.VIEW_CONTESTS],
         to: ROUTES.SHARAD_SAMMAN_CONTESTS,
       },
       {
         label: 'Voting Management',
         icon: 'fa-check-to-slot',
-        permissions: [PERMISSIONS.MANAGE_CONTESTS],
+        permissions: [PERMISSIONS.MANAGE_CONTESTS, PERMISSIONS.MANAGE_VOTING],
         to: ROUTES.SHARAD_SAMMAN_VOTING,
       },
       {
         label: 'Voting Audit & Controls',
         icon: 'fa-shield-halved',
-        permissions: [PERMISSIONS.MANAGE_NOMINATIONS],
+        permissions: [PERMISSIONS.MANAGE_NOMINATIONS, PERMISSIONS.VIEW_VOTING_AUDIT],
         to: ROUTES.SHARAD_SAMMAN_VOTING_AUDIT,
       },
       { label: 'All Nominations', icon: 'fa-list-check', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
@@ -167,7 +167,7 @@ export const NAVIGATION: NavSection[] = [
       {
         label: 'Add Nomination',
         icon: 'fa-circle-plus',
-        permissions: [PERMISSIONS.MANAGE_NOMINATIONS],
+        permissions: [PERMISSIONS.MANAGE_NOMINATIONS, PERMISSIONS.CREATE_NOMINATIONS],
         to: ROUTES.SHARAD_SAMMAN_NOMINATION_NEW,
         end: true,
       },

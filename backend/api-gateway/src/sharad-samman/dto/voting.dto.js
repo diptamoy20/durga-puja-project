@@ -16,6 +16,7 @@ const class_transformer_1 = require("class-transformer");
 
 class RequestVotingOtpDto {
     email;
+    phone;
     contestId;
     captchaAnswer;
     captchaToken;
@@ -27,6 +28,12 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value),
     __metadata("design:type", String)
 ], RequestVotingOtpDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Voter mobile phone number' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RequestVotingOtpDto.prototype, "phone", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'ID of the active contest' }),
     (0, class_transformer_1.Type)(() => Number),
@@ -52,6 +59,7 @@ class CastVoteDto {
     voterEmail;
     voterName;
     voterPhone;
+    voterAddress;
     voterCountry;
     voterCity;
     otpCode;
@@ -59,6 +67,12 @@ class CastVoteDto {
     deviceFingerprint;
 }
 exports.CastVoteDto = CastVoteDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Voter street address' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CastVoteDto.prototype, "voterAddress", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'ID of the active contest' }),
     (0, class_transformer_1.Type)(() => Number),
