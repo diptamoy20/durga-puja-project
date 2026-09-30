@@ -81,6 +81,13 @@ exports.PERMISSIONS = {
     CREATE_PODCASTS: 'create_podcasts',
     EDIT_PODCASTS: 'edit_podcasts',
     DELETE_PODCASTS: 'delete_podcasts',
+    // Associations
+    VIEW_ASSOCIATIONS: 'view_associations',
+    EDIT_ASSOCIATIONS: 'edit_associations',
+    APPROVE_ASSOCIATIONS: 'approve_associations',
+    REJECT_ASSOCIATIONS: 'reject_associations',
+    DELETE_ASSOCIATIONS: 'delete_associations',
+    EXPORT_ASSOCIATIONS: 'export_associations',
     // Webinars / events
     VIEW_WEBINARS: 'view_webinars',
     CREATE_WEBINARS: 'create_webinars',
@@ -89,6 +96,12 @@ exports.PERMISSIONS = {
     MANAGE_WEBINAR_RSVPS: 'manage_webinar_rsvps',
     // Settings
     MANAGE_SETTINGS: 'manage_settings',
+    // Sharad Samman
+    VIEW_NOMINATIONS: 'view_nominations',
+    MANAGE_NOMINATIONS: 'manage_nominations',
+    REVIEW_NOMINATIONS: 'review_nominations',
+    SHORTLIST_NOMINATIONS: 'shortlist_nominations',
+    MANAGE_CONTESTS: 'manage_contests',
 };
 /** Human-readable definitions used to populate the `permissions` table. */
 exports.PERMISSION_DEFINITIONS = [
@@ -152,11 +165,22 @@ exports.PERMISSION_DEFINITIONS = [
     { module: 'Podcast Management', permissionName: 'Create Podcasts', permissionKey: exports.PERMISSIONS.CREATE_PODCASTS },
     { module: 'Podcast Management', permissionName: 'Edit Podcasts', permissionKey: exports.PERMISSIONS.EDIT_PODCASTS },
     { module: 'Podcast Management', permissionName: 'Delete Podcasts', permissionKey: exports.PERMISSIONS.DELETE_PODCASTS },
+    { module: 'Association Management', permissionName: 'View Associations', permissionKey: exports.PERMISSIONS.VIEW_ASSOCIATIONS },
+    { module: 'Association Management', permissionName: 'Edit Associations', permissionKey: exports.PERMISSIONS.EDIT_ASSOCIATIONS },
+    { module: 'Association Management', permissionName: 'Approve Associations', permissionKey: exports.PERMISSIONS.APPROVE_ASSOCIATIONS },
+    { module: 'Association Management', permissionName: 'Reject Associations', permissionKey: exports.PERMISSIONS.REJECT_ASSOCIATIONS },
+    { module: 'Association Management', permissionName: 'Delete Associations', permissionKey: exports.PERMISSIONS.DELETE_ASSOCIATIONS },
+    { module: 'Association Management', permissionName: 'Export Associations', permissionKey: exports.PERMISSIONS.EXPORT_ASSOCIATIONS },
     { module: 'Webinars', permissionName: 'View Webinars', permissionKey: exports.PERMISSIONS.VIEW_WEBINARS },
     { module: 'Webinars', permissionName: 'Create Webinars', permissionKey: exports.PERMISSIONS.CREATE_WEBINARS },
     { module: 'Webinars', permissionName: 'Edit Webinars', permissionKey: exports.PERMISSIONS.EDIT_WEBINARS },
     { module: 'Webinars', permissionName: 'Delete Webinars', permissionKey: exports.PERMISSIONS.DELETE_WEBINARS },
     { module: 'Webinars', permissionName: 'Manage Webinar RSVPs', permissionKey: exports.PERMISSIONS.MANAGE_WEBINAR_RSVPS },
     { module: 'Settings', permissionName: 'Manage Settings', permissionKey: exports.PERMISSIONS.MANAGE_SETTINGS },
+    { module: 'Sharad Samman', permissionName: 'View Nominations', permissionKey: exports.PERMISSIONS.VIEW_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Manage Nominations', permissionKey: exports.PERMISSIONS.MANAGE_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Review Nominations', permissionKey: exports.PERMISSIONS.REVIEW_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Shortlist Nominations', permissionKey: exports.PERMISSIONS.SHORTLIST_NOMINATIONS },
+    { module: 'Sharad Samman', permissionName: 'Manage Contests', permissionKey: exports.PERMISSIONS.MANAGE_CONTESTS },
 ];
 exports.ALL_PERMISSION_KEYS = exports.PERMISSION_DEFINITIONS.map((definition) => definition.permissionKey);

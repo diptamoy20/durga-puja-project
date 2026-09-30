@@ -41,7 +41,13 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
   }
 
   // Unfiltered list links stay inactive when a status query is present.
-  if (item.to === ROUTES.PANDAL_ATLAS || item.to === ROUTES.COMMITTEES || item.to === ROUTES.ARTICLES) {
+  if (
+    item.to === ROUTES.PANDAL_ATLAS ||
+    item.to === ROUTES.COMMITTEES ||
+    item.to === ROUTES.ARTICLES ||
+    item.to === ROUTES.SHARAD_SAMMAN_NOMINATIONS ||
+    item.to === ROUTES.SHARAD_SAMMAN_CONTESTS
+  ) {
     return !currentParams.get('status');
   }
 
@@ -50,6 +56,10 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
   }
 
   if (item.to === ROUTES.MY_COMMITTEE_MEDIA) {
+    return !currentParams.get('status');
+  }
+
+  if (item.to === ROUTES.MY_COMMITTEE_NOMINATIONS) {
     return !currentParams.get('status');
   }
 
@@ -69,7 +79,7 @@ function navItemIsActive(item: NavItem, pathname: string, search: string): boole
 }
 
 export function Sidebar({ open, onNavigate }: SidebarProps) {
-  const { can } = useAuth();
+  const { can, user } = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
@@ -81,14 +91,15 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
       NAVIGATION.filter(
         (section) =>
           (!section.permissions || can(...section.permissions)) &&
-          !(section.hiddenWhen && can(...section.hiddenWhen)),
+          !(section.hiddenWhen && can(...section.hiddenWhen)) &&
+          !(section.requiresCommittee && !user?.committeeId),
       )
         .map((section) => ({
           ...section,
           items: section.items.filter((item) => !item.permissions || can(...item.permissions)),
         }))
         .filter((section) => section.items.length > 0),
-    [can],
+    [can, user?.committeeId],
   );
 
   const activeSection = useMemo(() => {
@@ -140,14 +151,24 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
 
             <ul className="menu-section-body">
               {section.items.map((item) => (
-                <li key={`${section.label}:${item.label}`}>
+                <li
+                  key={`${section.label}:${item.label}`}
+                  className={item.subsectionHeader ? 'sidebar__subsection-wrapper' : undefined}
+                >
+                  {item.subsectionHeader && (
+                    <div className="sidebar__subsection-header" role="presentation">
+                      <span className="sidebar__subsection-title">{item.subsectionHeader}</span>
+                    </div>
+                  )}
                   {item.to ? (
                     <NavLink
                       to={item.to}
                       end={item.end}
                       onClick={onNavigate}
                       className={() =>
-                        `sidebar__link ${navItemIsActive(item, pathname, search) ? 'is-active' : ''}`
+                        `sidebar__link ${item.isSubItem ? 'sidebar__link--sub' : ''} ${
+                          navItemIsActive(item, pathname, search) ? 'is-active' : ''
+                        }`
                       }
                     >
                       <i
@@ -159,7 +180,10 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
                       <span className="sidebar__text">{item.label}</span>
                     </NavLink>
                   ) : (
-                    <span className="sidebar__link is-pending" aria-disabled="true">
+                    <span
+                      className={`sidebar__link is-pending ${item.isSubItem ? 'sidebar__link--sub' : ''}`}
+                      aria-disabled="true"
+                    >
                       <i className={`fas ${item.icon} sidebar__icon`} aria-hidden="true" />
                       <span className="sidebar__text">{item.label}</span>
                       <span className="sidebar__soon">Soon</span>

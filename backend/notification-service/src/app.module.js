@@ -11,6 +11,7 @@ const node_path_1 = require("node:path");
 const database_1 = require("@dpgc/database");
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const schedule_1 = require("@nestjs/schedule");
 const notification_controller_1 = require("./notification.controller");
 const notification_service_1 = require("./notification.service");
 const notificationConfig = (0, config_1.registerAs)('notification', () => ({
@@ -40,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
                 load: [notificationConfig],
                 envFilePath: [(0, node_path_1.join)(__dirname, '..', '..', '.env')],
             }),
+            schedule_1.ScheduleModule.forRoot(),
             database_1.PrismaModule,
         ],
         controllers: [notification_controller_1.NotificationController],
