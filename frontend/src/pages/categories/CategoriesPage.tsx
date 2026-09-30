@@ -94,7 +94,11 @@ export function CategoriesPage() {
       setDeletingCategory(null);
       load();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete category.');
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Failed to delete category.';
+      toast.error(msg);
     } finally {
       setDeleting(false);
     }
@@ -237,7 +241,11 @@ export function CategoriesPage() {
       <ConfirmDialog
         open={deletingCategory !== null}
         title="Delete Category"
-        message={`Are you sure you want to delete category "${deletingCategory?.name}"?`}
+        message={
+          deletingCategory?._count?.subcategories && deletingCategory._count.subcategories > 0
+            ? `Are you sure you want to delete category "${deletingCategory.name}"? This will also delete its ${deletingCategory._count.subcategories} subcategory(ies).`
+            : `Are you sure you want to delete category "${deletingCategory?.name}"?`
+        }
         confirmLabel="Delete"
         destructive
         busy={deleting}

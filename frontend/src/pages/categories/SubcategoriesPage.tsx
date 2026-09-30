@@ -98,7 +98,11 @@ export function SubcategoriesPage() {
       setDeletingSub(null);
       load();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete subcategory.');
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Failed to delete subcategory.';
+      toast.error(msg);
     } finally {
       setDeleting(false);
     }

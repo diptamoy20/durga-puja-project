@@ -1,10 +1,24 @@
-import { Link, Outlet } from 'react-router-dom';
+import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 
 import { ROUTES } from '@/constants/routes';
 
 import '@/styles/public-layout.css';
 
+const NAV_LINKS = [
+  { label: 'Pandal Map', to: ROUTES.PUBLIC_ATLAS },
+  { label: 'Gallery', to: ROUTES.PUBLIC_GALLERY },
+  { label: 'Associations', to: ROUTES.PUBLIC_ASSOCIATIONS },
+  { label: 'Webinars', to: ROUTES.PUBLIC_WEBINARS },
+  { label: 'Podcasts', to: ROUTES.PUBLIC_PODCASTS },
+  { label: 'News', to: ROUTES.PUBLIC_NEWS },
+  { label: 'Tourism Concierge', to: ROUTES.PUBLIC_TOURISM_CONCIERGE },
+  { label: 'Investor Showcase', to: ROUTES.PUBLIC_INVESTOR_SHOWCASE },
+  { label: "People's Choice Voting", to: ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE },
+];
+
 export function PublicLayout() {
+  const location = useLocation();
+
   return (
     <div className="public-layout">
       <header className="public-layout__header">
@@ -15,30 +29,32 @@ export function PublicLayout() {
           </Link>
 
           <nav className="public-layout__nav" aria-label="Public site">
-            <Link to={ROUTES.PUBLIC_ATLAS} className="public-layout__nav-link">
-              Pandal Map
-            </Link>
-            <Link to={ROUTES.PUBLIC_GALLERY} className="public-layout__nav-link">
-              Gallery
-            </Link>
-            <Link
-              to={ROUTES.PUBLIC_ASSOCIATIONS}
-              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
-            >
-              Associations
-            </Link>
-            <Link
-              to={ROUTES.PUBLIC_WEBINARS}
-              style={{ textDecoration: 'none', color: 'var(--color-text)', fontWeight: 500 }}
-            >
-              Webinars
-            </Link>
-            <Link to={ROUTES.PUBLIC_PODCASTS} className="public-layout__nav-link">
-              Podcasts
-            </Link>
-            <Link to={ROUTES.PUBLIC_NEWS} className="public-layout__nav-link">
-              News
-            </Link>
+            {NAV_LINKS.map((link) => {
+              const isActive =
+                link.to === ROUTES.PUBLIC_TOURISM_CONCIERGE
+                  ? location.pathname.startsWith('/public/tourism')
+                  : link.to === ROUTES.PUBLIC_INVESTOR_SHOWCASE
+                  ? location.pathname.startsWith('/public/investments')
+                  : link.to === ROUTES.PUBLIC_ASSOCIATIONS
+                  ? location.pathname.startsWith('/public/associations')
+                  : location.pathname.startsWith(link.to);
+
+              return (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive: routerActive }) =>
+                    `public-layout__nav-link ${isActive || routerActive ? 'active' : ''}`
+                  }
+                  style={({ isActive: routerActive }) => ({
+                    color: isActive || routerActive ? 'var(--colour-brand)' : undefined,
+                    fontWeight: isActive || routerActive ? 700 : undefined,
+                  })}
+                >
+                  {link.label}
+                </NavLink>
+              );
+            })}
             <Link to={ROUTES.PUBLIC_CHOOSE_TYPE} className="btn btn--primary btn--sm">
               Register Account
             </Link>
@@ -69,3 +85,5 @@ export function PublicLayout() {
     </div>
   );
 }
+
+export default PublicLayout;

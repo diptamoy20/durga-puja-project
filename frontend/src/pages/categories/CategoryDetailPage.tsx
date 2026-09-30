@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageLoader } from '@/components/ui/Spinner';
 import { StatusBadge } from '@/components/ui/Badge';
@@ -10,17 +12,22 @@ import { PERMISSIONS } from '@/constants/permissions';
 import { ROUTES } from '@/constants/routes';
 import { categoryService } from '@/services/contentService';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
 import type { Category } from '@/types/content';
 import { formatCategoryDate } from '@/pages/categories/CategoriesPage';
 
 export function CategoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const categoryId = Number(id);
+  const navigate = useNavigate();
+  const toast = useToast();
   const { can } = useAuth();
 
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!Number.isFinite(categoryId)) return;
@@ -46,6 +53,24 @@ export function CategoryDetailPage() {
       active = false;
     };
   }, [categoryId]);
+
+  const handleDelete = async () => {
+    if (!category) return;
+    setDeleting(true);
+    try {
+      await categoryService.remove(category.id);
+      toast.success('Category deleted successfully.');
+      navigate(ROUTES.CATEGORIES);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Failed to delete category.';
+      toast.error(msg);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return <PageLoader label="Loading category" />;
@@ -76,9 +101,14 @@ export function CategoryDetailPage() {
         actions={
           <>
             {canManage && (
-              <Link to={ROUTES.CATEGORY_EDIT(category.id)} className="btn btn--primary btn--md">
-                Edit
-              </Link>
+              <>
+                <Link to={ROUTES.CATEGORY_EDIT(category.id)} className="btn btn--primary btn--md">
+                  Edit
+                </Link>
+                <Button variant="danger" size="md" onClick={() => setShowDeleteConfirm(true)}>
+                  Delete
+                </Button>
+              </>
             )}
             <Link to={ROUTES.CATEGORIES} className="btn btn--secondary btn--md">
               Back
@@ -166,6 +196,21 @@ export function CategoryDetailPage() {
           </div>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete Category"
+        message={
+          subcategories.length > 0
+            ? `Are you sure you want to delete category "${category.name}"? This will also remove its ${subcategories.length} subcategory(ies).`
+            : `Are you sure you want to delete category "${category.name}"?`
+        }
+        confirmLabel="Delete"
+        destructive
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

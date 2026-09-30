@@ -39,7 +39,7 @@ let AuthController = class AuthController {
     login(payload) {
         return this.authService.login(payload.credentials, payload.context ?? {});
     }
-    register(dto) {
+    register(cd ) {
         return this.authService.register(dto);
     }
     refresh(payload) {

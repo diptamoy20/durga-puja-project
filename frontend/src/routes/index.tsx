@@ -233,12 +233,101 @@ const PublicArticleDetailPage = lazy(() =>
   import('@/pages/public/PublicArticleDetailPage').then((m) => ({ default: m.PublicArticleDetailPage })),
 );
 
+// Public Tourism Concierge Pages
+const PublicTourismConciergePage = lazy(() =>
+  import('@/pages/public/PublicTourismConciergePage').then((m) => ({ default: m.PublicTourismConciergePage })),
+);
+const PublicTripPlannerPage = lazy(() =>
+  import('@/pages/public/PublicTripPlannerPage').then((m) => ({ default: m.PublicTripPlannerPage })),
+);
+const PublicTourismCircuitsPage = lazy(() =>
+  import('@/pages/public/PublicTourismCircuitsPage').then((m) => ({ default: m.PublicTourismCircuitsPage })),
+);
+const PublicTourismCircuitDetailPage = lazy(() =>
+  import('@/pages/public/PublicTourismCircuitDetailPage').then((m) => ({ default: m.PublicTourismCircuitDetailPage })),
+);
+const PublicTourismItinerariesPage = lazy(() =>
+  import('@/pages/public/PublicTourismItinerariesPage').then((m) => ({ default: m.PublicTourismItinerariesPage })),
+);
+const PublicTourismItineraryDetailPage = lazy(() =>
+  import('@/pages/public/PublicTourismItineraryDetailPage').then((m) => ({ default: m.PublicTourismItineraryDetailPage })),
+);
+const PublicTourismStaysPage = lazy(() =>
+  import('@/pages/public/PublicTourismStaysPage').then((m) => ({ default: m.PublicTourismStaysPage })),
+);
+const PublicTourismTransportsPage = lazy(() =>
+  import('@/pages/public/PublicTourismTransportsPage').then((m) => ({ default: m.PublicTourismTransportsPage })),
+);
+const PublicTourismKnowledgePage = lazy(() =>
+  import('@/pages/public/PublicTourismKnowledgePage').then((m) => ({ default: m.PublicTourismKnowledgePage })),
+);
+const PublicTourismOperatorsPage = lazy(() =>
+  import('@/pages/public/PublicTourismOperatorsPage').then((m) => ({ default: m.PublicTourismOperatorsPage })),
+);
+const PublicTourismEnquiryPage = lazy(() =>
+  import('@/pages/public/PublicTourismEnquiryPage').then((m) => ({ default: m.PublicTourismEnquiryPage })),
+);
+
 // Podcast Admin Pages
 const PodcastListPage = lazy(() =>
   import('@/pages/podcasts/PodcastListPage').then((m) => ({ default: m.PodcastListPage })),
 );
 const PodcastFormPage = lazy(() =>
   import('@/pages/podcasts/PodcastFormPage').then((m) => ({ default: m.PodcastFormPage })),
+);
+
+// Tourism Concierge Admin Pages
+const TourismEnquiriesPage = lazy(() =>
+  import('@/pages/tourism/TourismEnquiriesPage').then((m) => ({ default: m.TourismEnquiriesPage })),
+);
+const TourismEnquiryDetailPage = lazy(() =>
+  import('@/pages/tourism/TourismEnquiryDetailPage').then((m) => ({ default: m.TourismEnquiryDetailPage })),
+);
+const TourismCircuitsManagePage = lazy(() =>
+  import('@/pages/tourism/TourismCircuitsManagePage').then((m) => ({ default: m.TourismCircuitsManagePage })),
+);
+const TourismStaysManagePage = lazy(() =>
+  import('@/pages/tourism/TourismStaysManagePage').then((m) => ({ default: m.TourismStaysManagePage })),
+);
+const TourismTransportsManagePage = lazy(() =>
+  import('@/pages/tourism/TourismTransportsManagePage').then((m) => ({ default: m.TourismTransportsManagePage })),
+);
+const TourismItinerariesManagePage = lazy(() =>
+  import('@/pages/tourism/TourismItinerariesManagePage').then((m) => ({ default: m.TourismItinerariesManagePage })),
+);
+const TourismKnowledgeManagePage = lazy(() =>
+  import('@/pages/tourism/TourismKnowledgeManagePage').then((m) => ({ default: m.TourismKnowledgeManagePage })),
+);
+const TourismOperatorsManagePage = lazy(() =>
+  import('@/pages/tourism/TourismOperatorsManagePage').then((m) => ({ default: m.TourismOperatorsManagePage })),
+);
+
+// Investor Showcase Public Pages
+const PublicInvestorShowcasePage = lazy(() =>
+  import('@/pages/public/investments/PublicInvestorShowcasePage').then((m) => ({ default: m.PublicInvestorShowcasePage })),
+);
+const PublicInvestorDetailPage = lazy(() =>
+  import('@/pages/public/investments/PublicInvestorDetailPage').then((m) => ({ default: m.PublicInvestorDetailPage })),
+);
+
+// Investor Showcase Admin Pages
+const InvestmentOpportunitiesPage = lazy(() =>
+  import('@/pages/investments/InvestmentOpportunitiesPage').then((m) => ({ default: m.InvestmentOpportunitiesPage })),
+);
+const InvestmentOpportunityFormPage = lazy(() =>
+  import('@/pages/investments/InvestmentOpportunityFormPage').then((m) => ({ default: m.InvestmentOpportunityFormPage })),
+);
+const InvestmentOpportunityDetailPage = lazy(() =>
+  import('@/pages/investments/InvestmentOpportunityDetailPage').then((m) => ({ default: m.InvestmentOpportunityDetailPage })),
+);
+const IndustryAssociationsPage = lazy(() =>
+  import('@/pages/investments/IndustryAssociationsPage').then((m) => ({ default: m.IndustryAssociationsPage })),
+);
+const InvestmentEnquiriesPage = lazy(() =>
+  import('@/pages/investments/InvestmentEnquiriesPage').then((m) => ({ default: m.InvestmentEnquiriesPage })),
+);
+const InvestmentEnquiryDetailPage = lazy(() =>
+  import('@/pages/investments/InvestmentEnquiryDetailPage').then((m) => ({ default: m.InvestmentEnquiryDetailPage })),
 );
 
 // Sharad Samman Admin Pages
@@ -254,6 +343,9 @@ const NominationDetailPage = lazy(() =>
 const NominationFormPage = lazy(() =>
   import('@/pages/sharad-samman/NominationFormPage').then((m) => ({ default: m.NominationFormPage })),
 );
+const VotingAuditPage = lazy(() =>
+  import('@/pages/sharad-samman/VotingAuditPage').then((m) => ({ default: m.VotingAuditPage })),
+);
 const ContestListPage = lazy(() =>
   import('@/pages/sharad-samman/ContestListPage').then((m) => ({ default: m.ContestListPage })),
 );
@@ -267,6 +359,13 @@ const ContestVotingDetailPage = lazy(() =>
   import('@/pages/sharad-samman/ContestVotingDetailPage').then((m) => ({ default: m.ContestVotingDetailPage })),
 );
 
+// Public Sharad Samman Voting Pages
+const PublicVotingPage = lazy(() =>
+  import('@/pages/public/PublicVotingPage').then((m) => ({ default: m.PublicVotingPage })),
+);
+const PublicVotingResultsPage = lazy(() =>
+  import('@/pages/public/PublicVotingResultsPage').then((m) => ({ default: m.PublicVotingResultsPage })),
+);
 
 export function AppRoutes() {
   return (
@@ -294,8 +393,33 @@ export function AppRoutes() {
         <Route path={ROUTES.PUBLIC_WEBINARS} element={<PublicWebinarsPage />} />
         <Route path={ROUTES.PUBLIC_PODCASTS} element={<PublicPodcastsPage />} />
         <Route path={ROUTES.PUBLIC_PODCAST_DETAIL()} element={<PodcastDetailPage />} />
+
+        {/* Public Tourism Concierge */}
+        <Route path={ROUTES.PUBLIC_TOURISM_CONCIERGE} element={<PublicTourismConciergePage />} />
+        <Route path={ROUTES.PUBLIC_TRIP_PLANNER} element={<PublicTripPlannerPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_CIRCUITS} element={<PublicTourismCircuitsPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_CIRCUIT_DETAIL()} element={<PublicTourismCircuitDetailPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_ITINERARIES} element={<PublicTourismItinerariesPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_ITINERARY_DETAIL()} element={<PublicTourismItineraryDetailPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_STAYS} element={<PublicTourismStaysPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_TRANSPORTS} element={<PublicTourismTransportsPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_KNOWLEDGE} element={<PublicTourismKnowledgePage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_OPERATORS} element={<PublicTourismOperatorsPage />} />
+        <Route path={ROUTES.PUBLIC_TOURISM_ENQUIRY} element={<PublicTourismEnquiryPage />} />
         <Route path={ROUTES.PUBLIC_NEWS} element={<PublicArticlesPage />} />
         <Route path={ROUTES.PUBLIC_NEWS_DETAIL()} element={<PublicArticleDetailPage />} />
+
+        {/* Public Investor Showcase */}
+        <Route path={ROUTES.PUBLIC_INVESTOR_SHOWCASE} element={<PublicInvestorShowcasePage />} />
+        <Route path={ROUTES.PUBLIC_INVESTOR_DETAIL()} element={<PublicInvestorDetailPage />} />
+
+        {/* Public Sharad Samman Voting & Results */}
+        <Route path={ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE} element={<PublicVotingPage />} />
+        <Route path="/voting" element={<PublicVotingPage />} />
+        <Route path="/public/voting" element={<PublicVotingPage />} />
+        <Route path={ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS} element={<PublicVotingResultsPage />} />
+        <Route path="/voting/results" element={<PublicVotingResultsPage />} />
+        <Route path="/public/voting/results" element={<PublicVotingResultsPage />} />
       </Route>
 
       {/* Unauthenticated area. A signed-in user is sent to the dashboard. */}
@@ -491,7 +615,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.SHARAD_SAMMAN_DASHBOARD}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS]}>
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_NOMINATIONS, PERMISSIONS.VIEW_SHARAD_SAMMAN]}>
               <SharadSammanDashboardPage />
             </ProtectedRoute>
           }
@@ -499,7 +623,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.SHARAD_SAMMAN_CONTESTS}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS, PERMISSIONS.VIEW_CONTESTS]}>
               <ContestListPage />
             </ProtectedRoute>
           }
@@ -523,7 +647,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.SHARAD_SAMMAN_VOTING}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS, PERMISSIONS.MANAGE_VOTING]}>
               <VotingManagementPage />
             </ProtectedRoute>
           }
@@ -531,7 +655,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.SHARAD_SAMMAN_VOTING_DETAIL()}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS]}>
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_CONTESTS, PERMISSIONS.MANAGE_VOTING]}>
               <ContestVotingDetailPage />
             </ProtectedRoute>
           }
@@ -547,7 +671,7 @@ export function AppRoutes() {
         <Route
           path={ROUTES.SHARAD_SAMMAN_NOMINATION_NEW}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS, PERMISSIONS.CREATE_NOMINATIONS]}>
               <NominationFormPage />
             </ProtectedRoute>
           }
@@ -563,8 +687,16 @@ export function AppRoutes() {
         <Route
           path={ROUTES.SHARAD_SAMMAN_NOMINATION_EDIT()}
           element={
-            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS]}>
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS, PERMISSIONS.EDIT_NOMINATIONS]}>
               <NominationFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.SHARAD_SAMMAN_VOTING_AUDIT}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_NOMINATIONS, PERMISSIONS.VIEW_VOTING_AUDIT]}>
+              <VotingAuditPage />
             </ProtectedRoute>
           }
         />
@@ -811,6 +943,72 @@ export function AppRoutes() {
           }
         />
 
+        {/* Tourism Concierge Admin */}
+        <Route
+          path={ROUTES.ADMIN_TOURISM_ENQUIRIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismEnquiriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_ENQUIRY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismEnquiryDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_CIRCUITS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismCircuitsManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_STAYS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismStaysManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_TRANSPORTS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismTransportsManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_ITINERARIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismItinerariesManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_KNOWLEDGE}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismKnowledgeManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_TOURISM_OPERATORS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_TOURISM]}>
+              <TourismOperatorsManagePage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Gallery & Media */}
         <Route
           path={ROUTES.GALLERY_MEDIA}
@@ -960,6 +1158,66 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        {/* Investor Showcase Admin */}
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_INVESTMENTS]}>
+              <InvestmentOpportunitiesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITY_NEW}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.CREATE_INVESTMENTS]}>
+              <InvestmentOpportunityFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.VIEW_INVESTMENTS]}>
+              <InvestmentOpportunityDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_OPPORTUNITY_EDIT()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.EDIT_INVESTMENTS]}>
+              <InvestmentOpportunityFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_ASSOCIATIONS}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_ASSOCIATIONS]}>
+              <IndustryAssociationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_ENQUIRIES}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES]}>
+              <InvestmentEnquiriesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_INVESTMENT_ENQUIRY_DETAIL()}
+          element={
+            <ProtectedRoute permissions={[PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES]}>
+              <InvestmentEnquiryDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+
 
         {/* Account */}
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />

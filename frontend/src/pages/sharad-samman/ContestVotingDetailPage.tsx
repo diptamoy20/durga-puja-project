@@ -350,6 +350,16 @@ export function ContestVotingDetailPage() {
             <i className="fas fa-list-check" aria-hidden="true" style={{ marginRight: '6px' }} />
             Shortlist Queue
           </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => window.open(`${ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE}?contestId=${contest.id}`, '_blank')}
+            style={{ color: 'var(--colour-brand)', borderColor: 'var(--colour-brand)' }}
+            title="Open Public Voting Portal for this contest in new tab"
+          >
+            <i className="fas fa-arrow-up-right-from-square" aria-hidden="true" style={{ marginRight: '6px' }} />
+            Public Voting Portal
+          </Button>
         </div>
       </header>
 

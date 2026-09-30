@@ -78,6 +78,15 @@ enum ArticleStatus {
   ARCHIVED
 }
 
+enum InvestmentOpportunityStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  PUBLISHED
+  ARCHIVED
+}
+
 enum MediaModerationStatus {
   PENDING
   APPROVED
@@ -259,6 +268,21 @@ model User {
   createdPodcasts     PodcastEpisode[]       @relation("PodcastCreatedBy")
   updatedPodcasts     PodcastEpisode[]       @relation("PodcastUpdatedBy")
 
+  // Tourism domain
+  assignedEnquiries   TourismEnquiry[]       @relation("TourismEnquiryAssignedTo")
+  enquiryHistories    TourismEnquiryHistory[]
+
+  // Investor Showcase domain
+  submittedInvestments InvestmentOpportunity[] @relation("InvestmentSubmittedBy")
+  approvedInvestments  InvestmentOpportunity[] @relation("InvestmentApprovedBy")
+  rejectedInvestments  InvestmentOpportunity[] @relation("InvestmentRejectedBy")
+  publishedInvestments InvestmentOpportunity[] @relation("InvestmentPublishedBy")
+  createdInvestments   InvestmentOpportunity[] @relation("InvestmentCreatedBy")
+  updatedInvestments   InvestmentOpportunity[] @relation("InvestmentUpdatedBy")
+  investmentHistories  InvestmentOpportunityHistory[]
+  assignedInvestmentEnquiries InvestmentEnquiry[] @relation("InvestmentEnquiryAssignedTo")
+  investmentEnquiryHistories  InvestmentEnquiryHistory[]
+
   // Association domain
   association         Association? @relation("AssociationAccount")
   approvedAssociations Association[] @relation("AssociationApprovedBy")
@@ -272,6 +296,7 @@ model User {
   rejectedNominations    SharadSammanNomination[] @relation("NominationRejectedBy")
   shortlistedNominations SharadSammanNomination[] @relation("NominationShortlistedBy")
   createdNominations     SharadSammanNomination[] @relation("NominationCreatedBy")
+  reviewedVotes          SharadSammanVote[]       @relation("VoteReviewedBy")
 
   @@index([status])
   @@index([createdAt])
@@ -1144,6 +1169,368 @@ model PodcastSubscriber {
   @@map("podcast_subscribers")
 }
 
+// ===========================================================================
+// Tourism Concierge
+// ===========================================================================
+
+model TourismCircuit {
+  id                   Int       @id @default(autoincrement())
+  name                 String    @db.VarChar(255)
+  slug                 String    @unique @db.VarChar(255)
+  region               String    @db.VarChar(100)
+  description          String    @db.Text
+  highlightPandals     Json?     @map("highlight_pandals")
+  tags                 String[]  @default([])
+  duration             String    @db.VarChar(100)
+  bestTimeOfDay        String?   @map("best_time_of_day") @db.VarChar(100)
+  recommendedTransport String?   @map("recommended_transport") @db.VarChar(255)
+  crowdLevel           String?   @map("crowd_level") @db.VarChar(50)
+  coverImageUrl        String?   @map("cover_image_url") @db.Text
+  galleryImages        Json?     @map("gallery_images")
+  isActive             Boolean   @default(true) @map("is_active")
+  isFeatured           Boolean   @default(false) @map("is_featured")
+  sortOrder            Int       @default(0) @map("sort_order")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  @@index([region, isActive])
+  @@index([isActive, sortOrder])
+  @@map("tourism_circuits")
+}
+
+model TourismStay {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  slug          String   @unique @db.VarChar(255)
+  type          String   @db.VarChar(100)
+  location      String   @db.Text
+  city          String   @default("Kolkata") @db.VarChar(100)
+  district      String   @default("Kolkata") @db.VarChar(100)
+  priceRange    String   @map("price_range") @db.VarChar(100)
+  budgetTier    String   @default("MID_RANGE") @map("budget_tier") @db.VarChar(50)
+  starRating    Int?     @default(3) @map("star_rating")
+  amenities     String[] @default([])
+  contactPhone  String?  @map("contact_phone") @db.VarChar(50)
+  contactEmail  String?  @map("contact_email") @db.VarChar(180)
+  bookingUrl    String?  @map("booking_url") @db.VarChar(500)
+  description   String?  @db.Text
+  coverImageUrl String?  @map("cover_image_url") @db.Text
+  isWbtdc       Boolean  @default(false) @map("is_wbtdc")
+  isActive      Boolean  @default(true) @map("is_active")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([type, isActive])
+  @@index([district, isWbtdc])
+  @@map("tourism_stays")
+}
+
+model TourismTransport {
+  id                Int      @id @default(autoincrement())
+  name              String   @db.VarChar(255)
+  category          String   @db.VarChar(100)
+  operatingHours    String   @map("operating_hours") @db.VarChar(255)
+  routeDescription  String   @map("route_description") @db.Text
+  fareGuide         String   @map("fare_guide") @db.VarChar(255)
+  bookingOrHelpline String?  @map("booking_or_helpline") @db.VarChar(255)
+  tips              Json?
+  coverImageUrl     String?  @map("cover_image_url") @db.Text
+  isActive          Boolean  @default(true) @map("is_active")
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([category, isActive])
+  @@map("tourism_transports")
+}
+
+model TourismFestivalDay {
+  id              Int      @id @default(autoincrement())
+  tithiName       String   @map("tithi_name") @db.VarChar(100)
+  date            DateTime
+  rituals         String   @db.Text
+  tourismTips     String   @map("tourism_tips") @db.Text
+  bestTimeWindows String   @map("best_time_windows") @db.VarChar(255)
+  highlights      Json?
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([date])
+  @@map("tourism_festival_days")
+}
+
+model TourismItinerary {
+  id                 Int      @id @default(autoincrement())
+  title              String   @db.VarChar(255)
+  slug               String   @unique @db.VarChar(255)
+  durationDays       Int      @default(3) @map("duration_days")
+  targetAudience     String   @map("target_audience") @db.VarChar(150)
+  overview           String   @db.Text
+  dayPlans           Json     @map("day_plans")
+  includedHighlights String[] @default([]) @map("included_highlights")
+  coverImageUrl      String?  @map("cover_image_url") @db.Text
+  isCurated          Boolean  @default(true) @map("is_curated")
+  isActive           Boolean  @default(true) @map("is_active")
+  sortOrder          Int      @default(0) @map("sort_order")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([durationDays, isActive])
+  @@map("tourism_itineraries")
+}
+
+model TourismKnowledge {
+  id        Int      @id @default(autoincrement())
+  category  String   @db.VarChar(100)
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  quickTips String[] @default([]) @map("quick_tips")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([category, isActive])
+  @@map("tourism_knowledge")
+}
+
+model TourismOperator {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(255)
+  licenseNo       String?  @map("license_no") @db.VarChar(100)
+  operatorType    String   @map("operator_type") @db.VarChar(100)
+  contactPerson   String?  @map("contact_person") @db.VarChar(150)
+  phone           String   @db.VarChar(50)
+  email           String   @db.VarChar(180)
+  website         String?  @db.VarChar(500)
+  address         String?  @db.Text
+  packagesOffered Json?    @map("packages_offered")
+  rating          Decimal? @default(4.5) @db.Decimal(2, 1)
+  isVerified      Boolean  @default(true) @map("is_verified")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, isVerified])
+  @@map("tourism_operators")
+}
+
+model TourismEnquiry {
+  id                  Int       @id @default(autoincrement())
+  enquiryCode         String    @unique @map("enquiry_code") @db.VarChar(50)
+  fullName            String    @map("full_name") @db.VarChar(150)
+  email               String    @db.VarChar(180)
+  phone               String    @db.VarChar(50)
+  country             String    @default("India") @db.VarChar(100)
+  city                String?   @db.VarChar(100)
+  numberOfTravellers  Int       @default(1) @map("number_of_travellers")
+  startDate           DateTime? @map("start_date")
+  endDate             DateTime? @map("end_date")
+  durationPreference  String?   @map("duration_preference") @db.VarChar(100)
+  preferredCircuits   Json?     @map("preferred_circuits")
+  interests           String[]  @default([])
+  stayPreference      String?   @map("stay_preference") @db.VarChar(100)
+  transportPreference String?   @map("transport_preference") @db.VarChar(100)
+  pujaPreferences     String[]  @default([]) @map("puja_preferences")
+  specialRequirements String?   @map("special_requirements") @db.Text
+  status              String    @default("NEW") @db.VarChar(50)
+  assignedToId        Int?      @map("assigned_to_id")
+  adminRemarks        String?   @map("admin_remarks") @db.Text
+  consentGiven        Boolean   @default(true) @map("consent_given")
+  preferredLanguage   String    @default("en") @map("preferred_language") @db.VarChar(10)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  assignedTo User?                   @relation("TourismEnquiryAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  histories  TourismEnquiryHistory[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@map("tourism_enquiries")
+}
+
+model TourismEnquiryHistory {
+  id          Int      @id @default(autoincrement())
+  enquiryId   Int      @map("enquiry_id")
+  changedById Int?     @map("changed_by_id")
+  action      String   @db.VarChar(50)
+  fromStatus  String?  @map("from_status") @db.VarChar(50)
+  toStatus    String?  @map("to_status") @db.VarChar(50)
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  enquiry   TourismEnquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  changedBy User?          @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([enquiryId, createdAt])
+  @@map("tourism_enquiry_history")
+}
+
+// ===========================================================================
+// Investor Showcase & Industry Associations
+// ===========================================================================
+
+model IndustryAssociation {
+  id             Int       @id @default(autoincrement())
+  name           String    @db.VarChar(255)
+  code           String    @unique @db.VarChar(50)
+  category       String?   @default("Apex Chamber") @db.VarChar(100)
+  description    String?   @db.Text
+  contactPerson  String?   @map("contact_person") @db.VarChar(150)
+  email          String?   @db.VarChar(180)
+  phone          String?   @db.VarChar(50)
+  website        String?   @db.VarChar(500)
+  address        String?   @db.Text
+  city           String?   @db.VarChar(100)
+  state          String?   @default("West Bengal") @db.VarChar(100)
+  sectorsCovered Json?     @map("sectors_covered")
+  logoUrl        String?   @map("logo_url") @db.Text
+  isActive       Boolean   @default(true) @map("is_active")
+  sortOrder      Int       @default(0) @map("sort_order")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  opportunities  InvestmentOpportunity[]
+  enquiries      InvestmentEnquiry[]
+
+  @@index([isActive, sortOrder])
+  @@index([category])
+  @@map("industry_associations")
+}
+
+model InvestmentOpportunity {
+  id              Int                         @id @default(autoincrement())
+  title           String                      @db.VarChar(255)
+  slug            String                      @unique @db.VarChar(255)
+  sector          String                      @db.VarChar(150)
+  category        String?                     @db.VarChar(150)
+  location        String                      @db.VarChar(255)
+  district        String?                     @db.VarChar(100)
+  summary         String?                     @db.Text
+  description     String                      @db.Text
+  investmentRange String                      @map("investment_range") @db.VarChar(100)
+  investmentMin   Decimal?                    @map("investment_min") @db.Decimal(15, 2)
+  investmentMax   Decimal?                    @map("investment_max") @db.Decimal(15, 2)
+  projectType     String?                     @map("project_type") @db.VarChar(100)
+  expectedRoi     String?                     @map("expected_roi") @db.VarChar(150)
+  highlights      Json?
+  incentives      String?                     @db.Text
+  coverImageUrl   String?                     @map("cover_image_url") @db.Text
+  galleryImages   Json?                       @map("gallery_images")
+  documents       Json?
+  associationId   Int?                        @map("association_id")
+  contactEmail    String?                     @map("contact_email") @db.VarChar(180)
+  contactPhone    String?                     @map("contact_phone") @db.VarChar(50)
+  status          InvestmentOpportunityStatus @default(DRAFT)
+  isFeatured      Boolean                     @default(false) @map("is_featured")
+  sortOrder       Int                         @default(0) @map("sort_order")
+
+  submittedAt     DateTime?                   @map("submitted_at")
+  submittedById   Int?                        @map("submitted_by_id")
+  approvedAt      DateTime?                   @map("approved_at")
+  approvedById    Int?                        @map("approved_by_id")
+  rejectedAt      DateTime?                   @map("rejected_at")
+  rejectedById    Int?                        @map("rejected_by_id")
+  rejectionReason String?                     @map("rejection_reason") @db.Text
+  publishedAt     DateTime?                   @map("published_at")
+  publishedById   Int?                        @map("published_by_id")
+
+  createdById     Int?                        @map("created_by_id")
+  updatedById     Int?                        @map("updated_by_id")
+  createdAt       DateTime                    @default(now()) @map("created_at")
+  updatedAt       DateTime                    @updatedAt @map("updated_at")
+  deletedAt       DateTime?                   @map("deleted_at")
+
+  association   IndustryAssociation?          @relation(fields: [associationId], references: [id], onDelete: SetNull)
+  createdBy     User?                         @relation("InvestmentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy     User?                         @relation("InvestmentUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  submittedBy   User?                         @relation("InvestmentSubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  approvedBy    User?                         @relation("InvestmentApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  rejectedBy    User?                         @relation("InvestmentRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
+  publishedBy   User?                         @relation("InvestmentPublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
+
+  histories     InvestmentOpportunityHistory[]
+  enquiries     InvestmentEnquiry[]
+
+  @@index([status, publishedAt])
+  @@index([sector, status])
+  @@index([location])
+  @@index([isFeatured, status])
+  @@map("investment_opportunities")
+}
+
+model InvestmentOpportunityHistory {
+  id             Int                         @id @default(autoincrement())
+  opportunityId  Int                         @map("opportunity_id")
+  userId         Int?                        @map("user_id")
+  action         String                      @db.VarChar(50)
+  previousStatus String?                     @map("previous_status") @db.VarChar(50)
+  newStatus      String?                     @map("new_status") @db.VarChar(50)
+  comment        String?                     @db.Text
+  createdAt      DateTime                    @default(now()) @map("created_at")
+
+  opportunity InvestmentOpportunity          @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  user        User?                          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([opportunityId, createdAt])
+  @@map("investment_opportunity_histories")
+}
+
+model InvestmentEnquiry {
+  id                Int                  @id @default(autoincrement())
+  enquiryCode       String               @unique @map("enquiry_code") @db.VarChar(50)
+  opportunityId     Int?                 @map("opportunity_id")
+  associationId     Int?                 @map("association_id")
+  fullName          String               @map("full_name") @db.VarChar(150)
+  organization      String?              @db.VarChar(200)
+  designation       String?              @db.VarChar(100)
+  investorType      String?              @map("investor_type") @db.VarChar(100)
+  email             String               @db.VarChar(180)
+  phone             String               @db.VarChar(50)
+  country           String               @default("India") @db.VarChar(100)
+  city              String?              @db.VarChar(100)
+  investmentBudget  String?              @map("investment_budget") @db.VarChar(100)
+  proposedTimeline  String?              @map("proposed_timeline") @db.VarChar(100)
+  message           String               @db.Text
+  status            String               @default("NEW") @db.VarChar(50)
+  assignedToId      Int?                 @map("assigned_to_id")
+  adminRemarks      String?              @map("admin_remarks") @db.Text
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+
+  opportunity  InvestmentOpportunity?    @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  association  IndustryAssociation?      @relation(fields: [associationId], references: [id], onDelete: SetNull)
+  assignedTo   User?                     @relation("InvestmentEnquiryAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  histories    InvestmentEnquiryHistory[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([opportunityId])
+  @@index([associationId])
+  @@map("investment_enquiries")
+}
+
+model InvestmentEnquiryHistory {
+  id          Int               @id @default(autoincrement())
+  enquiryId   Int               @map("enquiry_id")
+  changedById Int?              @map("changed_by_id")
+  action      String            @db.VarChar(50)
+  fromStatus  String?           @map("from_status") @db.VarChar(50)
+  toStatus    String?           @map("to_status") @db.VarChar(50)
+  comment     String?           @db.Text
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  enquiry   InvestmentEnquiry   @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  changedBy User?               @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([enquiryId, createdAt])
+  @@map("investment_enquiry_histories")
+}
+
 // ============================================================================
 // Sharad Samman Domain
 // ============================================================================
@@ -1171,6 +1558,12 @@ enum NominationStatus {
   SHORTLISTED
 }
 
+enum VoteStatus {
+  VALID
+  FLAGGED
+  REJECTED
+}
+
 model Contest {
   id                  Int           @id @default(autoincrement())
   name                String        @db.VarChar(150)
@@ -1186,7 +1579,8 @@ model Contest {
   createdAt           DateTime      @default(now()) @map("created_at")
   updatedAt           DateTime      @updatedAt @map("updated_at")
 
-  nominations SharadSammanNomination[]
+  nominations        SharadSammanNomination[]
+  votes              SharadSammanVote[]
 
   @@unique([year, name])
   @@index([status])
@@ -1227,12 +1621,63 @@ model SharadSammanNomination {
   rejectedBy    User?         @relation("NominationRejectedBy", fields: [rejectedById], references: [id], onDelete: SetNull)
   shortlistedBy User?         @relation("NominationShortlistedBy", fields: [shortlistedById], references: [id], onDelete: SetNull)
   createdBy     User?         @relation("NominationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  votes         SharadSammanVote[]
 
   @@unique([contestId, pujaCommitteeId, category])
   @@index([status])
   @@index([contestId, status])
   @@index([pujaCommitteeId])
   @@map("sharad_samman_nominations")
+}
+
+model SharadSammanVote {
+  id                Int                    @id @default(autoincrement())
+  contestId         Int                    @map("contest_id")
+  nominationId      Int                    @map("nomination_id")
+  voterEmail        String                 @map("voter_email") @db.VarChar(180)
+  voterName         String?                @map("voter_name") @db.VarChar(150)
+  voterPhone        String?                @map("voter_phone") @db.VarChar(50)
+  voterCountry      String?                @default("India") @map("voter_country") @db.VarChar(100)
+  voterCity         String?                @map("voter_city") @db.VarChar(100)
+
+  status            VoteStatus             @default(VALID)
+  riskScore         Float                  @default(0.0) @map("risk_score")
+  flagReason        String?                @map("flag_reason") @db.Text
+  reviewedById      Int?                   @map("reviewed_by")
+  reviewedAt        DateTime?              @map("reviewed_at")
+  reviewNotes       String?                @map("review_notes") @db.Text
+
+  ipAddress         String?                @map("ip_address") @db.VarChar(64)
+  userAgent         String?                @map("user_agent") @db.Text
+  deviceFingerprint String?                @map("device_fingerprint") @db.VarChar(128)
+
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+
+  contest           Contest                @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  nomination        SharadSammanNomination @relation(fields: [nominationId], references: [id], onDelete: Cascade)
+  reviewedBy        User?                  @relation("VoteReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@unique([contestId, voterEmail])
+  @@index([contestId, status])
+  @@index([nominationId, status])
+  @@index([ipAddress, createdAt])
+  @@map("sharad_samman_votes")
+}
+
+model VotingOtp {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(180)
+  otpCode   String   @map("otp_code") @db.VarChar(10)
+  contestId Int      @map("contest_id")
+  attempts  Int      @default(0)
+  isUsed    Boolean  @default(false) @map("is_used")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, contestId, isUsed])
+  @@index([expiresAt])
+  @@map("voting_otps")
 }
 
 

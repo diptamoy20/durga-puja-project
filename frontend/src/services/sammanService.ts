@@ -141,6 +141,8 @@ export interface CommitteeCreateNominationPayload {
   category: string;
   title?: string;
   description?: string;
+  photos?: string[];
+  pandalImage?: string;
   contestId?: number;
   submitNow?: boolean;
 }
@@ -149,6 +151,8 @@ export interface CommitteeUpdateNominationPayload {
   category?: string;
   title?: string;
   description?: string;
+  photos?: string[];
+  pandalImage?: string;
   submitNow?: boolean;
 }
 

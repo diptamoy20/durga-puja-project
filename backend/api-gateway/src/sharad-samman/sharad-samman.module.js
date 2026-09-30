@@ -11,7 +11,9 @@ const common_1 = require("@nestjs/common");
 const database_1 = require("@dpgc/database");
 const sharad_samman_controller_1 = require("./sharad-samman.controller");
 const committee_sharad_samman_controller_1 = require("./committee-sharad-samman.controller");
+const voting_controller_1 = require("./voting.controller");
 const sharad_samman_service_1 = require("./sharad-samman.service");
+const voting_service_1 = require("./voting.service");
 
 let SharadSammanModule = class SharadSammanModule {
 };
@@ -20,10 +22,17 @@ exports.SharadSammanModule = SharadSammanModule = __decorate([
     (0, common_1.Module)({
         imports: [database_1.PrismaModule],
         controllers: [
+            voting_controller_1.VotingController,
             sharad_samman_controller_1.SharadSammanController,
             committee_sharad_samman_controller_1.CommitteeSharadSammanController,
         ],
-        providers: [sharad_samman_service_1.SharadSammanService],
-        exports: [sharad_samman_service_1.SharadSammanService],
+        providers: [
+            sharad_samman_service_1.SharadSammanService,
+            voting_service_1.VotingService,
+        ],
+        exports: [
+            sharad_samman_service_1.SharadSammanService,
+            voting_service_1.VotingService,
+        ],
     })
 ], SharadSammanModule);

@@ -31,6 +31,7 @@ const env_validation_1 = require("./config/env.validation");
 const database_1 = require("@dpgc/database");
 const all_exceptions_filter_1 = require("./filters/all-exceptions.filter");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
+const notifications_module_1 = require("./notifications/notifications.module");
 const permissions_guard_1 = require("./guards/permissions.guard");
 const registrations_module_1 = require("./registrations/registrations.module");
 const roles_guard_1 = require("./guards/roles.guard");
@@ -70,6 +71,7 @@ exports.AppModule = AppModule = __decorate([
             gallery_module_1.GalleryModule,
             atlas_module_1.AtlasModule,
             events_module_1.EventsModule,
+            notifications_module_1.NotificationsModule,
             database_1.PrismaModule,
             associations_module_1.AssociationsModule,
             sharad_samman_module_1.SharadSammanModule,

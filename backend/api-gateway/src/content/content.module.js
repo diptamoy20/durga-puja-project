@@ -10,6 +10,8 @@ exports.ContentModule = void 0;
 const common_1 = require("@nestjs/common");
 const content_controller_1 = require("./content.controller");
 const podcasts_controller_1 = require("./podcasts.controller");
+const tourism_controller_1 = require("./tourism.controller");
+const investments_controller_1 = require("./investments.controller");
 let ContentModule = class ContentModule {
 };
 exports.ContentModule = ContentModule;
@@ -24,6 +26,10 @@ exports.ContentModule = ContentModule = __decorate([
             content_controller_1.ContentFilesController,
             podcasts_controller_1.PublicPodcastsController,
             podcasts_controller_1.AdminPodcastsController,
+            tourism_controller_1.PublicTourismController,
+            tourism_controller_1.AdminTourismController,
+            investments_controller_1.PublicInvestmentsController,
+            investments_controller_1.AdminInvestmentsController,
         ],
     })
 ], ContentModule);

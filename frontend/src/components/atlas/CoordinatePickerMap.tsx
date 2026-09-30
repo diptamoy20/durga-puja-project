@@ -40,7 +40,7 @@ export function CoordinatePickerMap({
       onChangeRef.current(Number(pos.lat.toFixed(7)), Number(pos.lng.toFixed(7)));
     });
 
-    map.on('click', (event) => {
+    map.on('click', (event: any) => {
       marker.setLatLng(event.latlng);
       onChangeRef.current(
         Number(event.latlng.lat.toFixed(7)),

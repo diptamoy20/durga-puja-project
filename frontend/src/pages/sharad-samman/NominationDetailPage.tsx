@@ -14,6 +14,7 @@ import {
   formatNominationStatus,
 } from '@/constants/samman';
 import { sammanService } from '@/services/sammanService';
+import { errorMessage } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import type { NominationStatus, SharadSammanNomination } from '@/types/samman';
@@ -68,7 +69,7 @@ export function NominationDetailPage() {
         setReviewNotes(data.reviewNotes || '');
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load nomination.');
+        setError(errorMessage(err, 'Failed to load nomination.'));
       })
       .finally(() => {
         if (!silent) setLoading(false);
@@ -126,7 +127,7 @@ export function NominationDetailPage() {
       setTargetStatus(null);
       loadNomination(true);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Status transition failed.');
+      toast.error(errorMessage(err, 'Status transition failed.'));
     } finally {
       setBusy(false);
     }

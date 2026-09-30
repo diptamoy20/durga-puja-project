@@ -115,6 +115,7 @@ export const ROUTES = {
   SHARAD_SAMMAN_NOMINATION_NEW: '/sharad-samman/nominations/new',
   SHARAD_SAMMAN_NOMINATION_DETAIL: (id: number | string = ':id') => `/sharad-samman/nominations/${id}`,
   SHARAD_SAMMAN_NOMINATION_EDIT: (id: number | string = ':id') => `/sharad-samman/nominations/${id}/edit`,
+  SHARAD_SAMMAN_VOTING_AUDIT: '/sharad-samman/voting-audit',
 
   // Public Facing Pages
   PUBLIC_CHOOSE_TYPE: '/register/choose',
@@ -134,6 +135,50 @@ export const ROUTES = {
   PUBLIC_PODCAST_DETAIL: (slug: string = ':slug') => `/public/podcasts/${slug}`,
   PUBLIC_ASSOCIATIONS: '/public/associations',
   PUBLIC_ASSOCIATION_DETAIL: (id: number | string = ':id') => `/public/associations/${id}`,
+  PUBLIC_SHARAD_SAMMAN_VOTE: '/public/sharad-samman/vote',
+  PUBLIC_SHARAD_SAMMAN_RESULTS: '/public/sharad-samman/results',
+
+  // Public Tourism Concierge
+  PUBLIC_TOURISM_CONCIERGE: '/public/tourism',
+  PUBLIC_TRIP_PLANNER: '/public/tourism/trip-planner',
+  PUBLIC_TOURISM_CIRCUITS: '/public/tourism/circuits',
+  PUBLIC_TOURISM_CIRCUIT_DETAIL: (slug: string = ':slug') => `/public/tourism/circuits/${slug}`,
+  PUBLIC_TOURISM_ITINERARIES: '/public/tourism/itineraries',
+  PUBLIC_TOURISM_ITINERARY_DETAIL: (slug: string = ':slug') => `/public/tourism/itineraries/${slug}`,
+  PUBLIC_TOURISM_STAYS: '/public/tourism/stays',
+  PUBLIC_TOURISM_TRANSPORTS: '/public/tourism/transports',
+  PUBLIC_TOURISM_KNOWLEDGE: '/public/tourism/knowledge',
+  PUBLIC_TOURISM_OPERATORS: '/public/tourism/operators',
+  PUBLIC_TOURISM_ENQUIRY: '/public/tourism/enquiry',
+
+  // Admin Tourism Concierge
+  ADMIN_TOURISM_ENQUIRIES: '/admin/tourism/enquiries',
+  ADMIN_TOURISM_ENQUIRY_DETAIL: (id: number | string = ':id') => `/admin/tourism/enquiries/${id}`,
+  ADMIN_TOURISM_CIRCUITS: '/admin/tourism/circuits',
+  ADMIN_TOURISM_STAYS: '/admin/tourism/stays',
+  ADMIN_TOURISM_TRANSPORTS: '/admin/tourism/transports',
+  ADMIN_TOURISM_ITINERARIES: '/admin/tourism/itineraries',
+  ADMIN_TOURISM_KNOWLEDGE: '/admin/tourism/knowledge',
+  ADMIN_TOURISM_OPERATORS: '/admin/tourism/operators',
+
+  // Public Investor Showcase
+  PUBLIC_INVESTOR_SHOWCASE: '/public/investments',
+  PUBLIC_INVESTOR_DETAIL: (slug: string = ':slug') => `/public/investments/${slug}`,
+  PUBLIC_INVESTOR_OPPORTUNITY_DETAIL: (slug: string = ':slug') => `/public/investments/${slug}`,
+  PUBLIC_INVESTOR_ASSOCIATIONS: '/public/investments/associations',
+
+  // Admin Investor Showcase
+  ADMIN_INVESTMENTS: '/admin/investments',
+  ADMIN_INVESTMENT_OPPORTUNITIES: '/admin/investments',
+  ADMIN_INVESTMENT_NEW: '/admin/investments/new',
+  ADMIN_INVESTMENT_OPPORTUNITY_NEW: '/admin/investments/new',
+  ADMIN_INVESTMENT_EDIT: (id: number | string = ':id') => `/admin/investments/${id}/edit`,
+  ADMIN_INVESTMENT_OPPORTUNITY_EDIT: (id: number | string = ':id') => `/admin/investments/${id}/edit`,
+  ADMIN_INVESTMENT_DETAIL: (id: number | string = ':id') => `/admin/investments/${id}`,
+  ADMIN_INVESTMENT_OPPORTUNITY_DETAIL: (id: number | string = ':id') => `/admin/investments/${id}`,
+  ADMIN_INVESTMENT_ASSOCIATIONS: '/admin/investments/associations',
+  ADMIN_INVESTMENT_ENQUIRIES: '/admin/investments/enquiries',
+  ADMIN_INVESTMENT_ENQUIRY_DETAIL: (id: number | string = ':id') => `/admin/investments/enquiries/${id}`,
 
   FORBIDDEN: '/forbidden',
 } as const;

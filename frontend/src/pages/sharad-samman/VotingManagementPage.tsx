@@ -496,18 +496,33 @@ export function VotingManagementPage() {
                   <span style={{ fontSize: '0.8rem', color: 'var(--colour-ink-soft)' }}>
                     Contest: <strong>{c.contestStatus}</strong>
                   </span>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    id={`btn-manage-voting-${c.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(ROUTES.SHARAD_SAMMAN_VOTING_DETAIL(c.id));
-                    }}
-                  >
-                    <span>Manage Voting</span>
-                    <i className="fas fa-arrow-right" aria-hidden="true" style={{ marginLeft: '6px', fontSize: '11px' }} />
-                  </Button>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      id={`btn-public-voting-${c.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(`${ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE}?contestId=${c.id}`, '_blank');
+                      }}
+                      title="Open Public Voting Portal for this contest"
+                    >
+                      <i className="fas fa-external-link-alt" aria-hidden="true" style={{ marginRight: '4px', fontSize: '10px' }} />
+                      <span>Public Portal</span>
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      id={`btn-manage-voting-${c.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(ROUTES.SHARAD_SAMMAN_VOTING_DETAIL(c.id));
+                      }}
+                    >
+                      <span>Manage Voting</span>
+                      <i className="fas fa-arrow-right" aria-hidden="true" style={{ marginLeft: '6px', fontSize: '11px' }} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             );

@@ -56,7 +56,8 @@
   font-size: 0.9375rem;
 }
 
-.public-layout__nav-link:hover {
+.public-layout__nav-link:hover,
+.public-layout__nav-link.active {
   color: var(--colour-brand);
   text-decoration: none;
 }

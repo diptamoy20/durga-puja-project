@@ -138,20 +138,26 @@ export const NAVIGATION: NavSection[] = [
 
   {
     label: 'Sharad Samman',
-    permissions: [PERMISSIONS.VIEW_NOMINATIONS],
+    permissions: [PERMISSIONS.VIEW_NOMINATIONS, PERMISSIONS.VIEW_SHARAD_SAMMAN],
     items: [
       { label: 'Dashboard', icon: 'fa-trophy', to: ROUTES.SHARAD_SAMMAN_DASHBOARD, end: true },
       {
-        label: 'Contest Session',
+        label: 'Contest Sessions',
         icon: 'fa-calendar-check',
-        permissions: [PERMISSIONS.MANAGE_CONTESTS],
+        permissions: [PERMISSIONS.MANAGE_CONTESTS, PERMISSIONS.VIEW_CONTESTS],
         to: ROUTES.SHARAD_SAMMAN_CONTESTS,
       },
       {
         label: 'Voting Management',
         icon: 'fa-check-to-slot',
-        permissions: [PERMISSIONS.MANAGE_CONTESTS],
+        permissions: [PERMISSIONS.MANAGE_CONTESTS, PERMISSIONS.MANAGE_VOTING],
         to: ROUTES.SHARAD_SAMMAN_VOTING,
+      },
+      {
+        label: 'Voting Audit & Controls',
+        icon: 'fa-shield-halved',
+        permissions: [PERMISSIONS.MANAGE_NOMINATIONS, PERMISSIONS.VIEW_VOTING_AUDIT],
+        to: ROUTES.SHARAD_SAMMAN_VOTING_AUDIT,
       },
       { label: 'All Nominations', icon: 'fa-list-check', to: ROUTES.SHARAD_SAMMAN_NOMINATIONS },
       { label: 'Pending Review', icon: 'fa-hourglass-half', tone: 'warning', to: `${ROUTES.SHARAD_SAMMAN_NOMINATIONS}?status=UNDER_REVIEW` },
@@ -161,10 +167,12 @@ export const NAVIGATION: NavSection[] = [
       {
         label: 'Add Nomination',
         icon: 'fa-circle-plus',
-        permissions: [PERMISSIONS.MANAGE_NOMINATIONS],
+        permissions: [PERMISSIONS.MANAGE_NOMINATIONS, PERMISSIONS.CREATE_NOMINATIONS],
         to: ROUTES.SHARAD_SAMMAN_NOMINATION_NEW,
         end: true,
       },
+      { label: 'Public Voting Portal', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_SHARAD_SAMMAN_VOTE },
+      { label: 'Live Standings & Podium', icon: 'fa-ranking-star', to: ROUTES.PUBLIC_SHARAD_SAMMAN_RESULTS },
     ],
   },
 
@@ -290,6 +298,63 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Public Podcast Hub', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_PODCASTS },
     ],
   },
+
+  {
+    label: 'Tourism Concierge',
+    permissions: [PERMISSIONS.VIEW_TOURISM],
+    items: [
+      { label: 'Enquiries', icon: 'fa-envelope-open-text', to: ROUTES.ADMIN_TOURISM_ENQUIRIES },
+      { label: 'Circuits', icon: 'fa-route', to: ROUTES.ADMIN_TOURISM_CIRCUITS },
+      { label: 'Stays', icon: 'fa-hotel', to: ROUTES.ADMIN_TOURISM_STAYS },
+      { label: 'Transports', icon: 'fa-bus', to: ROUTES.ADMIN_TOURISM_TRANSPORTS },
+      { label: 'Itineraries', icon: 'fa-calendar-days', to: ROUTES.ADMIN_TOURISM_ITINERARIES },
+      { label: 'Knowledge Base', icon: 'fa-book-atlas', to: ROUTES.ADMIN_TOURISM_KNOWLEDGE },
+      { label: 'Tour Operators', icon: 'fa-handshake', to: ROUTES.ADMIN_TOURISM_OPERATORS },
+      { label: 'Public Portal', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_TOURISM_CONCIERGE },
+    ],
+  },
+
+  {
+    label: 'Investor Showcase',
+    permissions: [PERMISSIONS.VIEW_INVESTMENTS],
+    items: [
+      { label: 'All Opportunities', icon: 'fa-briefcase', to: ROUTES.ADMIN_INVESTMENTS },
+      {
+        label: 'Add Opportunity',
+        icon: 'fa-circle-plus',
+        permissions: [PERMISSIONS.CREATE_INVESTMENTS],
+        to: ROUTES.ADMIN_INVESTMENT_NEW,
+        end: true,
+      },
+      {
+        label: 'Pending Approval',
+        icon: 'fa-hourglass-half',
+        tone: 'warning',
+        to: `${ROUTES.ADMIN_INVESTMENTS}?status=PENDING_APPROVAL`,
+      },
+      {
+        label: 'Published',
+        icon: 'fa-circle-check',
+        tone: 'success',
+        to: `${ROUTES.ADMIN_INVESTMENTS}?status=PUBLISHED`,
+      },
+      {
+        label: 'Investor Enquiries',
+        icon: 'fa-envelope-open-text',
+        permissions: [PERMISSIONS.MANAGE_INVESTMENT_ENQUIRIES],
+        to: ROUTES.ADMIN_INVESTMENT_ENQUIRIES,
+      },
+      {
+        label: 'Chambers & Associations',
+        icon: 'fa-building-columns',
+        permissions: [PERMISSIONS.MANAGE_ASSOCIATIONS],
+        to: ROUTES.ADMIN_INVESTMENT_ASSOCIATIONS,
+      },
+      { label: 'Public Showcase', icon: 'fa-arrow-up-right-from-square', to: ROUTES.PUBLIC_INVESTOR_SHOWCASE },
+    ],
+  },
+
+
 
   {
     label: 'Content Management',
