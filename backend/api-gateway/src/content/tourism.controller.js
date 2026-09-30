@@ -487,8 +487,8 @@ let AdminTourismController = class AdminTourismController {
         return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.TOURISM_PATTERNS.ADMIN_ENQUIRY_UPDATE_STATUS, {
             id: Number(id),
             status: body.status,
-            comment: body.comment,
-            changedById: actor?.id,
+            comment: body.comment ?? body.notes,
+            adminUserId: actor?.id,
         });
     }
 
@@ -497,15 +497,15 @@ let AdminTourismController = class AdminTourismController {
             id: Number(id),
             assignedToId: body.assignedToId ? Number(body.assignedToId) : null,
             comment: body.comment,
-            changedById: actor?.id,
+            adminUserId: actor?.id,
         });
     }
 
     addNote(id, body, actor) {
         return this.client.send(shared_1.SERVICE_TOKENS.CONTENT, shared_1.TOURISM_PATTERNS.ADMIN_ENQUIRY_ADD_NOTE, {
             id: Number(id),
-            note: body.note || body.remarks,
-            changedById: actor?.id,
+            comment: body.note ?? body.remarks ?? body.comment,
+            adminUserId: actor?.id,
         });
     }
 };

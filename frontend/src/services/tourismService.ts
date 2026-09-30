@@ -311,11 +311,11 @@ export const adminTourismService = {
     },
     get: (id: number): Promise<TourismEnquiry> => unwrap(api.get(`/admin/tourism/enquiries/${id}`)),
     updateStatus: (id: number, status: TourismEnquiryStatus, notes?: string) =>
-      unwrap(api.post(`/admin/tourism/enquiries/${id}/status`, { status, notes })),
+      unwrap(api.patch(`/admin/tourism/enquiries/${id}/status`, { status, comment: notes })),
     assign: (id: number, assignedToId: number) =>
-      unwrap(api.post(`/admin/tourism/enquiries/${id}/assign`, { assignedToId })),
+      unwrap(api.patch(`/admin/tourism/enquiries/${id}/assign`, { assignedToId })),
     addNote: (id: number, comment: string) =>
-      unwrap(api.post(`/admin/tourism/enquiries/${id}/notes`, { comment })),
+      unwrap(api.post(`/admin/tourism/enquiries/${id}/notes`, { note: comment })),
   },
 
   stats: {
